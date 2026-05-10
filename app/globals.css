@@ -57,48 +57,38 @@ body {
 }
 
 .hero-logo-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 10px;
+    align-items: center;
+    margin-bottom: 80px;
+    display: flex;
 }
 
 .hero-logo-icon {
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
+    object-fit: contain;
+    width: 200px;
+    height: 200px;
+    margin-left: -60px;
 }
 
 .hero-logo-text {
-  font-size: 42px;
-
-  letter-spacing: 12px;
-
-  color: #B08B57;
-
-  font-weight: 300;
-
-  font-family: "Cormorant Garamond", serif;
-
-  text-transform: uppercase;
-
-  line-height: 1;
+    letter-spacing: 18px;
+    color: #b08b57;
+    text-transform: capitalize;
+    font-family: Cormorant Garamond, serif;
+    font-size: 42px;
+    font-weight: 100;
+    line-height: 1;
+    margin-left: -40px;
 }
 
 .hero-title {
-  font-size: 42px;
-
-  line-height: 1.15;
-
-  color: #4A3A32;
-
-  font-family: "Cormorant Garamond", serif;
-
-  font-weight: 400;
-
-  margin-bottom: 26px;
-
-  max-width: 520px;
+ color: #4a3a32;
+    max-width: 520px;
+    margin-bottom: 10px;
+    margin-top: -120px;
+    font-family: Cormorant Garamond, serif;
+    font-size: 40px;
+    font-weight: 100;
+    line-height: 1.15;
 }
 
 .hero-subtitle {
