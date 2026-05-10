@@ -415,8 +415,13 @@ body {
   }
 
   .hero-logo-text {
-    font-size: 22px;
-    letter-spacing: 8px;
+    
+     font-size: 56px;
+    font-weight: 200;
+    letter-spacing: 24px;
+    color: #B08B57;
+    font-family: "Cormorant Garamond", serif;
+    text-transform: uppercase;
   }
 
   .hero-title {
