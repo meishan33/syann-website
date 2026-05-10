@@ -321,11 +321,25 @@ export default function Home() {
     SYANN.CO
   </div>
 
+  {/* CRYSTAL ICON */}
+  <div className="footer-crystal-wrapper">
+
+    <img
+      src="/footer-crystal.png"
+      alt="Crystal Icon"
+      className="footer-crystal-icon"
+    />
+
+  </div>
+
+  {/* TAGLINE */}
   <p className="footer-tagline">
     Personalized crystal bracelets
+    <br />
     designed for your energy.
   </p>
 
+  {/* NAVIGATION */}
   <div className="footer-links">
 
     <a href="#">About</a>
@@ -338,13 +352,14 @@ export default function Home() {
 
   </div>
 
+  {/* SOCIAL */}
   <div className="footer-social">
 
     <a href="#">
       Instagram
     </a>
 
-    <span>•</span>
+    <span className="footer-divider">|</span>
 
     <a href="mailto:hello@syann.co">
       hello@syann.co
@@ -352,6 +367,18 @@ export default function Home() {
 
   </div>
 
+  {/* LINE + STAR */}
+  <div className="footer-line-wrapper">
+
+    <div className="footer-line"></div>
+
+    <div className="footer-star">
+      ✦
+    </div>
+
+  </div>
+
+  {/* COPYRIGHT */}
   <div className="footer-bottom">
     © 2026 SYANN.CO — Energy • Beauty • You.
   </div>
