@@ -355,36 +355,23 @@ body {
 /* FOOTER */
 
 .simple-footer {
-  background: #F6F1EB;
-
-  padding: 110px 20px 60px;
-
-  text-align: center;
-
-  margin-top: 20px;
+    text-align: center;
+    background: #f6f1eb;
+    padding: 30px 20px 60px
 }
-
 /* LOGO */
 
 .footer-logo {
-  font-size: 74px;
-
-  letter-spacing: 20px;
-
-  color: #B08B57;
-
-  font-family: "Cormorant Garamond", serif;
-
-  font-weight: 300;
-
-  margin-bottom: 34px;
+  letter-spacing: 19px;
+    color: #b08b57;
+    margin-bottom: 20px;
+    font-family: Cormorant Garamond, serif;
+    font-size: 35px;
+    font-weight: 100;
 }
 
 /* CRYSTAL ICON */
 
-.footer-crystal-wrapper {
-  margin-bottom: 30px;
-}
 
 .footer-crystal-icon {
   width: 46px;
@@ -399,45 +386,32 @@ body {
 /* TAGLINE */
 
 .footer-tagline {
-  font-family: "Cormorant Garamond", serif;
-
-  font-size: 26px;
-
-  line-height: 1.8;
-
-  color: #5B4638;
-
-  margin-bottom: 60px;
-
-  font-weight: 300;
+    color: #5b4638;
+    margin-bottom: 35px;
+    font-family: Cormorant Garamond, serif;
+    font-size: 14px;
+    font-weight: 100;
+    line-height: 1.6;
+    letter-spacing: 2px;
 }
 
 /* LINKS */
 
 .footer-links {
-  display: flex;
-
-  justify-content: center;
-
-  gap: 90px;
-
-  flex-wrap: wrap;
-
-  margin-bottom: 55px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 90px;
+    margin-bottom: 35px;
+    display: flex;
 }
 
 .footer-links a {
-  text-decoration: none;
-
-  color: #5B4638;
-
-  letter-spacing: 6px;
-
-  text-transform: uppercase;
-
-  font-size: 14px;
-
-  transition: 0.3s ease;
+    color: #5b4638;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all .3s;
 }
 
 .footer-links a:hover {
@@ -447,23 +421,15 @@ body {
 /* SOCIAL */
 
 .footer-social {
-  display: flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  gap: 30px;
-
-  margin-bottom: 55px;
-
-  color: #9A8573;
-
-  font-size: 16px;
-
-  letter-spacing: 4px;
-
-  text-transform: uppercase;
+    color: #9a8573;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 55px;
+    font-size: 12px;
+    display: flex;
 }
 
 .footer-social a {
@@ -515,13 +481,10 @@ body {
 /* COPYRIGHT */
 
 .footer-bottom {
-  font-size: 14px;
-
-  letter-spacing: 5px;
-
-  color: #B7A79A;
-
-  text-transform: uppercase;
+    letter-spacing: 5px;
+    color: #b7a79a;
+    text-transform: uppercase;
+    font-size: 12px;
 }
 
 /* MOBILE */
