@@ -9,19 +9,24 @@ export default function Home() {
 
           <div className="hero-grid">
 
-            {/* LEFT CONTENT */}
             <div className="hero-left">
+
+              <img
+                src="/banner.png"
+                alt="Banner"
+                className="hero-image"
+              />
 
               <div className="logo-row">
 
                 <img
-                  src="/logo.png"
+                  src="/S_brown_icon.png"
                   alt="SYANN"
                   className="logo-image"
                 />
 
                 <div className="logo-text">
-                  SYANN
+                  SYANN.CO
                 </div>
 
               </div>
@@ -41,16 +46,7 @@ export default function Home() {
 
             </div>
 
-            {/* RIGHT IMAGE */}
-            <div className="hero-right">
-
-              <img
-                src="/banner.png"
-                alt="Banner"
-                className="hero-image"
-              />
-
-            </div>
+          
 
           </div>
 

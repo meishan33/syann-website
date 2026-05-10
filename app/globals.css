@@ -51,6 +51,10 @@ body {
   letter-spacing: 12px;
   font-size: 28px;
   font-weight: 300;
+  text-transform: uppercase;
+  color: #B08B57;
+  margin-bottom: 40px;
+
 }
 
 .hero-title {
