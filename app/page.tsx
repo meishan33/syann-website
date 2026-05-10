@@ -162,8 +162,8 @@ export default function Home() {
           <div className="product-card">
 
             <img
-              src="/work.png"
-              alt="Work Bracelet"
+              src="/yellow.png"
+              alt="Wealth Bracelet"
               className="product-image"
             />
 
@@ -185,7 +185,7 @@ export default function Home() {
           <div className="product-card">
 
             <img
-              src="/protection.png"
+              src="/black.png"
               alt="Protection Bracelet"
               className="product-image"
             />
@@ -208,7 +208,7 @@ export default function Home() {
           <div className="product-card">
 
             <img
-              src="/calm.png"
+              src="/blue.png"
               alt="Calm Bracelet"
               className="product-image"
             />
@@ -228,13 +228,25 @@ export default function Home() {
 
           </div>
 
-          <div className="side-image-card">
+          <div className="product-card">
 
             <img
-              src="/hand.png"
-              alt="Lifestyle"
-              className="side-image"
+              src="/focus.png"
+              alt="Focus Bracelet"
+              className="product-image"
             />
+
+            <div className="product-content">
+
+              <h3 className="product-title">
+                Focus & Clarity
+              </h3>
+
+              <p className="product-description">
+                Enhance concentration and mental clarity
+              </p>
+
+            </div>
 
           </div>
 
