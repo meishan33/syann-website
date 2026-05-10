@@ -321,17 +321,7 @@ export default function Home() {
 
             <div>
 
-              <div className="logo-row footer-logo">
-
-                <img
-                  src="/footer.png"
-                  alt="SYANN.CO"
-                  className="footer-logo-image"
-                />
-
-            
-
-              </div>
+              <div className="footer-logo-text">SYANN.CO</div>
 
               <p className="footer-description">
                 Personalized crystal bracelets designed with intention,

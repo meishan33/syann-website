@@ -304,7 +304,7 @@ body {
 }
 
 .quiz-title {
-  font-size: 64px;
+  font-size: 50px;
   line-height: 1.1;
   font-family: serif;
   margin-bottom: 24px;
@@ -377,8 +377,12 @@ body {
 }
 
 .footer-logo-text {
-  letter-spacing: 8px;
-  font-size: 22px;
+    letter-spacing: 12px;
+    color: #b08b57;
+    text-transform: capitalize;
+    font-family: Cormorant Garamond, ui-sans-serif;
+    font-size: 25px;
+    font-weight: 50;
 }
 
 .footer-heading {
