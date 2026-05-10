@@ -261,10 +261,10 @@ export default function Home() {
               Personalized Energy Analysis
             </p>
 
-            <h2 className="quiz-title">
+            <h3 className="quiz-title">
               Discover The Bracelet
               Designed For You
-            </h2>
+            </h3>
 
             <p className="quiz-description">
               Our AI analyzes your zodiac, five elements,
@@ -324,8 +324,8 @@ export default function Home() {
               <div className="logo-row footer-logo">
 
                 <img
-                  src="/logo.png"
-                  alt="SYANN"
+                  src="/S_brown_icon.png"
+                  alt="SYANN.CO"
                   className="footer-logo-image"
                 />
 
