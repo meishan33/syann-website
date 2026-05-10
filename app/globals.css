@@ -1,26 +1,393 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: #F6F1EB;
+  color: #4A3A32;
+  font-family: Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.website {
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 12px;
+}
+
+/* HERO SECTION */
+
+.hero-section {
+  background: #EFE7DE;
+  overflow: hidden;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+
+.hero-left {
+  padding: 80px;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.logo-image {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+
+.logo-text {
+  letter-spacing: 12px;
+  font-size: 28px;
+  font-weight: 300;
+}
+
+.hero-title {
+  font-size: 64px;
+  line-height: 1.08;
+  margin-bottom: 24px;
+  font-family: serif;
+}
+
+.hero-subtitle {
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #B08B57;
+  margin-bottom: 40px;
+  font-size: 12px;
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* BUTTONS */
+
+.primary-button,
+.secondary-button {
+  border: 1px solid #B08B57;
+  background: transparent;
+  padding: 16px 32px;
+  cursor: pointer;
+  transition: 0.3s;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #4A3A32;
+  font-size: 12px;
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  background: #B08B57;
+  color: white;
+}
+
+/* FEATURE STRIP */
+
+.feature-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: 12px;
+  background: #E5DDD5;
+}
+
+.feature-item,
+.ai-box {
+  background: #F8F4EF;
+  padding: 40px;
+}
+
+.feature-item {
+  display: flex;
+  gap: 20px;
+}
+
+.feature-icon {
+  width: 52px;
+  height: 52px;
+  border: 1px solid #D7C8BA;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #B08B57;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.feature-title {
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.feature-description {
+  color: #6F625B;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.ai-box-title {
+  font-size: 28px;
+  line-height: 1.3;
+  font-family: serif;
+  margin-bottom: 24px;
+}
+
+.ai-list {
+  margin: 0 0 30px;
+  padding-left: 18px;
+  color: #6F625B;
+  line-height: 2;
+  font-size: 15px;
+}
+
+/* STATEMENT SECTION */
+
+.statement-section {
+  background: #F8F4EF;
+  margin-top: 12px;
+  padding: 40px;
+  text-align: center;
+}
+
+.statement-text {
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: #A98D72;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.statement-line {
+  width: 180px;
+  height: 1px;
+  background: #D9C8B8;
+  margin: 0 auto;
+}
+
+/* PRODUCT GRID */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  margin-top: 12px;
+  background: #E5DDD5;
+}
+
+.product-card,
+.side-image-card {
+  background: #F8F4EF;
+}
+
+.product-image,
+.side-image {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+}
+
+.product-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.product-title {
+  font-size: 22px;
+  font-family: serif;
+  margin-bottom: 16px;
+}
+
+.product-description {
+  color: #6F625B;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* QUIZ SECTION */
+
+.quiz-section {
+  background: #F8F4EF;
+  margin-top: 12px;
+  padding: 100px 40px;
+}
+
+.quiz-header {
+  max-width: 900px;
+  margin: 0 auto 60px;
+  text-align: center;
+}
+
+.quiz-label {
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #B08B57;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.quiz-title {
+  font-size: 64px;
+  line-height: 1.1;
+  font-family: serif;
+  margin-bottom: 24px;
+}
+
+.quiz-description {
+  color: #6F625B;
+  line-height: 1.8;
+  font-size: 17px;
+}
+
+.quiz-form-container {
+  max-width: 850px;
+  margin: 0 auto;
+  background: #EFE7DE;
+  padding: 50px;
+  border: 1px solid #E3D7CB;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 18px;
+  border: 1px solid #E5DDD5;
+  background: white;
+  color: #4A3A32;
+  font-size: 15px;
+  outline: none;
+}
+
+.form-textarea {
+  margin-top: 24px;
+  min-height: 160px;
+  resize: vertical;
+}
+
+.quiz-button-wrapper {
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* FOOTER */
+
+.footer {
+  background: #EFE7DE;
+  margin-top: 12px;
+  padding: 80px 40px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+}
+
+.footer-logo {
+  margin-bottom: 24px;
+}
+
+.footer-logo-image {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.footer-logo-text {
+  letter-spacing: 8px;
+  font-size: 22px;
+}
+
+.footer-heading {
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-size: 12px;
+  margin-bottom: 20px;
+  color: #A98D72;
+}
+
+.footer-description,
+.footer-list {
+  color: #6F625B;
+  line-height: 1.8;
+  font-size: 15px;
+}
+
+.footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-list li {
+  margin-bottom: 14px;
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 768px) {
+
+  .hero-grid,
+  .feature-strip,
+  .product-grid,
+  .footer-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-left {
+    padding: 40px 24px;
+  }
+
+  .hero-title,
+  .quiz-title {
+    font-size: 42px;
+  }
+
+  .container {
+    padding: 8px;
+  }
+
+  .quiz-section,
+  .footer {
+    padding: 60px 24px;
+  }
+
+  .feature-item,
+  .ai-box {
+    padding: 30px;
+  }
+
+  .quiz-form-container {
+    padding: 30px;
+  }
+
+  .statement-text {
+    font-size: 14px;
+    letter-spacing: 4px;
+  }
 }
