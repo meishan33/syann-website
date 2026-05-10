@@ -21,40 +21,45 @@ export default function Home() {
       {/* HERO SECTION */}
       <section className="max-w-[1200px] mx-auto px-8 py-20 flex flex-col md:flex-row items-center justify-between gap-16">
 
-        {/* LEFT */}
-        <div className="max-w-[520px]">
+        {/* HERO SECTION */}
+<section className="max-w-[1200px] mx-auto px-6 md:px-8 py-16 md:py-24 flex flex-col-reverse md:flex-row items-center justify-between gap-14 md:gap-20">
 
-          <p className="tracking-[4px] text-sm text-[#B08B57] mb-6">
-            PERSONALIZED ENERGY JEWELRY
-          </p>
+  {/* LEFT CONTENT */}
+  <div className="max-w-[540px] text-center md:text-left">
 
-          <h1 className="text-[42px] md:text-[68px] leading-[1.02] text-[#3A2F2A] font-serif mb-6">
-            Crystal Bracelets
-            Designed For
-            Your Energy
-          </h1>
+    <p className="tracking-[5px] text-[11px] md:text-sm text-[#B08B57] mb-5 uppercase">
+      Personalized Energy Jewelry
+    </p>
 
-          <p className="text-[#7A6E66] text-lg leading-relaxed mb-8">
-            AI-powered crystal recommendations based on your zodiac,
-            five elements, and emotional energy.
-          </p>
+    <h1 className="text-[44px] md:text-[76px] leading-[0.98] text-[#3A2F2A] font-serif mb-6">
+      Crystal Bracelets
+      Designed For
+      Your Energy
+    </h1>
 
-          <button className="border border-[#C8A97E] px-8 py-4 rounded-full text-[#3A2F2A] hover:bg-[#C8A97E] hover:text-white transition duration-300">
-            Discover Your Bracelet
-          </button>
+    <p className="text-[#7A6E66] text-[16px] md:text-lg leading-relaxed mb-10 max-w-[460px] mx-auto md:mx-0">
+      AI-powered crystal recommendations based on your zodiac,
+      five elements, and emotional energy.
+    </p>
 
-        </div>
+    <button className="border border-[#C8A97E] px-8 py-4 rounded-full text-[#3A2F2A] hover:bg-[#C8A97E] hover:text-white transition duration-300 text-sm tracking-wide">
+      Discover Your Bracelet
+    </button>
 
-        {/* RIGHT IMAGE */}
-        <div className="flex-1">
-          <img
-            src="/banner.png"
-            alt="Crystal Bracelet"
-            className="w-full rounded-[36px] object-cover shadow-2xl"
-          />
-        </div>
+  </div>
 
-      </section>
+  {/* RIGHT IMAGE */}
+  <div className="flex-1 w-full">
+
+    <img
+      src="/banner.png"
+      alt="Crystal Bracelet"
+      className="w-full rounded-[36px] object-cover shadow-2xl"
+    />
+
+  </div>
+
+</section>
 
       {/* FEATURE SECTION */}
       <section className="bg-white py-24 px-8">
