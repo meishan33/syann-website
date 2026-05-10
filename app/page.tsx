@@ -5,52 +5,52 @@ export default function Home() {
       <div className="container">
 
         {/* HERO SECTION */}
-        <section className="hero-section">
+<section className="hero-section">
 
-          <div className="hero-grid">
+  {/* FULL BANNER IMAGE */}
+  <img
+    src="/banner.png"
+    alt="SYANN Banner"
+    className="hero-banner"
+  />
 
-            <div className="hero-left">
+  {/* OVERLAY CONTENT */}
+  <div className="hero-overlay">
 
-              <img
-                src="/banner.png"
-                alt="Banner"
-                className="hero-image"
-              />
+    {/* LOGO ROW */}
+    <div className="hero-logo-row">
 
-              <div className="logo-row">
+      <img
+        src="/icon.png"
+        alt="SYANN"
+        className="hero-logo-icon"
+      />
 
-                <img
-                  src="/S_brown_icon.png"
-                  alt="SYANN"
-                  className="logo-image"
-                />
+      <div className="hero-logo-text">
+        SYANN.CO
+      </div>
 
-                <div className="logo-text">
-                  SYANN.CO
-                </div>
+    </div>
 
-              </div>
+    {/* TITLE */}
+    <h1 className="hero-title">
+      Personalized Crystal Bracelets
+      Designed For Your Energy
+    </h1>
 
-              <h1 className="hero-title">
-                Personalized Crystal Bracelets
-                Designed For Your Energy
-              </h1>
+    {/* SUBTITLE */}
+    <p className="hero-subtitle">
+      AI-POWERED • ENERGY ALIGNED • MADE FOR YOU
+    </p>
 
-              <p className="hero-subtitle">
-                AI-powered • Energy aligned • Made for you
-              </p>
+    {/* BUTTON */}
+    <button className="hero-button">
+      DISCOVER YOUR BRACELET ✦
+    </button>
 
-              <button className="primary-button">
-                Discover Your Bracelet ✦
-              </button>
+  </div>
 
-            </div>
-
-          
-
-          </div>
-
-        </section>
+</section>
 
         {/* FEATURE STRIP */}
         <section className="feature-strip">
