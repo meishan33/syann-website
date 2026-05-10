@@ -33,11 +33,11 @@ export default function Home() {
     </div>
 
     {/* TITLE */}
-    <h3 className="hero-title">
+    <h2 className="hero-title">
       Personalized Crystal Bracelets
       <br />
       Designed For Your Energy
-    </h3>
+    </h2>
 
     {/* SUBTITLE */}
     <p className="hero-subtitle">
