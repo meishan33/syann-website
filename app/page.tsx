@@ -35,6 +35,7 @@ export default function Home() {
     {/* TITLE */}
     <h1 className="hero-title">
       Personalized Crystal Bracelets
+      <br />
       Designed For Your Energy
     </h1>
 
