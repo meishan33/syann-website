@@ -324,14 +324,12 @@ export default function Home() {
               <div className="logo-row footer-logo">
 
                 <img
-                  src="/S_brown_icon.png"
+                  src="/footer.png"
                   alt="SYANN.CO"
                   className="footer-logo-image"
                 />
 
-                <div className="footer-logo-text">
-                  SYANN
-                </div>
+            
 
               </div>
 
@@ -374,8 +372,8 @@ export default function Home() {
 
               <ul className="footer-list">
                 <li>hello@syann.co</li>
-                <li>@syann.co</li>
-                <li>Singapore</li>
+                <li>instagram@syann.co</li>
+                <li>facebook@syann.co</li>
               </ul>
 
             </div>
