@@ -27,7 +27,7 @@ export default function Home() {
       />
 
       <div className="hero-logo-text">
-        SYANN.CO
+        SYANN
       </div>
 
     </div>
@@ -318,7 +318,7 @@ export default function Home() {
         <footer className="simple-footer">
 
   <div className="footer-logo">
-    SYANN.CO
+    SYANN
   </div>
 
   {/* CRYSTAL ICON */}
