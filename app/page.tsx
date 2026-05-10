@@ -21,7 +21,7 @@ export default function Home() {
     <div className="hero-logo-row">
 
       <img
-        src="/logo.png"
+        src="/S_brown_icon.png"
         alt="SYANN"
         className="hero-logo-icon"
       />

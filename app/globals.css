@@ -148,12 +148,12 @@ body {
 .feature-item,
 .ai-box {
   background: #F8F4EF;
-  padding: 40px;
+  padding: 15px;
 }
 
 .feature-item {
   display: flex;
-  gap: 20px;
+  gap: 10px;
 }
 
 .feature-icon {
@@ -223,7 +223,7 @@ body {
 .statement-section {
   background: #F8F4EF;
   margin-top: 12px;
-  padding: 40px;
+  padding: 20px;
   text-align: center;
 }
 
