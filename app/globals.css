@@ -354,60 +354,108 @@ body {
 
 /* FOOTER */
 
-.footer {
-  background: #EFE7DE;
-  margin-top: 12px;
-  padding: 80px 40px;
-}
+.simple-footer {
+  background: #F6F1EB;
 
-.footer-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 40px;
+  padding: 90px 20px 50px;
+
+  text-align: center;
+
+  border-top: 1px solid #E7DDD3;
+
+  margin-top: 20px;
 }
 
 .footer-logo {
-  margin-bottom: 24px;
+  font-size: 42px;
+
+  letter-spacing: 14px;
+
+  color: #B08B57;
+
+  font-family: "Cormorant Garamond", serif;
+
+  font-weight: 300;
+
+  margin-bottom: 22px;
 }
 
-.footer-logo-image {
-  width: 52px;
-  height: 52px;
-  object-fit: contain;
-}
+.footer-tagline {
+  color: #7A6A5D;
 
-.footer-logo-text {
-    letter-spacing: 12px;
-    color: #b08b57;
-    text-transform: capitalize;
-    font-family: Cormorant Garamond, ui-sans-serif;
-    font-size: 25px;
-    font-weight: 50;
-}
+  font-size: 16px;
 
-.footer-heading {
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  font-size: 12px;
-  margin-bottom: 20px;
-  color: #A98D72;
-}
-
-.footer-description,
-.footer-list {
-  color: #6F625B;
   line-height: 1.8;
-  font-size: 15px;
+
+  margin-bottom: 40px;
 }
 
-.footer-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.footer-links {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 40px;
+
+  flex-wrap: wrap;
+
+  margin-bottom: 30px;
 }
 
-.footer-list li {
-  margin-bottom: 14px;
+.footer-links a {
+  text-decoration: none;
+
+  color: #4A3A32;
+
+  letter-spacing: 3px;
+
+  text-transform: uppercase;
+
+  font-size: 11px;
+
+  transition: 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #B08B57;
+}
+
+.footer-social {
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 16px;
+
+  margin-bottom: 36px;
+
+  color: #9A8573;
+
+  font-size: 14px;
+}
+
+.footer-social a {
+  text-decoration: none;
+
+  color: #9A8573;
+
+  transition: 0.3s ease;
+}
+
+.footer-social a:hover {
+  color: #B08B57;
+}
+
+.footer-bottom {
+  font-size: 12px;
+
+  letter-spacing: 2px;
+
+  color: #B7A79A;
+
+  text-transform: uppercase;
 }
 
 /* MOBILE RESPONSIVE */

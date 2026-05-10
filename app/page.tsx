@@ -315,62 +315,48 @@ export default function Home() {
         </section>
 
         {/* FOOTER */}
-        <footer className="footer">
+        <footer className="simple-footer">
 
-          <div className="footer-grid">
+  <div className="footer-logo">
+    SYANN.CO
+  </div>
 
-            <div>
+  <p className="footer-tagline">
+    Personalized crystal bracelets
+    designed for your energy.
+  </p>
 
-              <div className="footer-logo-text">SYANN.CO</div>
+  <div className="footer-links">
 
-              <p className="footer-description">
-                Personalized crystal bracelets designed with intention,
-                energy alignment, and AI-powered recommendations.
-              </p>
+    <a href="#">About</a>
 
-            </div>
+    <a href="#">Bracelets</a>
 
-            <div>
+    <a href="#">Energy Quiz</a>
 
-              <h3 className="footer-heading">Explore</h3>
+    <a href="#">Contact</a>
 
-              <ul className="footer-list">
-                <li>About</li>
-                <li>Bracelets</li>
-                <li>Energy Quiz</li>
-                <li>Contact</li>
-              </ul>
+  </div>
 
-            </div>
+  <div className="footer-social">
 
-            <div>
+    <a href="#">
+      Instagram
+    </a>
 
-              <h3 className="footer-heading">Collections</h3>
+    <span>•</span>
 
-              <ul className="footer-list">
-                <li>Love & Harmony</li>
-                <li>Career & Success</li>
-                <li>Protection & Grounding</li>
-                <li>Calm & Balance</li>
-              </ul>
+    <a href="mailto:hello@syann.co">
+      hello@syann.co
+    </a>
 
-            </div>
+  </div>
 
-            <div>
+  <div className="footer-bottom">
+    © 2026 SYANN.CO — Energy • Beauty • You.
+  </div>
 
-              <h3 className="footer-heading">Connect</h3>
-
-              <ul className="footer-list">
-                <li>hello@syann.co</li>
-                <li>instagram@syann.co</li>
-                <li>facebook@syann.co</li>
-              </ul>
-
-            </div>
-
-          </div>
-
-        </footer>
+</footer>
 
       </div>
 
