@@ -21,7 +21,7 @@ export default function Home() {
     <div className="hero-logo-row">
 
       <img
-        src="/S_brown_icon.png"
+        src="/logo.png"
         alt="SYANN"
         className="hero-logo-icon"
       />
@@ -66,8 +66,7 @@ export default function Home() {
               </h3>
 
               <p className="feature-description">
-                Carefully selected,
-                high quality gemstones
+                Carefully selected natural gemstones chosen for their beauty, energy, and quality.
               </p>
             </div>
 
@@ -75,7 +74,7 @@ export default function Home() {
 
           <div className="feature-item">
 
-            <div className="feature-icon">✦</div>
+            <div className="feature-icon">&#9958;</div>
 
             <div>
               <h3 className="feature-title">
@@ -83,8 +82,7 @@ export default function Home() {
               </h3>
 
               <p className="feature-description">
-                Personalized recommendations
-                based on your unique energy
+                Personalized crystal recommendations based on your zodiac, intentions, and energy profile.
               </p>
             </div>
 
@@ -100,30 +98,25 @@ export default function Home() {
               </h3>
 
               <p className="feature-description">
-                Each bracelet is cleansed
-                and handcrafted with care
+                Each bracelet is thoughtfully handcrafted, cleansed, and designed with care.
               </p>
             </div>
 
           </div>
 
-          <div className="ai-box">
+              <div className="feature-item">
 
-            <h3 className="ai-box-title">
-              Designed By AI
-              Just For You
-            </h3>
+            <div className="feature-icon">&#10020;</div>
 
-            <ul className="ai-list">
-              <li>✓ Birth chart & zodiac analysis</li>
-              <li>✓ Five elements balance</li>
-              <li>✓ Energy & intention matching</li>
-              <li>✓ Personalized crystal selection</li>
-            </ul>
+            <div>
+              <h3 className="feature-title">
+                Personalized For You
+              </h3>
 
-            <button className="secondary-button">
-              Discover Your Energy
-            </button>
+              <p className="feature-description">
+                Every bracelet combination is uniquely matched to support your personal journey and goals.
+              </p>
+            </div>
 
           </div>
 
