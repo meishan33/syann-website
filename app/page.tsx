@@ -19,9 +19,6 @@ export default function Home() {
       </nav>
 
       {/* HERO SECTION */}
-      <section className="max-w-[1200px] mx-auto px-8 py-20 flex flex-col md:flex-row items-center justify-between gap-16">
-
-        {/* HERO SECTION */}
 <section className="max-w-[1200px] mx-auto px-6 md:px-8 py-16 md:py-24 flex flex-col-reverse md:flex-row items-center justify-between gap-14 md:gap-20">
 
   {/* LEFT CONTENT */}
