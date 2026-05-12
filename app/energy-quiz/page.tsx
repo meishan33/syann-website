@@ -275,7 +275,7 @@ export default function EnergyQuizPage() {
           <div className="preview-card">
 
             <img
-              src="/bracelet-preview.jpg"
+              src="/bracelet-preview.png"
               alt="Bracelet Preview"
               className="preview-image"
             />
