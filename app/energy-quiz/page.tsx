@@ -8,6 +8,8 @@ export default function EnergyQuizPage() {
 
   const [loading, setLoading] = useState(false)
 
+  const [result, setResult] = useState<any>(null)
+
   const [formData, setFormData] = useState({
     name: '',
     birthdate: '',
@@ -15,6 +17,9 @@ export default function EnergyQuizPage() {
     goal: '',
     feeling: ''
   })
+
+
+  /* HANDLE INPUT CHANGES */
 
   const handleChange = (
     e: any
@@ -26,6 +31,9 @@ export default function EnergyQuizPage() {
     })
   }
 
+
+  /* SUBMIT FORM */
+
   const handleSubmit = async (
     e: any
   ) => {
@@ -36,12 +44,44 @@ export default function EnergyQuizPage() {
 
       setLoading(true)
 
-      console.log(formData)
+      const response = await fetch(
+        '/api/generate-bracelet',
+        {
+          method: 'POST',
 
-      // NEXT STEP:
-      // Send form data to AI API route
+          headers: {
+            'Content-Type': 'application/json'
+          },
 
-      alert('Energy analysis submitted!')
+          body: JSON.stringify(formData)
+        }
+      )
+
+      const data = await response.json()
+
+      console.log(data)
+
+      if (data.success) {
+
+        let parsedResult
+
+        try {
+
+          parsedResult = JSON.parse(data.result)
+
+        } catch {
+
+          parsedResult = {
+            summary: data.result
+          }
+        }
+
+        setResult(parsedResult)
+
+      } else {
+
+        alert('Failed to generate bracelet.')
+      }
 
     } catch (error) {
 
@@ -55,6 +95,7 @@ export default function EnergyQuizPage() {
     }
   }
 
+
   return (
 
     <>
@@ -62,7 +103,9 @@ export default function EnergyQuizPage() {
 
       <main className="energy-page">
 
+
         {/* HERO SECTION */}
+
         <section className="hero-banner">
 
           <img
@@ -91,10 +134,14 @@ export default function EnergyQuizPage() {
         </section>
 
 
+
         {/* MAIN CONTENT */}
+
         <section className="content-wrapper">
 
+
           {/* LEFT FORM CARD */}
+
           <div className="form-card">
 
             <div className="form-header">
@@ -109,12 +156,15 @@ export default function EnergyQuizPage() {
 
             </div>
 
+
             <form
               onSubmit={handleSubmit}
               className="energy-form"
             >
 
+
               {/* NAME */}
+
               <div className="form-group">
 
                 <label>
@@ -133,7 +183,9 @@ export default function EnergyQuizPage() {
               </div>
 
 
+
               {/* BIRTHDATE + GENDER */}
+
               <div className="form-group-row">
 
                 <div className="form-group">
@@ -151,6 +203,7 @@ export default function EnergyQuizPage() {
                   />
 
                 </div>
+
 
                 <div className="form-group">
 
@@ -184,7 +237,9 @@ export default function EnergyQuizPage() {
               </div>
 
 
+
               {/* GOAL */}
+
               <div className="form-group">
 
                 <label>
@@ -231,7 +286,9 @@ export default function EnergyQuizPage() {
               </div>
 
 
+
               {/* FEELINGS */}
+
               <div className="form-group">
 
                 <label>
@@ -249,16 +306,20 @@ export default function EnergyQuizPage() {
               </div>
 
 
+
               {/* BUTTON */}
+
               <button
                 type="submit"
                 disabled={loading}
                 className="generate-button"
               >
 
-                {loading
-                  ? 'Analyzing Your Energy...'
-                  : 'GENERATE MY BRACELET ✨'}
+                {
+                  loading
+                    ? 'Analyzing Your Energy...'
+                    : 'GENERATE MY BRACELET ✨'
+                }
 
               </button>
 
@@ -271,14 +332,17 @@ export default function EnergyQuizPage() {
           </div>
 
 
-          {/* RIGHT PREVIEW CARD */}
+
+          {/* RIGHT RESULT CARD */}
+
           <div className="preview-card">
 
             <img
-              src="/bracelet-preview.png"
+              src="/bracelet-preview.jpg"
               alt="Bracelet Preview"
               className="preview-image"
             />
+
 
             <div className="preview-content">
 
@@ -290,12 +354,92 @@ export default function EnergyQuizPage() {
                 Your Personalized Bracelet
               </h2>
 
-              <p className="preview-description">
-                Your bracelet recommendation will be generated
-                based on your zodiac, emotions, intentions,
-                and five-element energy balance.
-              </p>
 
+              {/* BEFORE RESULT */}
+
+              {!result && (
+
+                <p className="preview-description">
+
+                  Your bracelet recommendation will be generated
+                  based on your zodiac, emotions, intentions,
+                  and five-element energy balance.
+
+                </p>
+              )}
+
+
+
+              {/* AFTER RESULT */}
+
+              {result && (
+
+                <div className="ai-result">
+
+                  <h3>
+                    {result.theme}
+                  </h3>
+
+                  <p>
+                    {result.summary}
+                  </p>
+
+
+                  {/* CRYSTALS */}
+
+                  {result.crystals && (
+
+                    <div className="result-section">
+
+                      <h4>
+                        Recommended Crystals
+                      </h4>
+
+                      <ul>
+
+                        {result.crystals.map(
+                          (
+                            crystal: string,
+                            index: number
+                          ) => (
+
+                            <li key={index}>
+                              ✧ {crystal}
+                            </li>
+
+                          )
+                        )}
+
+                      </ul>
+
+                    </div>
+                  )}
+
+
+
+                  {/* BRACELET DESIGN */}
+
+                  {result.bracelet_design && (
+
+                    <div className="result-section">
+
+                      <h4>
+                        Bracelet Design
+                      </h4>
+
+                      <p>
+                        {result.bracelet_design}
+                      </p>
+
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+
+
+              {/* FEATURE GRID */}
 
               <div className="feature-grid">
 
@@ -311,6 +455,7 @@ export default function EnergyQuizPage() {
 
                 </div>
 
+
                 <div className="feature-box">
 
                   <div className="feature-icon">
@@ -323,6 +468,7 @@ export default function EnergyQuizPage() {
 
                 </div>
 
+
                 <div className="feature-box">
 
                   <div className="feature-icon">
@@ -334,6 +480,7 @@ export default function EnergyQuizPage() {
                   </p>
 
                 </div>
+
 
                 <div className="feature-box">
 
