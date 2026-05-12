@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Navbar from '@/components/Navbar'
+import Navbar from '../../components/Navbar'
 import './energy-quiz.css'
 
 export default function EnergyQuizPage() {
@@ -17,12 +17,9 @@ export default function EnergyQuizPage() {
   })
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement |
-      HTMLSelectElement |
-      HTMLTextAreaElement
-    >
+    e: any
   ) => {
+
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -30,7 +27,7 @@ export default function EnergyQuizPage() {
   }
 
   const handleSubmit = async (
-    e: React.FormEvent
+    e: any
   ) => {
 
     e.preventDefault()
@@ -42,7 +39,7 @@ export default function EnergyQuizPage() {
       console.log(formData)
 
       // NEXT STEP:
-      // Send data to AI API route
+      // Send form data to AI API route
 
       alert('Energy analysis submitted!')
 
@@ -59,6 +56,7 @@ export default function EnergyQuizPage() {
   }
 
   return (
+
     <>
       <Navbar />
 
@@ -68,7 +66,7 @@ export default function EnergyQuizPage() {
         <section className="hero-banner">
 
           <img
-            src="/energy-banner.jpg"
+            src="/energy-banner.png"
             alt="Energy Banner"
             className="hero-banner-image"
           />
@@ -89,6 +87,7 @@ export default function EnergyQuizPage() {
             </p>
 
           </div>
+
         </section>
 
 
@@ -301,6 +300,7 @@ export default function EnergyQuizPage() {
               <div className="feature-grid">
 
                 <div className="feature-box">
+
                   <div className="feature-icon">
                     ✧
                   </div>
@@ -308,9 +308,11 @@ export default function EnergyQuizPage() {
                   <p>
                     Crystal Analysis
                   </p>
+
                 </div>
 
                 <div className="feature-box">
+
                   <div className="feature-icon">
                     ☾
                   </div>
@@ -318,9 +320,11 @@ export default function EnergyQuizPage() {
                   <p>
                     Personalized Energy Reading
                   </p>
+
                 </div>
 
                 <div className="feature-box">
+
                   <div className="feature-icon">
                     ◎
                   </div>
@@ -328,9 +332,11 @@ export default function EnergyQuizPage() {
                   <p>
                     AI Generated Bracelet Design
                   </p>
+
                 </div>
 
                 <div className="feature-box">
+
                   <div className="feature-icon">
                     ♡
                   </div>
@@ -338,6 +344,7 @@ export default function EnergyQuizPage() {
                   <p>
                     Tailored For Your Energy
                   </p>
+
                 </div>
 
               </div>
