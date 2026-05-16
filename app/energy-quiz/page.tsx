@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Navbar from '@/components/Navbar'
 import './energy-quiz.css'
 
 export default function EnergyQuizPage() {
@@ -99,8 +98,6 @@ export default function EnergyQuizPage() {
   return (
 
     <>
-      <Navbar />
-
       <main className="energy-page">
 
 

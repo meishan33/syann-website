@@ -1,8 +1,41 @@
+/* BRAND DESIGN TOKENS — sourced from public/brand-palette.png */
+
+:root {
+
+  /* Palette */
+  --color-bg: #F6F1EB;
+  --color-surface: #F8F4EF;
+  --color-surface-warm: #EFE7DE;
+  --color-border: #E5DDD5;
+
+  --color-text: #65462E;
+  --color-text-soft: #6F625B;
+  --color-text-muted: #9A8573;
+  --color-text-strong: #4A3A32;
+
+  --color-primary: #B08B57;
+  --color-primary-deep: #946833;
+  --color-accent: #B27A4D;
+  --color-accent-soft: #BAA382;
+  --color-highlight: #C4A275;
+  --color-header: #93684C;
+
+  /* Typography */
+  --font-heading: "Cormorant Garamond", "Times New Roman", serif;
+  --font-body: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+
+  /* Spacing */
+  --letter-spacing-wide: 0.16em;
+  --letter-spacing-uppercase: 0.22em;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap");
+
 body {
   margin: 0;
-  background: #F6F1EB;
-  color: #4A3A32;
-  font-family: Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-strong);
+  font-family: var(--font-body);
 }
 
 * {
