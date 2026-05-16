@@ -1,320 +1,231 @@
+'use client'
+
+import { useState } from 'react'
+import './home.css'
+
+const GOALS = [
+  { value: 'love', label: 'Love & Relationships' },
+  { value: 'wealth', label: 'Wealth & Abundance' },
+  { value: 'career', label: 'Career Success' },
+  { value: 'calmness', label: 'Calmness & Healing' },
+  { value: 'protection', label: 'Protection & Grounding' },
+  { value: 'confidence', label: 'Confidence & Motivation' },
+]
+
 export default function Home() {
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    birthdate: '',
+    birthtime: '',
+    gender: '',
+    goal: '',
+    feeling: '',
+  })
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    try {
+      setLoading(true)
+      const response = await fetch('/api/generate-bracelet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      const data = await response.json()
+      if (!data.success) {
+        alert('Failed to generate bracelet.')
+      } else {
+        window.location.href = '/energy-quiz'
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <main className="website">
+    <main className="home">
 
-      <div className="container">
+      {/* HERO BANNER — mirrors public/banner-section.png */}
+      <section className="home-hero">
 
-        {/* HERO SECTION */}
-<section className="hero-section">
+        <img
+          src="/banner-section.png"
+          alt=""
+          className="home-hero-bg"
+        />
 
-  {/* FULL BANNER IMAGE */}
-  <img
-    src="/banner.png"
-    alt="SYANN Banner"
-    className="hero-banner"
-  />
+        <div className="home-hero-overlay">
 
-  {/* OVERLAY CONTENT */}
-  <div className="hero-overlay">
+          <div className="home-hero-content">
 
-    {/* LOGO ROW */}
-    <div className="hero-logo-row">
+            <div className="home-hero-brand">
+              <img
+                src="/S_brown_icon.png"
+                alt=""
+                className="home-hero-brand-icon"
+              />
+              <span className="home-hero-brand-text">SYANN</span>
+            </div>
 
-      <img
-        src="/S_brown_icon.png"
-        alt="SYANN"
-        className="hero-logo-icon"
-      />
+            <h1 className="home-hero-title">
+              Personalized Crystal Bracelets
+              <br />
+              Designed For Your Energy
+            </h1>
 
-      <div className="hero-logo-text">
-        SYANN
-      </div>
+            <p className="home-hero-subtitle">
+              AI-POWERED · ENERGY ALIGNED · MADE FOR YOU
+            </p>
 
-    </div>
+            <a href="#energy-quiz" className="home-hero-cta">
+              Discover Your Bracelet
+              <span className="home-hero-cta-icon" aria-hidden="true">✦</span>
+            </a>
 
-    {/* TITLE */}
-    <h2 className="hero-title">
-      Personalized Crystal Bracelets
-      <br />
-      Designed For Your Energy
-    </h2>
+          </div>
 
-    {/* SUBTITLE */}
-    <p className="hero-subtitle">
-      AI-POWERED • ENERGY ALIGNED • MADE FOR YOU
-    </p>
+        </div>
 
-    {/* BUTTON */}
-    <button className="hero-button">
-      DISCOVER YOUR BRACELET ✦
-    </button>
+      </section>
 
-  </div>
 
-</section>
+      {/* ENERGY QUIZ FORM */}
+      <section id="energy-quiz" className="home-quiz">
 
-        {/* FEATURE STRIP */}
-        <section className="feature-strip">
+        <div className="home-quiz-header">
+          <p className="home-quiz-eyebrow">✦ Personalized Energy Analysis</p>
+          <h2 className="home-quiz-title">
+            Discover The Bracelet
+            <br />
+            Designed For You
+          </h2>
+          <p className="home-quiz-description">
+            Share a little about yourself and let our AI craft a bracelet
+            tuned to your zodiac, intentions, and energetic balance.
+          </p>
+        </div>
 
-          <div className="feature-item">
+        <form className="home-quiz-form" onSubmit={handleSubmit}>
 
-            <div className="feature-icon">✧</div>
+          <div className="home-quiz-grid">
 
-            <div>
-              <h3 className="feature-title">
-                Natural Crystals
-              </h3>
+            <div className="home-quiz-field">
+              <label htmlFor="name">Name</label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Enter your name"
+                required
+              />
+            </div>
 
-              <p className="feature-description">
-                Carefully selected natural gemstones chosen for their beauty, energy, and quality.
-              </p>
+            <div className="home-quiz-field">
+              <label htmlFor="birthdate">Birthday</label>
+              <input
+                id="birthdate"
+                name="birthdate"
+                type="date"
+                value={formData.birthdate}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="home-quiz-field">
+              <label htmlFor="birthtime">
+                Birth Time
+                <span className="home-quiz-field-hint">
+                  Optional, increases accuracy
+                </span>
+              </label>
+              <input
+                id="birthtime"
+                name="birthtime"
+                type="time"
+                value={formData.birthtime}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="home-quiz-field">
+              <label htmlFor="gender">Gender</label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select gender</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="nonbinary">Non-binary</option>
+                <option value="prefer-not">Prefer not to say</option>
+              </select>
+            </div>
+
+            <div className="home-quiz-field home-quiz-field-wide">
+              <label htmlFor="goal">Main Goal</label>
+              <select
+                id="goal"
+                name="goal"
+                value={formData.goal}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select your main goal</option>
+                {GOALS.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="home-quiz-field home-quiz-field-wide">
+              <label htmlFor="feeling">Current Feelings</label>
+              <textarea
+                id="feeling"
+                name="feeling"
+                rows={5}
+                value={formData.feeling}
+                onChange={handleChange}
+                placeholder="How are you feeling lately? Share anything you'd like us to know…"
+              />
             </div>
 
           </div>
 
-          <div className="feature-item">
+          <button
+            type="submit"
+            className="home-quiz-submit"
+            disabled={loading}
+          >
+            {loading ? 'Analyzing Your Energy…' : 'Generate My Bracelet'}
+            <span className="home-quiz-submit-icon" aria-hidden="true">✦</span>
+          </button>
 
-            <div className="feature-icon">&#9958;</div>
-
-            <div>
-              <h3 className="feature-title">
-                AI Energy Analysis
-              </h3>
-
-              <p className="feature-description">
-                Personalized crystal recommendations based on your zodiac, intentions, and energy profile.
-              </p>
-            </div>
-
-          </div>
-
-          <div className="feature-item">
-
-            <div className="feature-icon">♡</div>
-
-            <div>
-              <h3 className="feature-title">
-                Made With Intention
-              </h3>
-
-              <p className="feature-description">
-                Each bracelet is thoughtfully handcrafted, cleansed, and designed with care.
-              </p>
-            </div>
-
-          </div>
-
-              <div className="feature-item">
-
-            <div className="feature-icon">&#10020;</div>
-
-            <div>
-              <h3 className="feature-title">
-                Personalized For You
-              </h3>
-
-              <p className="feature-description">
-                Every bracelet combination is uniquely matched to support your personal journey and goals.
-              </p>
-            </div>
-
-          </div>
-
-        </section>
-
-        {/* STATEMENT */}
-        <section className="statement-section">
-
-          <p className="statement-text">
-            Wear Your Energy · Embrace Your Journey.
+          <p className="home-quiz-security">
+            Your information is kept private and is used only to personalize
+            your bracelet.
           </p>
 
-          <div className="statement-line"></div>
+        </form>
 
-        </section>
-
-        {/* PRODUCT GRID */}
-        <section className="product-grid">
-
-          <div className="product-card">
-
-            <img
-              src="/love.png"
-              alt="Love Bracelet"
-              className="product-image"
-            />
-
-            <div className="product-content">
-
-              <h3 className="product-title">
-                Love & Harmony
-              </h3>
-
-              <p className="product-description">
-                Attract love and deepen
-                emotional connection
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="product-card">
-
-            <img
-              src="/yellow.png"
-              alt="Wealth Bracelet"
-              className="product-image"
-            />
-
-            <div className="product-content">
-
-              <h3 className="product-title">
-                Wealth & Abundance
-              </h3>
-
-              <p className="product-description">
-                Boost confidence and
-                attract opportunities
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="product-card">
-
-            <img
-              src="/black.png"
-              alt="Protection Bracelet"
-              className="product-image"
-            />
-
-            <div className="product-content">
-
-              <h3 className="product-title">
-                Protection & Grounding
-              </h3>
-
-              <p className="product-description">
-                Shield your energy and
-                stay grounded
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="product-card">
-
-            <img
-              src="/blue.png"
-              alt="Calm Bracelet"
-              className="product-image"
-            />
-
-            <div className="product-content">
-
-              <h3 className="product-title">
-                Calm & Balance
-              </h3>
-
-              <p className="product-description">
-                Relieve stress and bring
-                inner peace
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="product-card">
-
-            <img
-              src="/focus.png"
-              alt="Focus Bracelet"
-              className="product-image"
-            />
-
-            <div className="product-content">
-
-              <h3 className="product-title">
-                Focus & Clarity
-              </h3>
-
-              <p className="product-description">
-                Enhance concentration and mental clarity
-              </p>
-
-            </div>
-
-          </div>
-
-        </section>
-
-        {/* QUIZ SECTION */}
-        <section className="quiz-section">
-
-          <div className="quiz-header">
-
-            <p className="quiz-label">
-              Personalized Energy Analysis
-            </p>
-
-            <h3 className="quiz-title">
-              Discover The Bracelet
-              Designed For You
-            </h3>
-
-            <p className="quiz-description">
-              Our AI analyzes your zodiac, five elements,
-              emotional energy, and intentions.
-            </p>
-
-          </div>
-
-          <div className="quiz-form-container">
-
-            <div className="form-grid">
-
-              <input type="text" placeholder="Your Name" className="form-input" />
-
-              <input type="date" className="form-input" />
-
-              <select className="form-input">
-                <option>Gender</option>
-                <option>Female</option>
-                <option>Male</option>
-              </select>
-
-              <select className="form-input">
-                <option>Main Goal</option>
-                <option>Love</option>
-                <option>Career</option>
-                <option>Protection</option>
-                <option>Calmness</option>
-              </select>
-
-            </div>
-
-            <textarea
-              placeholder="How are you feeling lately?"
-              className="form-textarea"
-            />
-
-            <div className="quiz-button-wrapper">
-
-              <button className="primary-button">
-                Generate My Bracelet ✦
-              </button>
-
-            </div>
-
-          </div>
-
-        </section>
-
-      </div>
+      </section>
 
     </main>
   )
