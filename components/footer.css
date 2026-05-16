@@ -15,6 +15,13 @@
   margin-bottom: 22px;
 }
 
+.footer-brand-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+}
+
 .footer-logo {
   font-family: var(--font-heading);
   font-weight: 400;

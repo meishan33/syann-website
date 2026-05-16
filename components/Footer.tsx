@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import LogoIcon from './LogoIcon'
 import './footer.css'
 
 const FOOTER_LINKS = [
@@ -17,7 +16,11 @@ export default function Footer() {
 
       {/* BRAND MARK */}
       <div className="footer-brand">
-        <LogoIcon className="w-20 h-20" />
+        <img
+          src="/NewLogo.png"
+          alt=""
+          className="footer-brand-icon"
+        />
         <div className="footer-logo">
           SYANN<span className="footer-logo-dot">.</span>CO
         </div>
