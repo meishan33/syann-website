@@ -110,9 +110,7 @@ export default function EnergyQuizPage() {
         <div className="home-quiz-header">
           <p className="home-quiz-eyebrow">✦ Energy Quiz</p>
           <h2 className="home-quiz-title">
-            Discover the crystals
-            <br />
-            aligned with your energy
+            Discover the crystals aligned with your energy
           </h2>
           <p className="home-quiz-description">
             Personalized through Five Elements wisdom and AI-powered
