@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabase } from "@/lib/supabase";
-import { openai } from "@/lib/openai";
 
 import { analyzeFiveElements } from "@/lib/five-elements";
+
 import { crystalMapping } from "@/lib/crystal-mapping";
 
 export async function POST(req: NextRequest) {
   try {
+
+    console.log("Analyze API triggered");
 
     // ============================================
     // GET FORM DATA
@@ -42,6 +44,8 @@ export async function POST(req: NextRequest) {
     // FIVE ELEMENTS ANALYSIS
     // ============================================
 
+    console.log("Analyzing five elements...");
+
     const analysis = analyzeFiveElements(
       birthDate,
       birthTime
@@ -53,6 +57,11 @@ export async function POST(req: NextRequest) {
 
     const recommendedCrystalNames =
       crystalMapping[analysis.weakElement] || [];
+
+    console.log(
+      "Recommended crystals:",
+      recommendedCrystalNames
+    );
 
     // ============================================
     // FETCH CRYSTALS FROM SUPABASE
@@ -67,6 +76,7 @@ export async function POST(req: NextRequest) {
       .in("name", recommendedCrystalNames);
 
     if (crystalError) {
+
       console.error(
         "Crystal Fetch Error:",
         crystalError
@@ -82,32 +92,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ============================================
-    // BUILD BRACELET PROMPT
-    // ============================================
-
-    const crystalText =
-      recommendedCrystalNames.join(", ");
-
-    const braceletPrompt = `
-Luxury minimalist crystal bracelet featuring ${crystalText} and elegant gold spacers, balanced bead arrangement, premium jewelry photography, realistic gemstone textures, soft ivory background, warm studio lighting, editorial luxury jewelry style, refined spiritual luxury aesthetic, elegant gemstone bracelet composition, soft natural shadow, sophisticated jewelry catalog photography
-`;
+    console.log("Fetched crystals successfully");
 
     // ============================================
-    // GENERATE BRACELET IMAGE
+    // TEMP PLACEHOLDER IMAGE
     // ============================================
 
-    const imageResponse =
-      await openai.images.generate({
-        model: "gpt-image-1",
-
-        prompt: braceletPrompt,
-
-        size: "1024x1024",
-      });
+    // Temporarily using placeholder image
+    // until OpenAI image generation is stable
 
     const generatedImageUrl =
-      imageResponse.data?.[0]?.url || "";
+      "https://placehold.co/1024x1024/png";
 
     // ============================================
     // PERSONALIZED EXPLANATION
@@ -122,6 +117,8 @@ The selected crystals were carefully curated to promote harmony, emotional clari
     // ============================================
     // SAVE RESULT TO SUPABASE
     // ============================================
+
+    console.log("Saving result to Supabase...");
 
     const {
       data: savedResult,
@@ -180,6 +177,8 @@ The selected crystals were carefully curated to promote harmony, emotional clari
         }
       );
     }
+
+    console.log("Saved successfully");
 
     // ============================================
     // RETURN RESPONSE
