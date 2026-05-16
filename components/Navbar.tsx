@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import LogoIcon from './LogoIcon'
 import './navbar.css'
 
 const NAV_LINKS = [
@@ -18,7 +19,8 @@ export default function Navbar() {
       {/* LEFT — BRAND */}
       <div className="navbar-brand">
         <Link href="/" className="navbar-brand-link">
-          SYANN
+          <LogoIcon className="w-10 h-10" />
+          <span className="navbar-brand-text">SYANN</span>
         </Link>
       </div>
 

@@ -23,20 +23,29 @@
 }
 
 .navbar-brand-link {
-  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
 
+  text-decoration: none;
+  color: var(--color-text-strong);
+
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.navbar-brand-link:hover {
+  opacity: 0.78;
+}
+
+.navbar-brand-text {
   font-family: var(--font-heading);
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 400;
   letter-spacing: var(--letter-spacing-wide);
 
   color: var(--color-text-strong);
 
-  transition: color 0.3s ease;
-}
-
-.navbar-brand-link:hover {
-  color: var(--color-primary);
+  line-height: 1;
 }
 
 /* NAV LINKS */
@@ -108,7 +117,7 @@
     display: none;
   }
 
-  .navbar-brand-link {
-    font-size: 24px;
+  .navbar-brand-text {
+    font-size: 22px;
   }
 }

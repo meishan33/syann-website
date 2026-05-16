@@ -140,14 +140,6 @@ export default function Home() {
 
           <div className="home-hero-content">
 
-            <div className="home-hero-brand">
-              <img
-                src="/S_brown_icon.png"
-                alt=""
-                className="home-hero-brand-icon"
-              />
-              <span className="home-hero-brand-text">SYANN</span>
-            </div>
 
             <h1 className="home-hero-title">
               Personalized Crystal Bracelets

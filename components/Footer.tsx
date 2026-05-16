@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import LogoIcon from './LogoIcon'
 import './footer.css'
 
 const FOOTER_LINKS = [
@@ -14,25 +15,17 @@ export default function Footer() {
   return (
     <footer className="footer">
 
-      {/* WORDMARK */}
-      <div className="footer-logo">
-        SYANN<span className="footer-logo-dot">.</span>CO
-      </div>
-
-      {/* CRYSTAL ICON */}
-      <div className="footer-crystal-wrapper">
-        <img
-          src="/footer-crystal.png"
-          alt=""
-          className="footer-crystal-icon"
-        />
+      {/* BRAND MARK */}
+      <div className="footer-brand">
+        <LogoIcon className="w-20 h-20" />
+        <div className="footer-logo">
+          SYANN<span className="footer-logo-dot">.</span>CO
+        </div>
       </div>
 
       {/* TAGLINE */}
       <p className="footer-tagline">
-        Personalized crystal bracelets
-        <br />
-        designed for your energy.
+        Crystal Energy, Uniquely Yours
       </p>
 
       {/* LINKS */}
