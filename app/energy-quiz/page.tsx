@@ -68,6 +68,21 @@ export default function EnergyQuizPage() {
     setLoadingMessage(LOADING_MESSAGES[0])
 
     try {
+
+      console.log("FORM DATA:");
+      console.log(formData);
+
+      console.log("JSON:");
+      console.log(
+      JSON.stringify({
+      birthDate: formData.birthDate,
+      birthTime: formData.birthTime,
+      gender: formData.gender,
+      intention: formData.intention,
+      fullName: formData.fullName,
+  })
+);
+
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

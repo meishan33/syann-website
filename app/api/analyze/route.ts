@@ -9,7 +9,7 @@ import { crystalMapping } from "@/lib/crystal-mapping";
 export async function POST(req: NextRequest) {
   try {
 
-    console.log("Analyze API triggered");
+    console.log("ANALYZE API HIT");
 
     // ============================================
     // GET FORM DATA
