@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
