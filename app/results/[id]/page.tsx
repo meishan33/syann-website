@@ -72,16 +72,16 @@ export default async function ResultsPage({ params }: Props) {
 
       {/* TWO-COLUMN LAYOUT */}
       <section className="mx-auto max-w-7xl px-6 pb-24">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-start">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-stretch">
 
 
           {/* ── LEFT: BRACELET IMAGE (3/5) ── */}
-          <div className="sticky top-24 lg:col-span-3">
+          <div className="lg:col-span-3 lg:h-full">
 
-            <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-7">
+            <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-7 lg:flex lg:flex-col lg:h-full">
 
               {data.cached_image_url ? (
-                <div className="relative aspect-square w-full overflow-hidden rounded-[20px] bg-[#F8F4EF]">
+                <div className="relative aspect-square w-full overflow-hidden rounded-[20px] bg-[#F8F4EF] lg:aspect-auto lg:flex-1">
                   <Image
                     src={data.cached_image_url}
                     alt="Your personalized crystal bracelet"
@@ -92,7 +92,7 @@ export default async function ResultsPage({ params }: Props) {
                   />
                 </div>
               ) : (
-                <div className="aspect-square flex flex-col items-center justify-center gap-4 rounded-[20px] bg-[#EFE7DD]">
+                <div className="aspect-square flex flex-col items-center justify-center gap-4 rounded-[20px] bg-[#EFE7DD] lg:aspect-auto lg:flex-1">
                   <span className="text-4xl text-[#B08B57] opacity-40">✦</span>
                   <p className="text-sm text-[#9A8573]">Bracelet preview generating…</p>
                 </div>
