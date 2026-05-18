@@ -23,7 +23,7 @@ export default function Footer() {
       style={{
         width: '100%',
         backgroundImage: "url('/footerbanner3.png')",
-        backgroundSize: 'cover',
+        backgroundSize: '100% 100%',
         backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat',
         ...BODY,
@@ -107,7 +107,7 @@ export default function Footer() {
 
 
           {/* ── RIGHT: NAV + SOCIAL ── */}
-          <div style={{ paddingLeft: 56 }}>
+          <div style={{ paddingLeft: 96 }}>
 
             {/* Nav links — horizontal row */}
             <div style={{
