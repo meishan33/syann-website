@@ -22,7 +22,7 @@ export default function Footer() {
     <footer
       style={{
         width: '100%',
-        backgroundImage: "url('/footerbanner2.png')",
+        backgroundImage: "url('/footerbanner3.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat',
@@ -112,8 +112,8 @@ export default function Footer() {
             {/* Nav links — horizontal row */}
             <div style={{
               display: 'flex',
-              gap: 36,
-              flexWrap: 'wrap',
+              gap: 28,
+              flexWrap: 'nowrap',
               marginBottom: 36,
             }}>
               {NAV_LINKS.map(({ href, label }) => (
