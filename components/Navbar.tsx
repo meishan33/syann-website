@@ -19,7 +19,7 @@ export default function Navbar() {
       <div className="navbar-brand">
         <Link href="/" className="navbar-brand-link">
           <img
-            src="/NewLogo.png"
+            src="/NewSymbols_transparent.png"
             alt=""
             className="navbar-brand-icon"
           />

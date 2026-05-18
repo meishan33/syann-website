@@ -38,8 +38,8 @@
 }
 
 .navbar-brand-icon {
-  width: 40px;
-  height: 40px;
+  width: auto;
+  height: 26px;
   object-fit: contain;
   display: block;
 }
