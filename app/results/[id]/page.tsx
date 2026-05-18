@@ -52,7 +52,7 @@ export default async function ResultsPage({ params }: Props) {
     <main className="min-h-screen bg-[#F6F1EB] text-[#4A3A32]">
 
       {/* PAGE HEADER */}
-      <header className="mx-auto max-w-6xl px-6 pt-16 pb-12 text-center">
+      <header className="mx-auto max-w-7xl px-6 pt-16 pb-12 text-center">
 
         <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
           ✦ Your Personalized Crystal Bracelet
@@ -71,14 +71,14 @@ export default async function ResultsPage({ params }: Props) {
 
 
       {/* TWO-COLUMN LAYOUT */}
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-14 lg:items-start">
+      <section className="mx-auto max-w-7xl px-6 pb-24">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-start">
 
 
-          {/* ── LEFT: BRACELET IMAGE ── */}
-          <div className="sticky top-24">
+          {/* ── LEFT: BRACELET IMAGE (3/5) ── */}
+          <div className="sticky top-24 lg:col-span-3">
 
-            <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-6 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-8">
+            <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-7">
 
               {data.cached_image_url ? (
                 <div className="relative aspect-square w-full overflow-hidden rounded-[20px] bg-[#F8F4EF]">
@@ -87,7 +87,7 @@ export default async function ResultsPage({ params }: Props) {
                     alt="Your personalized crystal bracelet"
                     fill
                     priority
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    sizes="(max-width: 1024px) 100vw, 60vw"
                     className="object-cover"
                   />
                 </div>
@@ -98,8 +98,7 @@ export default async function ResultsPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Subtle caption */}
-              <p className="mt-5 text-center text-[11px] uppercase tracking-[0.28em] text-[#9A8573]">
+              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.28em] text-[#9A8573]">
                 AI-curated · Five Elements · Handcrafted
               </p>
 
@@ -108,8 +107,8 @@ export default async function ResultsPage({ params }: Props) {
           </div>
 
 
-          {/* ── RIGHT: ANALYSIS + SIZE + PURCHASE ── */}
-          <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-7 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-10">
+          {/* ── RIGHT: ANALYSIS + SIZE + PURCHASE (2/5) ── */}
+          <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-2">
 
             <PurchasePanel
               weakElement={data.calculated_weak_element ?? "—"}

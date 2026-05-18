@@ -23,24 +23,24 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
 
   return (
     <>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-5">
 
         {/* ELEMENT ANALYSIS */}
         <div>
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
             Your Elemental Analysis
           </p>
 
-          <div className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-[#D9C4A8] bg-[#FBF6EE] px-4 py-2">
-            <span className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#9A8573]">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#D9C4A8] bg-[#FBF6EE] px-3 py-1.5">
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#9A8573]">
               Weak Element
             </span>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#B08B57]">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B08B57]">
               {weakElement}
             </span>
           </div>
 
-          <p className="text-[15px] leading-[1.85] text-[#7A5B45]">
+          <p className="text-[13px] leading-[1.8] text-[#7A5B45]">
             {analysisSummary}
           </p>
         </div>
@@ -49,11 +49,11 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
 
         {/* SIZE SELECTOR */}
         <div>
-          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.32em] text-[#4A3A32]">
+          <p className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.32em] text-[#4A3A32]">
             Select Your Bracelet Size
           </p>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {SIZES.map((size) => (
               <button
                 key={size.value}
@@ -61,7 +61,7 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
                 onClick={() => setSelectedSize(size.value)}
                 className={`
                   flex items-center justify-between
-                  rounded-2xl border px-5 py-4
+                  rounded-xl border px-4 py-3
                   text-left transition-all duration-200
                   ${
                     selectedSize === size.value
@@ -72,11 +72,11 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
               >
                 <span
                   style={SERIF}
-                  className={`text-xl font-light ${selectedSize === size.value ? 'text-[#4A3A32]' : 'text-[#6B5848]'}`}
+                  className={`text-[17px] font-light ${selectedSize === size.value ? 'text-[#4A3A32]' : 'text-[#6B5848]'}`}
                 >
                   {size.label}
                 </span>
-                <span className="text-[11px] uppercase tracking-[0.2em] text-[#9A8573]">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-[#9A8573]">
                   {size.fit}
                 </span>
               </button>
@@ -87,22 +87,22 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
           <button
             type="button"
             onClick={() => setMeasureOpen(true)}
-            className="mt-3 text-[12px] text-[#B08B57] underline underline-offset-2 transition-opacity hover:opacity-70"
+            className="mt-2 text-[11px] text-[#B08B57] underline underline-offset-2 transition-opacity hover:opacity-70"
           >
             How do I measure my wrist?
           </button>
         </div>
 
         {/* 8MM DISCLAIMER */}
-        <div className="flex gap-3 rounded-2xl border border-[#E5DDD5] bg-[#F8F4EF] px-4 py-3.5">
+        <div className="flex gap-2.5 rounded-xl border border-[#E5DDD5] bg-[#F8F4EF] px-3.5 py-3">
           <span className="mt-0.5 shrink-0 text-[#B08B57]">
-            <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
           </span>
-          <p className="text-[12.5px] leading-relaxed text-[#7A5B45]">
+          <p className="text-[11.5px] leading-relaxed text-[#7A5B45]">
             All SYANN bracelets use <strong className="font-medium text-[#4A3A32]">8 mm natural stone beads</strong> —
-            one standardized bead size for a consistent, premium finish across every design.
+            one standardized size for a consistent, premium finish.
           </p>
         </div>
 
@@ -111,9 +111,9 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
           href={`/payment?result=${resultId}&size=${selectedSize}`}
           onClick={(e) => { if (!selectedSize) { e.preventDefault(); alert('Please select a bracelet size before continuing.') } }}
           className={`
-            inline-flex w-full items-center justify-center gap-3
-            rounded-full border px-8 py-4
-            text-[12px] font-medium uppercase tracking-[0.32em]
+            inline-flex w-full items-center justify-center gap-2.5
+            rounded-full border px-6 py-3.5
+            text-[11px] font-medium uppercase tracking-[0.3em]
             transition-all duration-300
             ${
               selectedSize
@@ -127,7 +127,7 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
         </Link>
 
         {!selectedSize && (
-          <p className="-mt-5 text-center text-[11px] text-[#9A8573]">
+          <p className="-mt-3 text-center text-[10px] text-[#9A8573]">
             Please select a size to continue
           </p>
         )}
