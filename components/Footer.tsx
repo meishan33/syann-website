@@ -17,7 +17,7 @@ export default function Footer() {
     <footer
       style={{
         width: '100%',
-        background: '#D4C5AE',
+        background: '#DDD0BC',
         ...BODY,
         textAlign: 'center',
       }}
@@ -36,35 +36,35 @@ export default function Footer() {
           <img
             src="/NewSymbols_transparent.png"
             alt="SYANN crystal symbol"
-            style={{ width: 90, height: 90, objectFit: 'contain', display: 'block', opacity: 0.92 }}
+            style={{ width: 120, height: 120, objectFit: 'contain', display: 'block', opacity: 0.92 }}
           />
 
           {/* Vertical divider */}
-          <div style={{ width: 1, height: 72, background: '#B08B57', opacity: 0.5, flexShrink: 0 }} />
+          <div style={{ width: 1, height: 80, background: '#B08B57', opacity: 0.45, flexShrink: 0 }} />
 
           {/* Text block */}
           <div style={{ textAlign: 'left' }}>
             <p
               style={{
                 ...SERIF,
-                fontSize: 38,
+                fontSize: 30,
                 fontWeight: 300,
-                letterSpacing: '0.26em',
+                letterSpacing: '0.22em',
                 color: '#6B4F3A',
                 lineHeight: 1,
-                margin: '0 0 6px',
+                margin: '0 0 4px',
               }}
             >
               SYANN.CO
             </p>
             <p
               style={{
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: 600,
-                letterSpacing: '0.32em',
+                letterSpacing: '0.3em',
                 color: '#B08B57',
                 textTransform: 'uppercase',
-                margin: '0 0 12px',
+                margin: '0 0 8px',
               }}
             >
               Crystals · Energy · You
@@ -72,11 +72,11 @@ export default function Footer() {
             <p
               style={{
                 ...SERIF,
-                fontSize: 14.5,
+                fontSize: 13,
                 fontStyle: 'italic',
                 color: '#8B7060',
-                lineHeight: 1.65,
-                letterSpacing: '0.03em',
+                lineHeight: 1.6,
+                letterSpacing: '0.02em',
                 margin: 0,
               }}
             >
