@@ -183,18 +183,6 @@ export default function Home() {
       </section>
 
 
-      {/* ─── SLOGAN ───────────────────────────────────────── */}
-      <section className="home-slogan">
-        <span className="home-slogan-rule" aria-hidden="true" />
-        <p className="home-slogan-text">
-          Wear Your Energy
-          <span className="home-slogan-divider" aria-hidden="true">✦</span>
-          Embrace Your Journey
-        </p>
-        <span className="home-slogan-rule" aria-hidden="true" />
-      </section>
-
-
       {/* ─── BRACELET DISPLAY ─────────────────────────────── */}
       <section className="home-collection">
 
