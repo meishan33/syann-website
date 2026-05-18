@@ -13,7 +13,7 @@ const COL_HEAD: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: '0.28em',
   textTransform: 'uppercase' as const,
-  color: '#6B4F3A',
+  color: '#D4C4AE',
   margin: '0 0 10px',
 }
 
@@ -24,7 +24,7 @@ const UNDERBAR = (
 const LINK_STYLE: React.CSSProperties = {
   fontFamily: "'Montserrat', sans-serif",
   fontSize: 12.5,
-  color: '#8B6E52',
+  color: '#A89280',
   textDecoration: 'none',
   letterSpacing: '0.02em',
   lineHeight: 1,
@@ -125,22 +125,20 @@ export default function Footer() {
     <footer
       style={{
         width: '100%',
-        backgroundImage: "url('/footerbanner2.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        backgroundRepeat: 'no-repeat',
+        background: '#2C201A',
         ...BODY,
       }}
     >
-      {/* Light overlay so text reads cleanly over the image */}
-      <div style={{ background: 'rgba(248, 242, 234, 0.78)' }}>
+      <div>
 
         {/* ── 5-COLUMN GRID ── */}
-        <div style={{ padding: '52px 48px 36px' }}>
+        <div style={{ padding: '52px 24px 36px' }}>
           <div style={{
+            maxWidth: 1060,
+            margin: '0 auto',
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1.2fr 1fr 1.5fr',
-            gap: '0 44px',
+            gap: '0 48px',
             alignItems: 'start',
           }}>
 
@@ -152,8 +150,8 @@ export default function Footer() {
                 {SHOP_LINKS.map(({ href, label }) => (
                   <li key={href} style={{ marginBottom: 14 }}>
                     <Link href={href} style={LINK_STYLE}
-                      onMouseEnter={e => ((e.target as HTMLElement).style.color = '#B08B57')}
-                      onMouseLeave={e => ((e.target as HTMLElement).style.color = '#8B6E52')}
+                      onMouseEnter={e => ((e.target as HTMLElement).style.color = '#C9A96E')}
+                      onMouseLeave={e => ((e.target as HTMLElement).style.color = '#A89280')}
                     >{label}</Link>
                   </li>
                 ))}
@@ -168,8 +166,8 @@ export default function Footer() {
                 {ABOUT_LINKS.map(({ href, label }) => (
                   <li key={href} style={{ marginBottom: 14 }}>
                     <Link href={href} style={LINK_STYLE}
-                      onMouseEnter={e => ((e.target as HTMLElement).style.color = '#B08B57')}
-                      onMouseLeave={e => ((e.target as HTMLElement).style.color = '#8B6E52')}
+                      onMouseEnter={e => ((e.target as HTMLElement).style.color = '#C9A96E')}
+                      onMouseLeave={e => ((e.target as HTMLElement).style.color = '#A89280')}
                     >{label}</Link>
                   </li>
                 ))}
@@ -184,8 +182,8 @@ export default function Footer() {
                 {CARE_LINKS.map(({ href, label }) => (
                   <li key={href} style={{ marginBottom: 14 }}>
                     <Link href={href} style={LINK_STYLE}
-                      onMouseEnter={e => ((e.target as HTMLElement).style.color = '#B08B57')}
-                      onMouseLeave={e => ((e.target as HTMLElement).style.color = '#8B6E52')}
+                      onMouseEnter={e => ((e.target as HTMLElement).style.color = '#C9A96E')}
+                      onMouseLeave={e => ((e.target as HTMLElement).style.color = '#A89280')}
                     >{label}</Link>
                   </li>
                 ))}
@@ -204,8 +202,8 @@ export default function Footer() {
                       target={href.startsWith('http') ? '_blank' : undefined}
                       rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                       style={{ ...LINK_STYLE, display: 'inline-flex', alignItems: 'center', gap: 9 }}
-                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#B08B57')}
-                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#8B6E52')}
+                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#C9A96E')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#A89280')}
                     >
                       <span style={{ opacity: 0.75, display: 'flex' }}>{icon}</span>
                       {label}
@@ -225,7 +223,7 @@ export default function Footer() {
                 </p>
               ) : (
                 <>
-                  <p style={{ fontSize: 12.5, color: '#8B6E52', lineHeight: 1.75, marginBottom: 18 }}>
+                  <p style={{ fontSize: 12.5, color: '#A89280', lineHeight: 1.75, marginBottom: 18 }}>
                     Stay inspired. Be the first to know about new collections and offers.
                   </p>
                   <form onSubmit={handleJoin} style={{ position: 'relative' }}>
@@ -239,10 +237,10 @@ export default function Footer() {
                         width: '100%',
                         fontSize: 12,
                         padding: '11px 44px 11px 14px',
-                        border: '1px solid #C4A882',
+                        border: '1px solid rgba(196,168,130,0.35)',
                         borderRadius: 6,
-                        background: 'rgba(255,255,255,0.55)',
-                        color: '#4A3A32',
+                        background: 'rgba(255,255,255,0.07)',
+                        color: '#E0D0BC',
                         outline: 'none',
                         fontFamily: "'Montserrat', sans-serif",
                         boxSizing: 'border-box',
@@ -286,7 +284,7 @@ export default function Footer() {
 
 
         {/* ── ORNAMENT DIVIDER ── */}
-        <div style={{ padding: '0 48px', display: 'flex', alignItems: 'center', gap: 0 }}>
+        <div style={{ maxWidth: 1060, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 0 }}>
           {/* Left side: line — small diamond — line */}
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}>
             <polygon points="8,2 14,8 8,14 2,8" fill="none" stroke="#C4A882" strokeWidth="1"/>
@@ -309,31 +307,31 @@ export default function Footer() {
 
         {/* ── COPYRIGHT ROW ── */}
         <div style={{
-          padding: '20px 48px 28px',
+          padding: '20px 24px 28px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 24,
           flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 11, color: '#8B7060', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 11, color: '#7A6858', letterSpacing: '0.06em' }}>
             © 2026 SYANN.CO. All rights reserved.
           </span>
-          <span style={{ color: '#C4A882', fontSize: 11 }}>|</span>
+          <span style={{ color: 'rgba(196,168,130,0.4)', fontSize: 11 }}>|</span>
           <Link
             href="/privacy"
-            style={{ fontSize: 11, color: '#8B7060', textDecoration: 'none', letterSpacing: '0.04em', transition: 'color 0.2s' }}
-            onMouseEnter={e => ((e.target as HTMLElement).style.color = '#B08B57')}
-            onMouseLeave={e => ((e.target as HTMLElement).style.color = '#8B7060')}
+            style={{ fontSize: 11, color: '#7A6858', textDecoration: 'none', letterSpacing: '0.04em', transition: 'color 0.2s' }}
+            onMouseEnter={e => ((e.target as HTMLElement).style.color = '#C9A96E')}
+            onMouseLeave={e => ((e.target as HTMLElement).style.color = '#7A6858')}
           >
             Privacy Policy
           </Link>
-          <span style={{ color: '#C4A882', fontSize: 11 }}>|</span>
+          <span style={{ color: 'rgba(196,168,130,0.4)', fontSize: 11 }}>|</span>
           <Link
             href="/terms"
-            style={{ fontSize: 11, color: '#8B7060', textDecoration: 'none', letterSpacing: '0.04em', transition: 'color 0.2s' }}
-            onMouseEnter={e => ((e.target as HTMLElement).style.color = '#B08B57')}
-            onMouseLeave={e => ((e.target as HTMLElement).style.color = '#8B7060')}
+            style={{ fontSize: 11, color: '#7A6858', textDecoration: 'none', letterSpacing: '0.04em', transition: 'color 0.2s' }}
+            onMouseEnter={e => ((e.target as HTMLElement).style.color = '#C9A96E')}
+            onMouseLeave={e => ((e.target as HTMLElement).style.color = '#7A6858')}
           >
             Terms of Service
           </Link>
