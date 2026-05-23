@@ -18,6 +18,16 @@ export default async function ResultsPage({ params }: Props) {
     .eq("id", id)
     .single();
 
+  const crystalNames: string[] = data?.crystal_names ?? [];
+  const crystalExplanations: Record<string, string> = data?.crystal_explanations ?? {};
+
+  const { data: crystalDetails } = crystalNames.length
+    ? await supabase
+        .from("crystals")
+        .select("name, meaning, bead_image_url")
+        .in("name", crystalNames)
+    : { data: [] };
+
   /* ── Error state ── */
   if (error || !data) {
     return (
@@ -52,7 +62,7 @@ export default async function ResultsPage({ params }: Props) {
     <main className="min-h-screen bg-[#F6F1EB] text-[#4A3A32]">
 
       {/* PAGE HEADER */}
-      <header className="mx-auto max-w-7xl px-6 pt-16 pb-12 text-center">
+      <header className="mx-auto max-w-[1280px] px-6 pt-16 pb-12 text-center">
 
         <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
           ✦ Your Personalized Crystal Bracelet
@@ -71,7 +81,7 @@ export default async function ResultsPage({ params }: Props) {
 
 
       {/* TWO-COLUMN LAYOUT */}
-      <section className="mx-auto max-w-7xl px-6 pb-24">
+      <section className="mx-auto max-w-[1280px] px-6 pb-24">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-stretch">
 
 
@@ -88,8 +98,22 @@ export default async function ResultsPage({ params }: Props) {
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 60vw"
-                    className="object-cover"
+                    className="object-contain"
                   />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+                    <span
+                      style={{ fontFamily: "'Cormorant Garamond', serif", letterSpacing: '0.65em' }}
+                      className="text-[15px] font-light text-white/80 uppercase drop-shadow-sm"
+                    >
+                      SYANN.CO
+                    </span>
+                    <span
+                      style={{ fontFamily: 'sans-serif', letterSpacing: '0.28em' }}
+                      className="text-[6.5px] font-light text-white/55 uppercase drop-shadow-sm"
+                    >
+                      CRYSTALS · ENERGY · YOU
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div className="aspect-square flex flex-col items-center justify-center gap-4 rounded-[20px] bg-[#EFE7DD] lg:aspect-auto lg:flex-1">
@@ -111,9 +135,9 @@ export default async function ResultsPage({ params }: Props) {
           <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-2">
 
             <PurchasePanel
-              weakElement={data.calculated_weak_element ?? "—"}
               analysisSummary={data.analysis_summary ?? ""}
               resultId={id}
+              suggestedSpacer={data.suggested_spacer ?? null}
             />
 
           </div>
@@ -121,6 +145,63 @@ export default async function ResultsPage({ params }: Props) {
 
         </div>
       </section>
+
+
+      {/* CRYSTAL COMPANIONS */}
+      {crystalDetails && crystalDetails.length > 0 && (
+        <section className="mx-auto max-w-[1280px] px-6 pb-24">
+
+          <div className="mb-10 text-center">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
+              ✦ Your Crystal Companions
+            </p>
+            <h2 style={SERIF} className="text-3xl font-light text-[#4A3A32] sm:text-4xl">
+              Chosen for Your Energy
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+            {crystalNames.map((name) => {
+              const crystal = crystalDetails.find((c) => c.name === name);
+              const explanation = crystalExplanations[name];
+              if (!crystal) return null;
+              return (
+                <div
+                  key={name}
+                  className="flex flex-col rounded-[24px] border border-[#E5DDD5] bg-white p-6 shadow-[0_10px_40px_-20px_rgba(101,70,46,0.15)]"
+                >
+                  {crystal.bead_image_url && (
+                    <div className="relative mb-5 h-24 w-24 self-center overflow-hidden rounded-full border border-[#EDE5DB] bg-[#F8F4EF]">
+                      <Image
+                        src={crystal.bead_image_url}
+                        alt={crystal.name}
+                        fill
+                        sizes="96px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.28em] text-[#B08B57]">
+                    {crystal.meaning}
+                  </p>
+
+                  <h3 style={SERIF} className="mb-3 text-2xl font-light text-[#4A3A32]">
+                    {crystal.name}
+                  </h3>
+
+                  {explanation && (
+                    <p className="text-[13px] leading-[1.85] text-[#7A5B45]">
+                      {explanation}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+        </section>
+      )}
 
     </main>
   );

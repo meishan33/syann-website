@@ -4,16 +4,17 @@ import Link from 'next/link'
 import './navbar.css'
 
 const NAV_LINKS = [
-  { href: '/', label: 'Home' },
+  { href: '/',            label: 'Main' },
   { href: '/energy-quiz', label: 'Energy Quiz' },
-  { href: '/collection', label: 'Collection' },
-  { href: '/about', label: 'About' },
-  { href: '/faq', label: 'FAQ' },
+  { href: '/about',       label: 'About' },
+  { href: '/faq',         label: 'FAQ' },
+  { href: '/contact',     label: 'Contact' },
 ]
 
 export default function Navbar() {
   return (
     <header className="navbar">
+    <div className="navbar-inner">
 
       {/* LEFT — BRAND */}
       <div className="navbar-brand">
@@ -56,25 +57,10 @@ export default function Navbar() {
           </svg>
         </Link>
 
-        <Link href="/cart" aria-label="Shopping Cart" className="navbar-icon-btn">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M6 7h12l-1.2 11.1a2 2 0 0 1-2 1.9H9.2a2 2 0 0 1-2-1.9L6 7z" />
-            <path d="M9 7V5a3 3 0 0 1 6 0v2" />
-          </svg>
-        </Link>
 
       </div>
 
+    </div>
     </header>
   )
 }

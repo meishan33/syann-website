@@ -3,134 +3,130 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-const SIZES = [
-  { value: '13-15', label: '13 – 15 cm', fit: 'XS / S · Petite' },
-  { value: '16-18', label: '16 – 18 cm', fit: 'M / L · Standard' },
-  { value: '19-23', label: '19 – 23 cm', fit: 'XL / XXL · Large' },
-]
-
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
+const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 
 type Props = {
-  weakElement: string
   analysisSummary: string
   resultId: string
+  suggestedSpacer?: string | null
 }
 
-export default function PurchasePanel({ weakElement, analysisSummary, resultId }: Props) {
-  const [selectedSize, setSelectedSize] = useState<string>('')
+export default function PurchasePanel({ analysisSummary, resultId, suggestedSpacer }: Props) {
+  const spacer = suggestedSpacer?.toLowerCase().includes('gold') ? 'gold' : 'silver'
+
+  const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
+
+  const purchaseHref = `/payment?result=${resultId}&spacer=${spacer}${remark ? `&remark=${encodeURIComponent(remark)}` : ''}`
 
   return (
     <>
       <div className="flex flex-col gap-5">
 
-        {/* ELEMENT ANALYSIS */}
+        {/* ANALYSIS */}
         <div>
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#4A3A32]" style={BODY}>
             Your Elemental Analysis
           </p>
-
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#D9C4A8] bg-[#FBF6EE] px-3 py-1.5">
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#9A8573]">
-              Weak Element
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B08B57]">
-              {weakElement}
-            </span>
-          </div>
-
-          <p className="text-[13px] leading-[1.8] text-[#7A5B45]">
-            {analysisSummary}
-          </p>
+          {(() => {
+            const [paragraph, bulletBlock] = analysisSummary.split('\n\n')
+            const bullets = bulletBlock
+              ? bulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
+              : []
+            return (
+              <>
+                <p className="text-[13px] leading-[1.8] text-[#7A5B45] mb-3" style={BODY}>
+                  {paragraph}
+                </p>
+                {bullets.length > 0 && (
+                  <div className="flex flex-col gap-2 mt-1">
+                    {bullets.map((point, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="mt-[5px] shrink-0 text-[#B08B57]">
+                          <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
+                        </span>
+                        <p className="text-[12px] leading-[1.7] text-[#7A5B45] m-0" style={BODY}>{point}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </div>
 
         <div className="h-px bg-[#E5DDD5]" />
 
-        {/* SIZE SELECTOR */}
+        {/* REMARK */}
         <div>
-          <p className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.32em] text-[#4A3A32]">
-            Select Your Bracelet Size
+          <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.32em] text-[#4A3A32]" style={BODY}>
+            Remarks
           </p>
-
-          <div className="flex flex-col gap-2">
-            {SIZES.map((size) => (
-              <button
-                key={size.value}
-                type="button"
-                onClick={() => setSelectedSize(size.value)}
-                className={`
-                  flex items-center justify-between
-                  rounded-xl border px-4 py-3
-                  text-left transition-all duration-200
-                  ${
-                    selectedSize === size.value
-                      ? 'border-[#B08B57] bg-[#FBF6EE] shadow-[0_0_0_1px_#B08B57]'
-                      : 'border-[#E5DDD5] bg-white hover:border-[#C9AA80]'
-                  }
-                `}
-              >
-                <span
-                  style={SERIF}
-                  className={`text-[17px] font-light ${selectedSize === size.value ? 'text-[#4A3A32]' : 'text-[#6B5848]'}`}
-                >
-                  {size.label}
-                </span>
-                <span className="text-[10px] uppercase tracking-[0.18em] text-[#9A8573]">
-                  {size.fit}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* HOW TO MEASURE LINK */}
-          <button
-            type="button"
-            onClick={() => setMeasureOpen(true)}
-            className="mt-2 text-[11px] text-[#B08B57] underline underline-offset-2 transition-opacity hover:opacity-70"
-          >
-            How do I measure my wrist?
-          </button>
+          <p className="mb-2.5 text-[11px] text-[#9A8573]" style={BODY}>
+            Any special requests or notes for your order?
+          </p>
+          <textarea
+            value={remark}
+            onChange={(e) => setRemark(e.target.value)}
+            placeholder="e.g. wrist size, spacer color preference…"
+            rows={3}
+            maxLength={300}
+            style={BODY}
+            className="w-full resize-none rounded-xl border border-[#E5DDD5] bg-[#FDFAF7] px-4 py-3 text-[12px] text-[#4A3A32] placeholder-[#C5B8AD] outline-none transition-colors focus:border-[#B08B57] leading-relaxed"
+          />
+          {remark.length > 0 && (
+            <p className="mt-1 text-right text-[10px] text-[#C5B8AD]" style={BODY}>
+              {remark.length}/300
+            </p>
+          )}
         </div>
 
-        {/* 8MM DISCLAIMER */}
-        <div className="flex gap-2.5 rounded-xl border border-[#E5DDD5] bg-[#F8F4EF] px-3.5 py-3">
-          <span className="mt-0.5 shrink-0 text-[#B08B57]">
-            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-          </span>
-          <p className="text-[11.5px] leading-relaxed text-[#7A5B45]">
-            All SYANN bracelets use <strong className="font-medium text-[#4A3A32]">8 mm natural stone beads</strong> —
-            one standardized size for a consistent, premium finish.
-          </p>
+        <div className="h-px bg-[#E5DDD5]" />
+
+        {/* INFO */}
+        <div className="rounded-xl border border-[#E5DDD5] bg-[#F8F4EF] px-4 py-4" style={BODY}>
+          <div className="flex gap-2.5">
+            <span className="mt-0.5 shrink-0 text-[#B08B57]">
+              <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </span>
+            <div className="flex flex-col gap-3">
+              {[
+                <>All SYANN bracelet use <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> for a consistent, premium finish.</>,
+                <>The default bracelet size is <strong className="font-medium text-[#4A3A32]">16 cm with 20 beads</strong>. Please include your wrist size in the remarks if you&apos;d like it larger or smaller.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setMeasureOpen(true)}
+                    className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer transition-opacity hover:opacity-70"
+                    style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
+                  >
+                    How to measure your wrist
+                  </button>
+                </>,
+                <>You may change the spacer color in the remarks. If not specified, we will follow the color shown in the bracelet image.</>,
+              ].map((text, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="mt-[3px] shrink-0 text-[#B08B57]">
+                    <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
+                  </span>
+                  <p className="text-[11.5px] leading-normal text-[#7A5B45] m-0">{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* PURCHASE BUTTON */}
         <Link
-          href={`/payment?result=${resultId}&size=${selectedSize}`}
-          onClick={(e) => { if (!selectedSize) { e.preventDefault(); alert('Please select a bracelet size before continuing.') } }}
-          className={`
-            inline-flex w-full items-center justify-center gap-2.5
-            rounded-full border px-6 py-3.5
-            text-[11px] font-medium uppercase tracking-[0.3em]
-            transition-all duration-300
-            ${
-              selectedSize
-                ? 'border-[#4A3A32] bg-[#4A3A32] text-white hover:bg-[#B08B57] hover:border-[#B08B57]'
-                : 'border-[#C5B8AD] bg-[#C5B8AD] text-white cursor-not-allowed'
-            }
-          `}
+          href={purchaseHref}
+          className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 no-underline text-[11px] font-medium uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57]"
+          style={BODY}
         >
           Purchase My Bracelet
           <span aria-hidden="true">✦</span>
         </Link>
-
-        {!selectedSize && (
-          <p className="-mt-3 text-center text-[10px] text-[#9A8573]">
-            Please select a size to continue
-          </p>
-        )}
 
       </div>
 
@@ -143,13 +139,10 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
           aria-label="How to measure your wrist"
           className="fixed inset-0 z-50 flex items-center justify-center p-5"
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-[#2E2118]/50 backdrop-blur-sm"
             onClick={() => setMeasureOpen(false)}
           />
-
-          {/* Panel */}
           <div className="relative w-full max-w-md rounded-[28px] bg-[#FBF6EE] p-8 shadow-[0_40px_100px_-30px_rgba(74,58,50,0.5)]">
 
             <button
@@ -160,14 +153,10 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
               ✕
             </button>
 
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]" style={BODY}>
               Size Guide
             </p>
-
-            <h3
-              style={SERIF}
-              className="mb-6 text-2xl font-light text-[#4A3A32]"
-            >
+            <h3 style={SERIF} className="mb-6 text-2xl font-light text-[#4A3A32]">
               How to Measure Your Wrist
             </h3>
 
@@ -176,32 +165,19 @@ export default function PurchasePanel({ weakElement, analysisSummary, resultId }
                 { n: '01', text: 'Wrap a thin strip of paper or a flexible tape measure around your wrist, just below the wrist bone.' },
                 { n: '02', text: 'Mark where the paper meets — this is your wrist circumference.' },
                 { n: '03', text: 'Lay the strip flat and measure the length in centimetres.' },
-                { n: '04', text: 'Match your measurement to the size guide below. For a relaxed fit, add 1 cm; for a snug fit, use your exact measurement.' },
+                { n: '04', text: 'Add your wrist measurement to the Remarks field. The default size is 16 cm — let us know if you\'d like it larger or smaller.' },
               ].map(({ n, text }) => (
                 <li key={n} className="flex gap-4">
-                  <span
-                    style={SERIF}
-                    className="shrink-0 text-2xl font-light text-[#B08B57] leading-tight"
-                  >
-                    {n}
-                  </span>
-                  <p className="text-[13.5px] leading-relaxed text-[#6B5848]">{text}</p>
+                  <span style={SERIF} className="shrink-0 text-2xl font-light text-[#B08B57] leading-tight">{n}</span>
+                  <p className="text-[13.5px] leading-relaxed text-[#6B5848]" style={BODY}>{text}</p>
                 </li>
               ))}
             </ol>
 
-            <div className="mt-8 grid grid-cols-3 divide-x divide-[#E5DDD5] rounded-2xl border border-[#E5DDD5] bg-white overflow-hidden text-center text-[12px]">
-              {SIZES.map((s) => (
-                <div key={s.value} className="py-3 px-2">
-                  <p className="font-semibold text-[#4A3A32] tracking-wide">{s.label}</p>
-                  <p className="mt-0.5 text-[#9A8573] tracking-wider uppercase text-[10px]">{s.fit}</p>
-                </div>
-              ))}
-            </div>
-
             <button
               onClick={() => setMeasureOpen(false)}
               className="mt-6 w-full rounded-full border border-[#B08B57] bg-[#B08B57] py-3 text-[12px] font-medium uppercase tracking-[0.28em] text-white transition-colors hover:bg-[#7A5B45] hover:border-[#7A5B45]"
+              style={BODY}
             >
               Got It
             </button>

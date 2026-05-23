@@ -1,7 +1,5 @@
-'use client'
-
-import { useState } from 'react'
 import './home.css'
+import EnergyQuizForm from '@/components/EnergyQuizForm'
 
 const SELLING_POINTS = [
   {
@@ -54,76 +52,28 @@ const SELLING_POINTS = [
 
 const BRACELETS = [
   {
-    image: '/love.png',
+    image: '/LoveAndHarmony.png',
     title: 'Love & Harmony',
     description: 'Open the heart, soften connection, invite tender devotion.',
   },
   {
-    image: '/study.png',
+    image: '/WealthAndAbundance.png',
     title: 'Wealth & Abundance',
     description: 'Magnetize opportunity, prosperity, and creative flow.',
   },
   {
-    image: '/black.png',
+    image: '/ProtectionAndGrounding.png',
     title: 'Protection & Grounding',
     description: 'Shield your aura, root your energy, walk in steady calm.',
   },
   {
-    image: '/blue.png',
+    image: '/CalmAndBalance.png',
     title: 'Calm & Balance',
     description: 'Quiet the noise, restore balance, return to inner stillness.',
   },
 ]
 
-const GOALS = [
-  { value: 'love', label: 'Love & Relationships' },
-  { value: 'wealth', label: 'Wealth & Abundance' },
-  { value: 'career', label: 'Career Success' },
-  { value: 'calmness', label: 'Calmness & Healing' },
-  { value: 'protection', label: 'Protection & Grounding' },
-  { value: 'confidence', label: 'Confidence & Motivation' },
-]
-
 export default function Home() {
-  const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    birthdate: '',
-    birthtime: '',
-    gender: '',
-    goal: '',
-    feeling: '',
-  })
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    try {
-      setLoading(true)
-      const response = await fetch('/api/generate-bracelet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-      const data = await response.json()
-      if (!data.success) {
-        alert('Failed to generate bracelet.')
-      } else {
-        window.location.href = '/energy-quiz'
-      }
-    } catch (error) {
-      console.error(error)
-      alert('Something went wrong.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <main className="home">
 
@@ -139,7 +89,7 @@ export default function Home() {
         <div className="home-hero-overlay">
 
           <div className="home-hero-content">
-
+          <div className="home-hero-text">
 
             <h1 className="home-hero-title">
               Personalized Crystal Bracelets
@@ -151,11 +101,12 @@ export default function Home() {
               AI-POWERED · ENERGY ALIGNED · MADE FOR YOU
             </p>
 
-            <a href="#energy-quiz" className="home-hero-cta">
+            <a href="/energy-quiz" className="home-hero-cta">
               Discover Your Bracelet
               <span className="home-hero-cta-icon" aria-hidden="true">✦</span>
             </a>
 
+          </div>
           </div>
 
         </div>
@@ -164,7 +115,8 @@ export default function Home() {
 
 
       {/* ─── SELLING POINTS ───────────────────────────────── */}
-      <section className="home-points">
+      <section className="home-points-section">
+      <div className="home-points">
 
         {SELLING_POINTS.map((point) => (
           <article key={point.label} className="home-point">
@@ -180,6 +132,7 @@ export default function Home() {
           </article>
         ))}
 
+      </div>
       </section>
 
 
@@ -235,115 +188,7 @@ export default function Home() {
           </p>
         </div>
 
-        <form className="home-quiz-form" onSubmit={handleSubmit}>
-
-          <div className="home-quiz-grid">
-
-            <div className="home-quiz-field">
-              <label htmlFor="name">Name</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your name"
-                required
-              />
-            </div>
-
-            <div className="home-quiz-field">
-              <label htmlFor="birthdate">Birthday</label>
-              <input
-                id="birthdate"
-                name="birthdate"
-                type="date"
-                value={formData.birthdate}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="home-quiz-field">
-              <label htmlFor="birthtime">
-                Birth Time
-                <span className="home-quiz-field-hint">
-                  Optional, increases accuracy
-                </span>
-              </label>
-              <input
-                id="birthtime"
-                name="birthtime"
-                type="time"
-                value={formData.birthtime}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="home-quiz-field">
-              <label htmlFor="gender">Gender</label>
-              <select
-                id="gender"
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select gender</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="nonbinary">Non-binary</option>
-                <option value="prefer-not">Prefer not to say</option>
-              </select>
-            </div>
-
-            <div className="home-quiz-field home-quiz-field-wide">
-              <label htmlFor="goal">Main Goal</label>
-              <select
-                id="goal"
-                name="goal"
-                value={formData.goal}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select your main goal</option>
-                {GOALS.map((g) => (
-                  <option key={g.value} value={g.value}>
-                    {g.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="home-quiz-field home-quiz-field-wide">
-              <label htmlFor="feeling">Current Feelings</label>
-              <textarea
-                id="feeling"
-                name="feeling"
-                rows={5}
-                value={formData.feeling}
-                onChange={handleChange}
-                placeholder="How are you feeling lately? Share anything you'd like us to know…"
-              />
-            </div>
-
-          </div>
-
-          <button
-            type="submit"
-            className="home-quiz-submit"
-            disabled={loading}
-          >
-            {loading ? 'Analyzing Your Energy…' : 'Generate My Bracelet'}
-            <span className="home-quiz-submit-icon" aria-hidden="true">✦</span>
-          </button>
-
-          <p className="home-quiz-security">
-            Your information is kept private and is used only to personalize
-            your bracelet.
-          </p>
-
-        </form>
+        <EnergyQuizForm />
 
       </section>
 

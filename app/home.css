@@ -34,6 +34,7 @@
   inset: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 0 96px;
 
   background: linear-gradient(
@@ -45,6 +46,14 @@
 }
 
 .home-hero-content {
+  width: 100%;
+  max-width: 1280px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.home-hero-text {
   max-width: 560px;
   display: flex;
   flex-direction: column;
@@ -135,14 +144,20 @@
 
 /* ─── SELLING POINTS ──────────────────────────────────── */
 
+.home-points-section {
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
 .home-points {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
 
+  max-width: 1280px;
+  margin: 0 auto;
   background: var(--color-border);
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
 }
 
 .home-point {
@@ -239,7 +254,7 @@
 /* ─── COLLECTION ──────────────────────────────────────── */
 
 .home-collection {
-  padding: 100px 48px 110px;
+  padding: 64px 48px 56px;
   background: var(--color-bg);
 }
 
@@ -342,7 +357,7 @@
 /* ─── ENERGY QUIZ ─────────────────────────────────────── */
 
 .home-quiz {
-  padding: 110px 24px 130px;
+  padding: 64px 24px 80px;
   background: var(--color-surface);
 }
 
@@ -387,6 +402,7 @@
 
   background: var(--color-surface-warm);
   border: 1px solid var(--color-border);
+  border-radius: 48px;
 }
 
 .home-quiz-grid {
@@ -408,8 +424,7 @@
 .home-quiz-field label {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 
   font-family: var(--font-body);
   font-size: 11px;
@@ -491,8 +506,18 @@
 }
 
 .home-quiz-submit:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.home-quiz-submit--loading {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  animation: quiz-submit-pulse 2s ease-in-out infinite;
+}
+
+@keyframes quiz-submit-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.75; }
 }
 
 .home-quiz-submit-icon {
