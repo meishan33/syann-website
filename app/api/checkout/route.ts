@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
-
-// ── Pricing (in sen — smallest MYR unit) — update before going live ──────────
-const PRICE_BASE_CENTS = 18800   // RM 188.00
-// ─────────────────────────────────────────────────────────────────────────────
+const PRICE_BASE_CENTS = 18800   // RM 188.00 — update before going live
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: 'Stripe is not configured yet.' }, { status: 503 })
   }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2026-04-22.dahlia',
+  })
 
   try {
     const { resultId, spacer, remark } = await req.json()
