@@ -1,4 +1,3 @@
-import '../home.css'
 import EnergyQuizForm from '@/components/EnergyQuizForm'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }

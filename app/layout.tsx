@@ -1,4 +1,6 @@
 import "./globals.css";
+import "./home.css";
+import "../components/navbar.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 

@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import './navbar.css'
 
 const NAV_LINKS = [
   { href: '/',            label: 'Main' },
