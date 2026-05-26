@@ -465,7 +465,7 @@ export default function AdminPage() {
                           <tbody>
                             {crystals.map(c => (
                               <tr key={c.id}>
-                                {CRYSTAL_COLUMNS.filter(col => col.always || visibleCols.has(col.key)).map(col => {
+                                {CRYSTAL_COLUMNS.filter(col => visibleCols.has(col.key)).map(col => {
                                   if (col.key === 'bead_image_url') return (
                                     <td key="img" style={TD}>
                                       {c.bead_image_url
