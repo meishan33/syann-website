@@ -28,6 +28,24 @@ const LOADING_MESSAGES = [
 ]
 
 const LS_KEY = 'syann_has_generated'
+const LS_DAILY_COUNT = 'syann_daily_count'
+const LS_DAILY_DATE  = 'syann_daily_date'
+
+function todayStr() { return new Date().toISOString().slice(0, 10) }
+
+function getDailyCount(): number {
+  if (localStorage.getItem(LS_DAILY_DATE) !== todayStr()) {
+    localStorage.setItem(LS_DAILY_DATE, todayStr())
+    localStorage.setItem(LS_DAILY_COUNT, '0')
+    return 0
+  }
+  return parseInt(localStorage.getItem(LS_DAILY_COUNT) || '0', 10)
+}
+
+function incrementDailyCount() {
+  localStorage.setItem(LS_DAILY_DATE, todayStr())
+  localStorage.setItem(LS_DAILY_COUNT, String(getDailyCount() + 1))
+}
 
 /* ── Sign-up / Log-in modal ───────────────────────────────────────────── */
 
@@ -51,6 +69,19 @@ function AuthModal({ onSuccess, onClose }: { onSuccess: () => void; onClose: () 
     borderRadius: 8,
   }
 
+  const handleGoogleSignIn = async () => {
+    setAuthError(null)
+    setAuthLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/energy-quiz` },
+    })
+    if (error) {
+      setAuthError(error.message)
+      setAuthLoading(false)
+    }
+  }
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setAuthError(null)
@@ -59,7 +90,15 @@ function AuthModal({ onSuccess, onClose }: { onSuccess: () => void; onClose: () 
     try {
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password })
-        if (error) throw error
+        if (error) {
+          if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already exists')) {
+            setAuthError('An account with this email already exists. Please sign in instead.')
+            setMode('login')
+          } else {
+            throw error
+          }
+          return
+        }
         setDone(true)
         setTimeout(() => onSuccess(), 1800)
       } else {
@@ -121,11 +160,34 @@ function AuthModal({ onSuccess, onClose }: { onSuccess: () => void; onClose: () 
             <h3 style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', textAlign: 'center', marginBottom: 6 }}>
               {mode === 'signup' ? 'Continue Your Journey' : 'Sign In to Continue'}
             </h3>
-            <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#9A8573', textAlign: 'center', lineHeight: 1.75, marginBottom: 28 }}>
+            <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#9A8573', textAlign: 'center', lineHeight: 1.75, marginBottom: 24 }}>
               {mode === 'signup'
                 ? 'Create a free account to unlock your personalized crystal reading.'
                 : 'Sign in to continue generating your crystal reading.'}
             </p>
+
+            {/* Google Sign In */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={authLoading}
+              style={{ ...BODY, width: '100%', padding: '13px', background: '#fff', border: '1px solid #E5DDD5', borderRadius: 999, color: '#4A3A32', fontSize: 12, fontWeight: 500, letterSpacing: '0.06em', cursor: authLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16, transition: 'border-color 0.2s, box-shadow 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v8.51h12.93c-.56 2.95-2.26 5.45-4.81 7.12v5.91h7.79c4.55-4.19 7.17-10.36 7.17-16.99z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.15 15.9-5.84l-7.79-5.91c-2.15 1.45-4.9 2.3-8.11 2.3-6.23 0-11.51-4.21-13.4-9.87H2.54v6.09C6.49 42.62 14.72 48 24 48z"/>
+                <path fill="#FBBC05" d="M10.6 28.68A14.95 14.95 0 0 1 9.6 24c0-1.64.28-3.23.8-4.68V13.23H2.54A23.96 23.96 0 0 0 0 24c0 3.88.92 7.55 2.54 10.77l8.06-6.09z"/>
+                <path fill="#EA4335" d="M24 9.45c3.51 0 6.66 1.21 9.14 3.57l6.86-6.86C35.91 2.38 30.47 0 24 0 14.72 0 6.49 5.38 2.54 13.23l8.06 6.09C12.49 13.66 17.77 9.45 24 9.45z"/>
+              </svg>
+              Continue with Google
+            </button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1, height: 1, background: '#E5DDD5' }} />
+              <span style={{ ...BODY, fontSize: 10, color: '#C4B5A8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>or</span>
+              <div style={{ flex: 1, height: 1, background: '#E5DDD5' }} />
+            </div>
 
             <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input
@@ -191,10 +253,33 @@ export default function EnergyQuizForm() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [birthDateDisplay, setBirthDateDisplay] = useState('')
   const [birthDateError, setBirthDateError] = useState(false)
+  const [birthDateLocked, setBirthDateLocked] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0])
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showDailyLimit, setShowDailyLimit] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) return
+      const meta = session.user.user_metadata ?? {}
+
+      const name = meta.full_name || meta.name || ''
+      const savedBirthDate: string = meta.syann_birth_date || ''
+      const savedBirthTime: string = meta.syann_birth_time || ''
+
+      setFormData(prev => ({
+        ...prev,
+        ...(name         && { fullName: name }),
+        ...(savedBirthDate && { birthDate: savedBirthDate }),
+        ...(savedBirthTime && { birthTime: savedBirthTime }),
+      }))
+
+      if (savedBirthDate) {
+        setBirthDateLocked(true)
+      }
+    })
+  }, [])
 
   useEffect(() => {
     if (!loading) return
@@ -212,20 +297,6 @@ export default function EnergyQuizForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let digits = e.target.value.replace(/\D/g, '').slice(0, 8)
-    let formatted = digits
-    if (digits.length > 4) formatted = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4)
-    else if (digits.length > 2) formatted = digits.slice(0, 2) + '/' + digits.slice(2)
-    setBirthDateDisplay(formatted)
-    setBirthDateError(false)
-    if (digits.length === 8) {
-      const iso = `${digits.slice(4)}-${digits.slice(2, 4)}-${digits.slice(0, 2)}`
-      setFormData(prev => ({ ...prev, birthDate: iso }))
-    } else {
-      setFormData(prev => ({ ...prev, birthDate: '' }))
-    }
-  }
 
   const runAnalysis = async () => {
     setLoading(true)
@@ -244,7 +315,21 @@ export default function EnergyQuizForm() {
       const data = await res.json()
       if (!data?.id) throw new Error('Your analysis is missing a reference id.')
 
-      localStorage.setItem(LS_KEY, 'true')
+      const prev = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
+      localStorage.setItem(LS_KEY, String(prev + 1))
+      incrementDailyCount()
+
+      // Save birth date & time to user metadata for future auto-fill
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        await supabase.auth.updateUser({
+          data: {
+            syann_birth_date: formData.birthDate,
+            ...(formData.birthTime && { syann_birth_time: formData.birthTime }),
+          },
+        })
+      }
+
       router.push(`/results/${data.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something unexpected happened. Please try again.')
@@ -262,12 +347,18 @@ export default function EnergyQuizForm() {
     }
     setBirthDateError(false)
 
-    // Check if already generated before
-    const hasGenerated = localStorage.getItem(LS_KEY) === 'true'
-    if (hasGenerated) {
-      // Check if logged in
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (session) {
+      // Logged-in: 3 attempts per 24 hours
+      if (getDailyCount() >= 3) {
+        setShowDailyLimit(true)
+        return
+      }
+    } else {
+      // Guest: 2 free attempts then prompt to login
+      const attemptCount = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
+      if (attemptCount >= 2) {
         setShowAuthModal(true)
         return
       }
@@ -290,6 +381,26 @@ export default function EnergyQuizForm() {
         />
       )}
 
+      {showDailyLimit && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setShowDailyLimit(false)}>
+          <div style={{ background: '#FDFAF7', borderRadius: 20, padding: '40px 36px', maxWidth: 400, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+            onClick={e => e.stopPropagation()}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#B08B57" strokeWidth="1.2" strokeLinecap="round" style={{ marginBottom: 16 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 300, color: '#3D2B1F', margin: '0 0 12px' }}>Daily Limit Reached</h2>
+            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 300, color: '#7A6355', lineHeight: 1.75, margin: '0 0 24px' }}>
+              You've used all 3 readings for today.<br />Come back tomorrow to discover more.
+            </p>
+            <button
+              onClick={() => setShowDailyLimit(false)}
+              style={{ fontFamily: "'Montserrat', sans-serif", padding: '13px 32px', background: '#4A3A32', border: 'none', borderRadius: 999, color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer' }}
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
+
       <form className="home-quiz-form" onSubmit={handleSubmit} noValidate>
 
         <div className="home-quiz-grid">
@@ -297,7 +408,6 @@ export default function EnergyQuizForm() {
           <div className="home-quiz-field home-quiz-field-wide">
             <label htmlFor="fullName">
               Name
-              <span className="home-quiz-field-hint">Optional</span>
             </label>
             <input
               id="fullName"
@@ -312,17 +422,28 @@ export default function EnergyQuizForm() {
           </div>
 
           <div className="home-quiz-field">
-            <label htmlFor="birthDate">Birth Date</label>
+            <label htmlFor="birthDate">
+              Birth Date
+              {birthDateLocked
+                ? <span className="home-quiz-field-hint">Locked to your profile</span>
+                : <span style={{ color: '#C0392B', fontWeight: 500 }}>*</span>
+              }
+            </label>
             <input
               id="birthDate"
               name="birthDate"
-              type="text"
-              inputMode="numeric"
-              placeholder="DD / MM / YYYY"
-              value={birthDateDisplay}
-              onChange={handleBirthDateChange}
-              disabled={loading}
-              style={birthDateError ? { borderColor: '#C0392B', boxShadow: '0 0 0 3px rgba(192,57,43,0.1)' } : undefined}
+              type="date"
+              value={formData.birthDate}
+              onChange={e => {
+                setFormData(prev => ({ ...prev, birthDate: e.target.value }))
+                setBirthDateError(false)
+              }}
+              disabled={loading || birthDateLocked}
+              style={{
+                borderColor: birthDateError ? '#C0392B' : undefined,
+                boxShadow: birthDateError ? '0 0 0 3px rgba(192,57,43,0.1)' : undefined,
+                ...(birthDateLocked ? { background: '#F4EFE8', color: '#9A8573', cursor: 'not-allowed' } : {}),
+              }}
             />
             {birthDateError && (
               <span style={{ fontSize: 11, color: '#C0392B', letterSpacing: '0.04em', marginTop: -4 }}>

@@ -7,10 +7,16 @@ const SELLING_POINTS = [
       'Hand-selected genuine gemstones, ethically sourced and energetically cleansed.',
     icon: (
       <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 4 L26 12 L22 26 H10 L6 12 Z" />
-        <path d="M16 4 L22 26" />
-        <path d="M16 4 L10 26" />
-        <path d="M6 12 H26" />
+        {/* Outer gem outline */}
+        <polygon points="10,7 22,7 27,14 16,27 5,14" />
+        {/* Girdle */}
+        <line x1="5" y1="14" x2="27" y2="14" />
+        {/* Crown facets */}
+        <line x1="10" y1="7" x2="16" y2="14" />
+        <line x1="22" y1="7" x2="16" y2="14" />
+        {/* Pavilion facets */}
+        <line x1="10" y1="14" x2="16" y2="27" />
+        <line x1="22" y1="14" x2="16" y2="27" />
       </svg>
     ),
   },
@@ -177,9 +183,7 @@ export default function Home() {
         <div className="home-quiz-header">
           <p className="home-quiz-eyebrow">✦ Personalized Energy Analysis</p>
           <h2 className="home-quiz-title">
-            Discover The Bracelet
-            <br />
-            Designed For You
+            Discover The Bracelet Designed For You
           </h2>
           <p className="home-quiz-description">
             Share a little about yourself and let our AI craft a bracelet

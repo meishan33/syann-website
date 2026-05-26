@@ -38,7 +38,50 @@ export default function AboutPage() {
       </section>
 
 
-      {/* ── 2 · OUR STORY ────────────────────────────────────── */}
+      {/* ── 2 · CRAFTED AROUND YOUR ENERGY ──────────────────── */}
+      <section style={{ position: 'relative', minHeight: 520, overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+
+        {/* Background image */}
+        <img
+          src="/AboutImage2.png"
+          alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 78%', display: 'block' }}
+        />
+
+        {/* Left gradient overlay for text legibility */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(90deg, rgba(246,241,235,0.96) 0%, rgba(246,241,235,0.88) 35%, rgba(246,241,235,0.55) 60%, rgba(246,241,235,0) 80%)',
+        }} />
+
+        {/* Text content */}
+        <div style={{ position: 'relative', zIndex: 1, padding: 'clamp(56px, 6vw, 96px) clamp(32px, 6vw, 96px)', maxWidth: 580 }}>
+
+          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.38em', color: GOLD, textTransform: 'uppercase', marginBottom: 18 }}>
+            About SYANN
+          </p>
+
+          <h2 style={{ ...SERIF, fontSize: 'clamp(38px, 5vw, 62px)', fontWeight: 300, lineHeight: 1.1, color: '#3D2B1F', margin: '0 0 22px' }}>
+            Crafted Around<br />Your Energy.
+          </h2>
+
+          <p style={{ ...BODY, fontSize: 13, fontWeight: 300, lineHeight: 1.85, color: '#7A6355', margin: '0 0 32px', maxWidth: 420 }}>
+            At SYANN, every bracelet is thoughtfully designed through a blend of crystal energy, five element balance, and modern AI personalization — creating a piece uniquely aligned to you.
+          </p>
+
+          <Link
+            href="/energy-quiz"
+            style={{ ...BODY, display: 'inline-block', padding: '14px 28px', background: GOLD, color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', textDecoration: 'none', transition: 'background 0.3s' }}
+          >
+            Discover Your Bracelet
+          </Link>
+
+        </div>
+
+      </section>
+
+
+      {/* ── 3 · OUR STORY ────────────────────────────────────── */}
       <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
         <div style={{ position: 'relative', minHeight: 420 }}>
@@ -177,23 +220,6 @@ export default function AboutPage() {
       </section>
 
 
-      {/* ── 6 · BOTTOM BAR ───────────────────────────────────── */}
-      <div style={{ background: '#3D2B1F', padding: '20px 24px' }}>
-        <div style={{ maxWidth: 980, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-          {[
-            { icon: '🚚', title: 'Free Shipping',    sub: 'Malaysia & Singapore' },
-            { icon: '✦',  title: 'Premium Quality',  sub: 'Natural Crystals' },
-            { icon: '🤍', title: 'Handmade',          sub: 'With Intention' },
-            { icon: '🔒', title: '100% Protected',   sub: 'Secure Payment' },
-          ].map(({ icon, title, sub }) => (
-            <div key={title} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 4 }}>
-              <span style={{ fontSize: 16, color: GOLD }}>{icon}</span>
-              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.26em', textTransform: 'uppercase', color: '#F6F1EB', margin: 0 }}>{title}</p>
-              <p style={{ ...BODY, fontSize: 10, fontWeight: 300, letterSpacing: '0.12em', color: 'rgba(246,241,235,0.55)', margin: 0 }}>{sub}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
     </main>
   )

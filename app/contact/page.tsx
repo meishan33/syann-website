@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
@@ -9,7 +11,9 @@ const GOLD = '#B08B57'
 const INPUT_STYLE: React.CSSProperties = {
   width: '100%',
   padding: '13px 16px',
-  border: '1px solid #E5DDD5',
+  borderWidth: 1,
+  borderStyle: 'solid',
+  borderColor: '#E5DDD5',
   background: '#fff',
   fontSize: 13,
   color: '#4A3A32',
@@ -33,20 +37,55 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 }
 
 export default function ContactPage() {
+  const router = useRouter()
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
-  const [sent, setSent] = useState(false)
   const [focused, setFocused] = useState<string | null>(null)
+  const [errors, setErrors] = useState<{ subject?: boolean; message?: boolean }>({});
 
-  const handle = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) return
+      const meta = session.user.user_metadata ?? {}
+      const name = meta.full_name || meta.name || ''
+      const email = session.user.email || ''
+      setForm(prev => ({
+        ...prev,
+        ...(name && { name }),
+        ...(email && { email }),
+      }))
+    })
+  }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setSent(true)
+  const handle = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+    if (errors[name as keyof typeof errors]) setErrors(prev => ({ ...prev, [name]: false }))
   }
 
-  const focusStyle = (name: string): React.CSSProperties =>
-    focused === name ? { ...INPUT_STYLE, borderColor: GOLD, boxShadow: `0 0 0 3px rgba(176,139,87,0.1)` } : INPUT_STYLE
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const newErrors = {
+      subject: !form.subject.trim(),
+      message: !form.message.trim(),
+    }
+    setErrors(newErrors)
+    if (newErrors.subject || newErrors.message) return
+
+    await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+
+    router.push('/contact/success')
+  }
+
+  const focusStyle = (name: string): React.CSSProperties => {
+    const hasError = errors[name as keyof typeof errors]
+    if (focused === name) return { ...INPUT_STYLE, borderColor: GOLD, boxShadow: `0 0 0 3px rgba(176,139,87,0.1)` }
+    if (hasError) return { ...INPUT_STYLE, borderColor: '#C0392B', boxShadow: `0 0 0 3px rgba(192,57,43,0.08)` }
+    return INPUT_STYLE
+  }
 
   return (
     <main style={{ background: '#F6F1EB', color: '#4A3A32', ...BODY }}>
@@ -85,23 +124,13 @@ export default function ContactPage() {
 
       {/* ── FORM + CONTACT INFO ───────────────────────────────── */}
       <section style={{ background: '#FDFAF7', padding: 'clamp(48px, 6vw, 72px) clamp(24px, 6vw, 48px)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 64px 1fr', alignItems: 'start' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '3fr 56px 2fr', alignItems: 'start' }}>
 
           {/* LEFT — Form */}
           <div>
             <SectionEyebrow>Send Us a Message</SectionEyebrow>
 
-            {sent ? (
-              <div style={{ padding: '32px 0' }}>
-                <p style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', marginBottom: 10 }}>
-                  Thank you for reaching out.
-                </p>
-                <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#7A6355', lineHeight: 1.8 }}>
-                  We've received your message and will get back to you within 24–48 hours.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} noValidate>
+            <form onSubmit={handleSubmit} noValidate>
 
                 {/* Name + Email row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
@@ -122,21 +151,23 @@ export default function ContactPage() {
                 {/* Subject */}
                 <div style={{ marginBottom: 12 }}>
                   <input
-                    name="subject" type="text" placeholder="Subject"
+                    name="subject" type="text" placeholder="Subject *"
                     value={form.subject} onChange={handle}
                     onFocus={() => setFocused('subject')} onBlur={() => setFocused(null)}
                     style={focusStyle('subject')}
                   />
+                  {errors.subject && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '5px 0 0', letterSpacing: '0.04em' }}>Subject is required.</p>}
                 </div>
 
                 {/* Message */}
                 <div style={{ marginBottom: 20 }}>
                   <textarea
-                    name="message" placeholder="Your Message"
+                    name="message" placeholder="Your Message *"
                     rows={6} value={form.message} onChange={handle}
                     onFocus={() => setFocused('message')} onBlur={() => setFocused(null)}
                     style={{ ...focusStyle('message'), resize: 'vertical', lineHeight: 1.7 }}
                   />
+                  {errors.message && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '5px 0 0', letterSpacing: '0.04em' }}>Message is required.</p>}
                 </div>
 
                 {/* Submit */}
@@ -169,7 +200,6 @@ export default function ContactPage() {
 
 
               </form>
-            )}
           </div>
 
           {/* CENTER — gold diamond ornament */}
@@ -199,7 +229,7 @@ export default function ContactPage() {
                 },
                 {
                   label: 'Instagram',
-                  value: '@syann.co',
+                  value: '@syann.co_official',
                   sub: null,
                   icon: (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
