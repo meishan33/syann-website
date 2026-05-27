@@ -16,6 +16,7 @@ type Order = {
   recommended_crystal_names: string[]; total_amount: number
   payment_status: string; fulfillment_status: string; created_at: string
   shipping_address: string | null; spacer_choice: string | null; remark: string | null
+  weak_element: string | null; strong_element: string | null; analysis_summary: string | null
 }
 type User = {
   id: string; email: string; name: string | null
@@ -385,6 +386,18 @@ export default function AdminPage() {
                                         <div>
                                           <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Remark</p>
                                           <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.remark}</p>
+                                        </div>
+                                      )}
+                                      {(o.weak_element || o.strong_element) && (
+                                        <div>
+                                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Element Analysis</p>
+                                          <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>Weak: {o.weak_element || '—'} · Strong: {o.strong_element || '—'}</p>
+                                        </div>
+                                      )}
+                                      {o.analysis_summary && (
+                                        <div style={{ width: '100%' }}>
+                                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Analysis Summary</p>
+                                          <p style={{ ...BODY, fontSize: 12, color: '#7A6355', margin: 0, lineHeight: 1.7 }}>{o.analysis_summary}</p>
                                         </div>
                                       )}
                                     </div>

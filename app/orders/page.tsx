@@ -20,6 +20,8 @@ type Order = {
   fulfillment_status: string
   created_at: string
   generated_image_url: string | null
+  weak_element: string | null
+  strong_element: string | null
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -108,6 +110,11 @@ export default function OrdersPage() {
                     <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.6 }}>
                       {order.recommended_crystal_names?.join(' · ') || '—'}
                     </p>
+                    {(order.weak_element || order.strong_element) && (
+                      <p style={{ ...BODY, fontSize: 11, color: '#B08B57', margin: 0, letterSpacing: '0.04em' }}>
+                        Weak: {order.weak_element || '—'} · Strong: {order.strong_element || '—'}
+                      </p>
+                    )}
                   </div>
                   </div>
 

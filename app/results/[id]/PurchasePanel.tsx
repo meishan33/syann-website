@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
@@ -10,15 +10,39 @@ type Props = {
   analysisSummary: string
   resultId: string
   suggestedSpacer?: string | null
+  imageUrl?: string | null
+  weakElement?: string | null
+  strongElement?: string | null
 }
 
-export default function PurchasePanel({ analysisSummary, resultId, suggestedSpacer }: Props) {
+export default function PurchasePanel({ analysisSummary, resultId, suggestedSpacer, imageUrl, weakElement, strongElement }: Props) {
   const spacer = suggestedSpacer?.toLowerCase().includes('gold') ? 'gold' : 'silver'
 
   const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const purchaseHref = `/payment?result=${resultId}&spacer=${spacer}${remark ? `&remark=${encodeURIComponent(remark)}` : ''}`
+  async function handlePurchase() {
+    setLoading(true)
+    setError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const email = session?.user?.email ?? null
+
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resultId, spacer, remark, email, imageUrl, weakElement, strongElement }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')
+      window.location.href = data.url
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setLoading(false)
+    }
+  }
 
   return (
     <>
@@ -119,14 +143,19 @@ export default function PurchasePanel({ analysisSummary, resultId, suggestedSpac
         </div>
 
         {/* PURCHASE BUTTON */}
-        <Link
-          href={purchaseHref}
-          className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 no-underline text-[11px] font-medium uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57]"
-          style={BODY}
-        >
-          Purchase My Bracelet
-          <span aria-hidden="true">✦</span>
-        </Link>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handlePurchase}
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57] disabled:opacity-60 disabled:cursor-not-allowed"
+            style={BODY}
+          >
+            {loading ? 'Redirecting to Payment…' : <><span>Purchase My Bracelet</span><span aria-hidden="true">✦</span></>}
+          </button>
+          {error && (
+            <p className="text-center text-[11px] text-red-400" style={BODY}>{error}</p>
+          )}
+        </div>
 
       </div>
 

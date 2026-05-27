@@ -138,6 +138,9 @@ export default async function ResultsPage({ params }: Props) {
               analysisSummary={data.analysis_summary ?? ""}
               resultId={id}
               suggestedSpacer={data.suggested_spacer ?? null}
+              imageUrl={data.cached_image_url ?? null}
+              weakElement={data.calculated_weak_element ?? null}
+              strongElement={data.calculated_strong_element ?? null}
             />
 
           </div>
