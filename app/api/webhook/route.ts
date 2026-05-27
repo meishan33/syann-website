@@ -49,7 +49,10 @@ export async function POST(req: NextRequest) {
     }
 
     type ShippingAddr = { line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null }
-    const addr = (session as unknown as { shipping_details?: { address?: ShippingAddr } }).shipping_details?.address
+    type SessionExt = { shipping_details?: { address?: ShippingAddr }; collected_information?: { shipping_details?: { address?: ShippingAddr } } }
+    const sessionExt = session as unknown as SessionExt
+    // dahlia API version uses collected_information.shipping_details; fall back to shipping_details for older versions
+    const addr = sessionExt.collected_information?.shipping_details?.address ?? sessionExt.shipping_details?.address
     const shippingAddress = addr
       ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country]
           .filter(Boolean)
