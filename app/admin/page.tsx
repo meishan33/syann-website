@@ -12,7 +12,7 @@ const DARK = '#4A3A32'
 type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt'
 
 type Order = {
-  id: string; customer_name: string; customer_email: string
+  id: string; customer_name: string; customer_email: string; customer_phone: string | null
   recommended_crystal_names: string[]; total_amount: number
   payment_status: string; fulfillment_status: string; created_at: string
   shipping_address: string | null; spacer_choice: string | null; remark: string | null
@@ -372,6 +372,10 @@ export default function AdminPage() {
                                       <div>
                                         <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Delivery Address</p>
                                         <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.shipping_address || '—'}</p>
+                                      </div>
+                                      <div>
+                                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Phone</p>
+                                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_phone || '—'}</p>
                                       </div>
                                       <div>
                                         <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Spacer</p>

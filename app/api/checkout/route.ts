@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'payment',
+      phone_number_collection: { enabled: true },
       shipping_address_collection: {
         allowed_countries: ['MY'],
       },

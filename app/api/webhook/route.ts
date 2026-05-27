@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
     const { error: insertError } = await supabaseAdmin.from('orders').insert({
       customer_name: session.customer_details?.name || result?.user_name || null,
       customer_email: session.customer_details?.email || null,
+      customer_phone: session.customer_details?.phone || null,
       shipping_address: shippingAddress,
       generated_image_url: result?.cached_image_url || null,
       recommended_crystal_names: result?.crystal_names ?? [],
