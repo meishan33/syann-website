@@ -48,9 +48,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    const addr = session.shipping_details?.address
+    const shippingAddress = addr
+      ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country]
+          .filter(Boolean)
+          .join(', ')
+      : null
+
     await supabaseAdmin.from('orders').insert({
       customer_name: session.customer_details?.name || result?.user_name || null,
       customer_email: session.customer_details?.email || null,
+      shipping_address: shippingAddress,
       recommended_crystal_names: result?.crystal_names ?? [],
       total_amount: (session.amount_total ?? 0) / 100,
       payment_status: 'paid',
