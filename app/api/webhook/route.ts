@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const addr = session.shipping_details?.address
+    type ShippingAddr = { line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null }
+    const addr = (session as unknown as { shipping_details?: { address?: ShippingAddr } }).shipping_details?.address
     const shippingAddress = addr
       ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country]
           .filter(Boolean)
