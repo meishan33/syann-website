@@ -28,23 +28,25 @@ const LOADING_MESSAGES = [
 ]
 
 const LS_KEY = 'syann_has_generated'
-const LS_DAILY_COUNT = 'syann_daily_count'
-const LS_DAILY_DATE  = 'syann_daily_date'
 
 function todayStr() { return new Date().toISOString().slice(0, 10) }
 
-function getDailyCount(): number {
-  if (localStorage.getItem(LS_DAILY_DATE) !== todayStr()) {
-    localStorage.setItem(LS_DAILY_DATE, todayStr())
-    localStorage.setItem(LS_DAILY_COUNT, '0')
+function getDailyCount(userId: string): number {
+  const countKey = `syann_daily_count_${userId}`
+  const dateKey  = `syann_daily_date_${userId}`
+  if (localStorage.getItem(dateKey) !== todayStr()) {
+    localStorage.setItem(dateKey, todayStr())
+    localStorage.setItem(countKey, '0')
     return 0
   }
-  return parseInt(localStorage.getItem(LS_DAILY_COUNT) || '0', 10)
+  return parseInt(localStorage.getItem(countKey) || '0', 10)
 }
 
-function incrementDailyCount() {
-  localStorage.setItem(LS_DAILY_DATE, todayStr())
-  localStorage.setItem(LS_DAILY_COUNT, String(getDailyCount() + 1))
+function incrementDailyCount(userId: string) {
+  const countKey = `syann_daily_count_${userId}`
+  const dateKey  = `syann_daily_date_${userId}`
+  localStorage.setItem(dateKey, todayStr())
+  localStorage.setItem(countKey, String(getDailyCount(userId) + 1))
 }
 
 /* ── Sign-up / Log-in modal ───────────────────────────────────────────── */
@@ -317,11 +319,10 @@ export default function EnergyQuizForm() {
 
       const prev = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
       localStorage.setItem(LS_KEY, String(prev + 1))
-      incrementDailyCount()
-
       // Save birth date & time to user metadata for future auto-fill
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
+        incrementDailyCount(session.user.id)
         await supabase.auth.updateUser({
           data: {
             syann_birth_date: formData.birthDate,
@@ -350,8 +351,8 @@ export default function EnergyQuizForm() {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (session) {
-      // Logged-in: 3 attempts per 24 hours
-      if (getDailyCount() >= 3) {
+      // Logged-in: 3 attempts per 24 hours, keyed by user ID
+      if (getDailyCount(session.user.id) >= 3) {
         setShowDailyLimit(true)
         return
       }
