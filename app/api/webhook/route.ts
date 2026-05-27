@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           .join(', ')
       : null
 
-    await supabaseAdmin.from('orders').insert({
+    const { error: insertError } = await supabaseAdmin.from('orders').insert({
       customer_name: session.customer_details?.name || result?.user_name || null,
       customer_email: session.customer_details?.email || null,
       shipping_address: shippingAddress,
@@ -69,6 +69,11 @@ export async function POST(req: NextRequest) {
       spacer_choice: spacer || null,
       remark: remark || null,
     })
+
+    if (insertError) {
+      console.error('Webhook order insert failed:', insertError.message)
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
   }
 
   return NextResponse.json({ received: true })

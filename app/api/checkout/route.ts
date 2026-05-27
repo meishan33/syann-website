@@ -13,12 +13,13 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, remark } = await req.json()
+    const { resultId, spacer, remark, email } = await req.json()
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      ...(email ? { customer_email: email } : {}),
       line_items: [
         {
           price_data: {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 type Props = {
   resultId: string
@@ -16,10 +17,13 @@ export default function CheckoutButton({ resultId, spacer, remark }: Props) {
     setLoading(true)
     setError(null)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const email = session?.user?.email ?? null
+
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultId, spacer, remark }),
+        body: JSON.stringify({ resultId, spacer, remark, email }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')
