@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, remark, email } = await req.json()
+    const { resultId, spacer, remark, email, imageUrl } = await req.json()
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: 'SYANN Crystal Bracelet',
               description: `Spacer: ${spacer}${remark ? ` · Note: ${remark}` : ''}`,
+              ...(imageUrl ? { images: [imageUrl] } : {}),
             },
             unit_amount: PRICE_BASE_CENTS,
           },

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
@@ -18,6 +19,7 @@ type Order = {
   payment_status: string
   fulfillment_status: string
   created_at: string
+  generated_image_url: string | null
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -85,6 +87,12 @@ export default function OrdersPage() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
 
                   {/* Left */}
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  {order.generated_image_url && (
+                    <div style={{ position: 'relative', width: 72, height: 72, borderRadius: 12, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
+                      <Image src={order.generated_image_url} alt="Crystal bracelet" fill sizes="72px" style={{ objectFit: 'contain' }} />
+                    </div>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ ...BODY, fontSize: 10, fontWeight: 700, color: '#C4B5A8', letterSpacing: '0.1em' }}>#{orders.length - idx}</span>
@@ -100,6 +108,7 @@ export default function OrdersPage() {
                     <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.6 }}>
                       {order.recommended_crystal_names?.join(' · ') || '—'}
                     </p>
+                  </div>
                   </div>
 
                   {/* Right */}

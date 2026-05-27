@@ -15,6 +15,7 @@ type Order = {
   id: string; customer_name: string; customer_email: string
   recommended_crystal_names: string[]; total_amount: number
   payment_status: string; fulfillment_status: string; created_at: string
+  shipping_address: string | null; spacer_choice: string | null; remark: string | null
 }
 type User = {
   id: string; email: string; name: string | null
@@ -126,6 +127,7 @@ export default function AdminPage() {
   const [adminEmail, setAdminEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
   const [expandedInquiry, setExpandedInquiry] = useState<string | null>(null)
   const [inquirySort, setInquirySort] = useState<InquirySortKey>('submitted_at')
   const [inquirySortAsc, setInquirySortAsc] = useState(false)
@@ -346,22 +348,46 @@ export default function AdminPage() {
                         </tr></thead>
                         <tbody>
                           {orders.map(o => (
-                            <tr key={o.id}>
-                              <td style={TD}><p style={{ margin: '0 0 2px', fontWeight: 400 }}>{o.customer_name || '—'}</p><p style={{ margin: 0, fontSize: 11, color: '#9A8573' }}>{o.customer_email}</p></td>
-                              <td style={TD}><p style={{ margin: 0, fontSize: 11, lineHeight: 1.6 }}>{o.recommended_crystal_names?.join(', ') || '—'}</p></td>
-                              <td style={TD}>RM {Number(o.total_amount).toFixed(2)}</td>
-                              <td style={TD}><Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} /></td>
-                              <td style={TD}><Badge label={o.fulfillment_status} color={o.fulfillment_status === 'fulfilled' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : '#9A8573'} /></td>
-                              <td style={TD}>{new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                              <td style={TD}>
-                                <select value={o.fulfillment_status} disabled={actionLoading === o.id} onChange={e => updateFulfillment(o.id, e.target.value)}
-                                  style={{ ...BODY, fontSize: 11, padding: '6px 10px', border: '1px solid #E5DDD5', background: '#fff', color: DARK, cursor: 'pointer', borderRadius: 6 }}>
-                                  <option value="unfulfilled">Unfulfilled</option>
-                                  <option value="processing">Processing</option>
-                                  <option value="fulfilled">Fulfilled</option>
-                                </select>
-                              </td>
-                            </tr>
+                            <>
+                              <tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)}>
+                                <td style={TD}><p style={{ margin: '0 0 2px', fontWeight: 400 }}>{o.customer_name || '—'}</p><p style={{ margin: 0, fontSize: 11, color: '#9A8573' }}>{o.customer_email}</p></td>
+                                <td style={TD}><p style={{ margin: 0, fontSize: 11, lineHeight: 1.6 }}>{o.recommended_crystal_names?.join(', ') || '—'}</p></td>
+                                <td style={TD}>RM {Number(o.total_amount).toFixed(2)}</td>
+                                <td style={TD}><Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} /></td>
+                                <td style={TD}><Badge label={o.fulfillment_status} color={o.fulfillment_status === 'fulfilled' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : '#9A8573'} /></td>
+                                <td style={TD}>{new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                <td style={TD} onClick={e => e.stopPropagation()}>
+                                  <select value={o.fulfillment_status} disabled={actionLoading === o.id} onChange={e => updateFulfillment(o.id, e.target.value)}
+                                    style={{ ...BODY, fontSize: 11, padding: '6px 10px', border: '1px solid #E5DDD5', background: '#fff', color: DARK, cursor: 'pointer', borderRadius: 6 }}>
+                                    <option value="unfulfilled">Unfulfilled</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="fulfilled">Fulfilled</option>
+                                  </select>
+                                </td>
+                              </tr>
+                              {expandedOrder === o.id && (
+                                <tr key={o.id + '-detail'}>
+                                  <td colSpan={7} style={{ ...TD, background: '#F9F6F2', borderBottom: '2px solid #E5DDD5' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 40px', padding: '4px 0' }}>
+                                      <div>
+                                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Delivery Address</p>
+                                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.shipping_address || '—'}</p>
+                                      </div>
+                                      <div>
+                                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Spacer</p>
+                                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0, textTransform: 'capitalize' }}>{o.spacer_choice || '—'}</p>
+                                      </div>
+                                      {o.remark && (
+                                        <div>
+                                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Remark</p>
+                                          <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.remark}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </>
                           ))}
                         </tbody>
                       </table>

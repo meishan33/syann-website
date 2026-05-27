@@ -7,9 +7,10 @@ type Props = {
   resultId: string
   spacer: string
   remark: string
+  imageUrl: string | null
 }
 
-export default function CheckoutButton({ resultId, spacer, remark }: Props) {
+export default function CheckoutButton({ resultId, spacer, remark, imageUrl }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,7 +24,7 @@ export default function CheckoutButton({ resultId, spacer, remark }: Props) {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultId, spacer, remark, email }),
+        body: JSON.stringify({ resultId, spacer, remark, email, imageUrl }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')

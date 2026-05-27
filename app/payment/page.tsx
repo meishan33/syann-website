@@ -124,7 +124,7 @@ export default async function PaymentPage({ searchParams }: Props) {
           <div className="h-px bg-[#E5DDD5]" />
 
           {/* ── Checkout button ── */}
-          <CheckoutButton resultId={resultId} spacer={spacer} remark={remark} />
+          <CheckoutButton resultId={resultId} spacer={spacer} remark={remark} imageUrl={imageUrl} />
 
           {/* ── Back link ── */}
           <p className="text-center -mt-3">

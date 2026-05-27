@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     // Look up crystal names from the quiz result
     const { data: result } = await supabaseAdmin
       .from('energy_quiz_results')
-      .select('crystal_names, user_name')
+      .select('crystal_names, user_name, cached_image_url')
       .eq('id', resultId)
       .single()
 
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
       customer_name: session.customer_details?.name || result?.user_name || null,
       customer_email: session.customer_details?.email || null,
       shipping_address: shippingAddress,
+      generated_image_url: result?.cached_image_url || null,
       recommended_crystal_names: result?.crystal_names ?? [],
       total_amount: (session.amount_total ?? 0) / 100,
       payment_status: 'paid',
