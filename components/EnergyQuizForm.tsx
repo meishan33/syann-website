@@ -22,9 +22,11 @@ const LOADING_MESSAGES = [
   'Reading your Five Elements profile…',
   'Selecting crystals aligned with your energy…',
   'Crafting your personalized bracelet…',
-  'Generating your bracelet visualization — this may take a moment…',
+  'Generating your bracelet visualization…',
+  'This may take a moment…',
   'Almost there, please hold on…',
-  'Your bracelet is nearly ready — thank you for your patience…',
+  'Your bracelet is nearly ready…',
+  'Thank you for your patience…',
 ]
 
 const LS_KEY = 'syann_has_generated'
@@ -256,7 +258,6 @@ export default function EnergyQuizForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [birthDateError, setBirthDateError] = useState(false)
-  const [birthDateLocked, setBirthDateLocked] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0])
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showDailyLimit, setShowDailyLimit] = useState(false)
@@ -277,9 +278,6 @@ export default function EnergyQuizForm() {
         ...(savedBirthTime && { birthTime: savedBirthTime }),
       }))
 
-      if (savedBirthDate) {
-        setBirthDateLocked(true)
-      }
     })
   }, [])
 
@@ -312,9 +310,8 @@ export default function EnergyQuizForm() {
         body: JSON.stringify(formData),
       })
 
-      if (!res.ok) throw new Error('We could not complete your analysis. Please try again.')
-
       const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'We could not complete your analysis. Please try again.')
       if (!data?.id) throw new Error('Your analysis is missing a reference id.')
 
       const prev = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
@@ -332,6 +329,8 @@ export default function EnergyQuizForm() {
       }
 
       router.push(`/results/${data.id}`)
+      // Reset transient fields so the form is clean if user navigates back
+      setFormData(prev => ({ ...prev, intention: '', feeling: '' }))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something unexpected happened. Please try again.')
       setLoading(false)
@@ -351,8 +350,10 @@ export default function EnergyQuizForm() {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (session) {
-      // Logged-in: 3 attempts per 24 hours, keyed by user ID
-      if (getDailyCount(session.user.id) >= 3) {
+      const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
+      const isAdmin = profile?.is_admin === true
+      // Logged-in: 3 attempts per 24 hours, keyed by user ID (admins are exempt)
+      if (!isAdmin && getDailyCount(session.user.id) >= 3) {
         setShowDailyLimit(true)
         return
       }
@@ -425,10 +426,7 @@ export default function EnergyQuizForm() {
           <div className="home-quiz-field">
             <label htmlFor="birthDate">
               Birth Date
-              {birthDateLocked
-                ? <span className="home-quiz-field-hint">Locked to your profile</span>
-                : <span style={{ color: '#C0392B', fontWeight: 500 }}>*</span>
-              }
+              <span style={{ color: '#C0392B', fontWeight: 500 }}>*</span>
             </label>
             <input
               id="birthDate"
@@ -439,11 +437,10 @@ export default function EnergyQuizForm() {
                 setFormData(prev => ({ ...prev, birthDate: e.target.value }))
                 setBirthDateError(false)
               }}
-              disabled={loading || birthDateLocked}
+              disabled={loading}
               style={{
                 borderColor: birthDateError ? '#C0392B' : undefined,
                 boxShadow: birthDateError ? '0 0 0 3px rgba(192,57,43,0.1)' : undefined,
-                ...(birthDateLocked ? { background: '#F4EFE8', color: '#9A8573', cursor: 'not-allowed' } : {}),
               }}
             />
             {birthDateError && (
@@ -517,7 +514,11 @@ export default function EnergyQuizForm() {
           className={`home-quiz-submit${loading ? ' home-quiz-submit--loading' : ''}`}
           disabled={loading}
         >
-          {loading ? loadingMessage : 'Analyze My Energy'}
+          {loading
+            ? loadingMessage.split('\n').map((line, i) => (
+                <span key={i} style={{ display: 'block' }}>{line}</span>
+              ))
+            : 'Analyze My Energy'}
           <span className="home-quiz-submit-icon" aria-hidden="true">✦</span>
         </button>
 

@@ -22,7 +22,11 @@ const FAQS = [
   },
   {
     q: 'Will my bracelet look exactly like the preview?',
-    a: 'The preview is an AI-generated visualization of your recommended bracelet design. The actual handcrafted bracelet will closely follow the crystal selection and color palette shown, though natural stones may have slight variations in tone and texture — making each piece beautifully unique.',
+    a: 'The preview is an AI-generated visualization of your recommended bracelet design. The actual handcrafted bracelet will closely follow the crystal selection and color palette shown. As every crystal is natural and unique, each batch may have slight variations in color and texture — making your piece one-of-a-kind.',
+  },
+  {
+    q: 'What is included in every SYANN bracelet?',
+    a: 'Every SYANN bracelet comes with 2 metal spacer discs and 1 silver SYANN logo charm as standard inclusions — no extra charge. The spacer metal tone (gold or silver) is chosen by our AI designer to complement your specific crystal combination. If you have a preference for the spacer metal or placement, simply note it in the Remarks field when placing your order.',
   },
   {
     q: 'How do I choose the right bracelet size?',

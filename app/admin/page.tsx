@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -9,14 +9,15 @@ const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 const DARK = '#4A3A32'
 
-type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt'
+type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop'
 
 type Order = {
-  id: string; customer_name: string; customer_email: string; customer_phone: string | null
+  id: string; order_number: number | null; customer_name: string; customer_email: string; customer_phone: string | null
   recommended_crystal_names: string[]; total_amount: number
   payment_status: string; fulfillment_status: string; created_at: string
   shipping_address: string | null; spacer_choice: string | null; remark: string | null
   weak_element: string | null; strong_element: string | null; analysis_summary: string | null
+  generated_image_url: string | null
 }
 type User = {
   id: string; email: string; name: string | null
@@ -79,6 +80,10 @@ const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
     key: 'ai-prompt', label: 'AI Prompt',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>,
   },
+  {
+    key: 'shop', label: 'Shop',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  },
 ]
 
 const AI_SYSTEM_PROMPT = `You are a luxury crystal bracelet designer and Five Elements (Wu Xing) energy specialist for SYANN, a premium crystal jewelry brand.
@@ -129,6 +134,13 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [orderFilter, setOrderFilter] = useState<'all' | 'unfulfilled' | 'processing' | 'fulfilled'>('all')
+  const [orderSort, setOrderSort] = useState<'created_at' | 'customer_name' | 'total_amount'>('created_at')
+  const [orderSortAsc, setOrderSortAsc] = useState(false)
+  const [orderSearch, setOrderSearch] = useState('')
+  const [orderSearchField, setOrderSearchField] = useState<'customer_name' | 'customer_email'>('customer_name')
+  const [showOrderSortDropdown, setShowOrderSortDropdown] = useState(false)
   const [expandedInquiry, setExpandedInquiry] = useState<string | null>(null)
   const [inquirySort, setInquirySort] = useState<InquirySortKey>('submitted_at')
   const [inquirySortAsc, setInquirySortAsc] = useState(false)
@@ -142,6 +154,18 @@ export default function AdminPage() {
   const [addCrystalError, setAddCrystalError] = useState<string | null>(null)
   const [addCrystalLoading, setAddCrystalLoading] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
+
+  // Shop
+  type ShopProduct = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; active: boolean }
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([])
+  const [shopLoading, setShopLoading] = useState(false)
+  const [showAddProduct, setShowAddProduct] = useState(false)
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '' })
+  const [addProductError, setAddProductError] = useState<string | null>(null)
+  const [addProductLoading, setAddProductLoading] = useState(false)
+  const [productImageUploading, setProductImageUploading] = useState(false)
+  const [editProductId, setEditProductId] = useState<string | null>(null)
+  const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '' })
   const [visibleCols, setVisibleCols] = useState<Set<string>>(
     new Set(['bead_image_url', 'name', 'element', 'color_family', 'price_tier', 'active', 'toggle'])
   )
@@ -162,7 +186,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!token) return
-    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings()])
+    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings(), fetchShopProducts()])
       .finally(() => setLoading(false))
   }, [token])
 
@@ -173,6 +197,12 @@ export default function AdminPage() {
   const fetchCrystals = async () => { const r = await fetch('/api/admin/crystals', { headers: headers() }); if (r.ok) setCrystals(await r.json()) }
   const fetchInquiries= async () => { const r = await fetch('/api/admin/inquiry',  { headers: headers() }); if (r.ok) setInquiries(await r.json()) }
   const fetchReadings = async () => { const r = await fetch('/api/admin/readings', { headers: headers() }); if (r.ok) setReadings(await r.json()) }
+  const fetchShopProducts = async () => {
+    setShopLoading(true)
+    const r = await fetch('/api/shop/products', { headers: headers() })
+    if (r.ok) setShopProducts(await r.json())
+    setShopLoading(false)
+  }
 
   const updateFulfillment = async (id: string, fulfillment_status: string) => {
     setActionLoading(id)
@@ -335,83 +365,212 @@ export default function AdminPage() {
           ) : (
             <>
               {/* ── ORDERS ── */}
-              {tab === 'orders' && (
-                <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
-                  {orders.length === 0 ? (
-                    <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', padding: '48px 0' }}>No orders yet.</p>
-                  ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead><tr style={{ background: '#F6F1EB' }}>
-                          <th style={TH}>Customer</th><th style={TH}>Crystals</th>
-                          <th style={TH}>Amount</th><th style={TH}>Payment</th>
-                          <th style={TH}>Fulfilment</th><th style={TH}>Date</th><th style={TH}>Update</th>
-                        </tr></thead>
-                        <tbody>
-                          {orders.map(o => (
-                            <>
-                              <tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)}>
-                                <td style={TD}><p style={{ margin: '0 0 2px', fontWeight: 400 }}>{o.customer_name || '—'}</p><p style={{ margin: 0, fontSize: 11, color: '#9A8573' }}>{o.customer_email}</p></td>
-                                <td style={TD}><p style={{ margin: 0, fontSize: 11, lineHeight: 1.6 }}>{o.recommended_crystal_names?.join(', ') || '—'}</p></td>
-                                <td style={TD}>RM {Number(o.total_amount).toFixed(2)}</td>
-                                <td style={TD}><Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} /></td>
-                                <td style={TD}><Badge label={o.fulfillment_status} color={o.fulfillment_status === 'fulfilled' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : '#9A8573'} /></td>
-                                <td style={TD}>{new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                                <td style={TD} onClick={e => e.stopPropagation()}>
-                                  <select value={o.fulfillment_status} disabled={actionLoading === o.id} onChange={e => updateFulfillment(o.id, e.target.value)}
-                                    style={{ ...BODY, fontSize: 11, padding: '6px 10px', border: '1px solid #E5DDD5', background: '#fff', color: DARK, cursor: 'pointer', borderRadius: 6 }}>
-                                    <option value="unfulfilled">Unfulfilled</option>
-                                    <option value="processing">Processing</option>
-                                    <option value="fulfilled">Fulfilled</option>
-                                  </select>
-                                </td>
-                              </tr>
-                              {expandedOrder === o.id && (
-                                <tr key={o.id + '-detail'}>
-                                  <td colSpan={7} style={{ ...TD, background: '#F9F6F2', borderBottom: '2px solid #E5DDD5' }}>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 40px', padding: '4px 0' }}>
-                                      <div>
-                                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Delivery Address</p>
-                                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.shipping_address || '—'}</p>
-                                      </div>
-                                      <div>
-                                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Phone</p>
-                                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_phone || '—'}</p>
-                                      </div>
-                                      <div>
-                                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Spacer</p>
-                                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0, textTransform: 'capitalize' }}>{o.spacer_choice || '—'}</p>
-                                      </div>
-                                      {o.remark && (
-                                        <div>
-                                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Remark</p>
-                                          <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.remark}</p>
-                                        </div>
-                                      )}
-                                      {(o.weak_element || o.strong_element) && (
-                                        <div>
-                                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Element Analysis</p>
-                                          <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>Weak: {o.weak_element || '—'} · Strong: {o.strong_element || '—'}</p>
-                                        </div>
-                                      )}
-                                      {o.analysis_summary && (
-                                        <div style={{ width: '100%' }}>
-                                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Analysis Summary</p>
-                                          <p style={{ ...BODY, fontSize: 12, color: '#7A6355', margin: 0, lineHeight: 1.7 }}>{o.analysis_summary}</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              )}
-                            </>
-                          ))}
-                        </tbody>
-                      </table>
+              {tab === 'orders' && (() => {
+                const q = orderSearch.trim().toLowerCase()
+                const searchFiltered = orders.filter(o => !q || (o[orderSearchField] || '').toLowerCase().includes(q))
+                const tabCounts = {
+                  all: searchFiltered.length,
+                  unfulfilled: searchFiltered.filter(o => o.fulfillment_status === 'unfulfilled').length,
+                  processing:  searchFiltered.filter(o => o.fulfillment_status === 'processing').length,
+                  fulfilled:   searchFiltered.filter(o => o.fulfillment_status === 'fulfilled').length,
+                }
+                const ORDER_SORT_OPTIONS: { key: 'created_at' | 'customer_name' | 'total_amount'; label: string }[] = [
+                  { key: 'created_at',    label: 'Date' },
+                  { key: 'customer_name', label: 'Name' },
+                  { key: 'total_amount',  label: 'Amount' },
+                ]
+                const filteredOrders = searchFiltered
+                  .filter(o => orderFilter === 'all' || o.fulfillment_status === orderFilter)
+                  .sort((a, b) => {
+                    let result: number
+                    if (orderSort === 'total_amount') result = Number(a.total_amount) - Number(b.total_amount)
+                    else if (orderSort === 'customer_name') result = (a.customer_name || '').toLowerCase().localeCompare((b.customer_name || '').toLowerCase())
+                    else result = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                    return orderSortAsc ? result : -result
+                  })
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} onClick={() => setShowOrderSortDropdown(false)}>
+
+                    {/* Toolbar */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                      {/* Filter tabs */}
+                      <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 4 }}>
+                        {(['all', 'unfulfilled', 'processing', 'fulfilled'] as const).map(f => (
+                          <button key={f} onClick={() => setOrderFilter(f)}
+                            style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 14px', background: orderFilter === f ? DARK : 'transparent', color: orderFilter === f ? '#F6F1EB' : '#9A8573', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                            {f}
+                            {f !== 'all' && tabCounts[f] > 0 && (
+                              <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 999, background: orderFilter === f ? 'rgba(255,255,255,0.2)' : '#F0E8DF', color: orderFilter === f ? '#F6F1EB' : '#9A8573' }}>
+                                {tabCounts[f]}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Search + Sort */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E5DDD5', borderRadius: 7, background: '#fff', overflow: 'hidden' }}>
+                          <select
+                            value={orderSearchField}
+                            onChange={e => { setOrderSearchField(e.target.value as 'customer_name' | 'customer_email'); setOrderSearch('') }}
+                            style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '7px 8px', border: 'none', borderRight: '1px solid #E5DDD5', background: '#F6F1EB', color: '#7A6355', cursor: 'pointer', outline: 'none' }}
+                          >
+                            <option value="customer_name">Name</option>
+                            <option value="customer_email">Email</option>
+                          </select>
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 8, pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input
+                              value={orderSearch}
+                              onChange={e => setOrderSearch(e.target.value)}
+                              placeholder={`Search by ${orderSearchField === 'customer_name' ? 'name' : 'email'}…`}
+                              style={{ ...BODY, fontSize: 11, padding: '7px 28px 7px 26px', border: 'none', color: DARK, background: 'transparent', outline: 'none', width: 180 }}
+                            />
+                            {orderSearch && (
+                              <button onClick={() => setOrderSearch('')} style={{ position: 'absolute', right: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#C4B5A8', padding: 0, display: 'flex' }}>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => setShowOrderSortDropdown(o => !o)}
+                            style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '7px 14px', background: '#fff', color: DARK, border: '1px solid #E5DDD5', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+                            {ORDER_SORT_OPTIONS.find(s => s.key === orderSort)?.label}
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              {orderSortAsc ? <polyline points="18 15 12 9 6 15"/> : <polyline points="6 9 12 15 18 9"/>}
+                            </svg>
+                          </button>
+                          {showOrderSortDropdown && (
+                            <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: '#fff', border: '1px solid #E5DDD5', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.1)', padding: '6px 0', zIndex: 50, minWidth: 150 }}>
+                              {ORDER_SORT_OPTIONS.map(opt => (
+                                <button key={opt.key}
+                                  onClick={() => {
+                                    if (orderSort === opt.key) setOrderSortAsc(a => !a)
+                                    else { setOrderSort(opt.key); setOrderSortAsc(false) }
+                                    setShowOrderSortDropdown(false)
+                                  }}
+                                  style={{ ...BODY, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: orderSort === opt.key ? GOLD : DARK, fontWeight: orderSort === opt.key ? 600 : 400 }}
+                                >
+                                  {opt.label}
+                                  {orderSort === opt.key && (
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round">
+                                      {orderSortAsc ? <polyline points="18 15 12 9 6 15"/> : <polyline points="6 9 12 15 18 9"/>}
+                                    </svg>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {/* Table */}
+                    <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                      {filteredOrders.length === 0 ? (
+                        <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', padding: '48px 0' }}>No orders found.</p>
+                      ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead><tr style={{ background: '#F6F1EB' }}>
+                              <th style={TH}>#</th>
+                              <th style={TH}>Customer</th><th style={TH}>Crystals</th>
+                              <th style={TH}>Amount</th><th style={TH}>Payment</th>
+                              <th style={TH}>Fulfilment</th><th style={TH}>Date</th><th style={TH}>Update</th>
+                            </tr></thead>
+                            <tbody>
+                              {filteredOrders.map((o, idx) => (
+                                <React.Fragment key={o.id}>
+                                  <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)}>
+                                    <td style={{ ...TD, color: '#B0A090', fontSize: 11, letterSpacing: '0.06em' }}>#{o.order_number ?? '—'}</td>
+                                    <td style={TD}><p style={{ margin: '0 0 2px', fontWeight: 400 }}>{o.customer_name || '—'}</p><p style={{ margin: 0, fontSize: 11, color: '#9A8573' }}>{o.customer_email}</p></td>
+                                    <td style={TD}><p style={{ margin: 0, fontSize: 11, lineHeight: 1.6 }}>{o.recommended_crystal_names?.join(', ') || '—'}</p></td>
+                                    <td style={TD}>S${Number(o.total_amount).toFixed(2)}</td>
+                                    <td style={TD}><Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} /></td>
+                                    <td style={TD}><Badge label={o.fulfillment_status} color={o.fulfillment_status === 'fulfilled' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : '#9A8573'} /></td>
+                                    <td style={TD}>{new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                    <td style={TD} onClick={e => e.stopPropagation()}>
+                                      <select value={o.fulfillment_status} disabled={actionLoading === o.id} onChange={e => updateFulfillment(o.id, e.target.value)}
+                                        style={{ ...BODY, fontSize: 11, padding: '6px 10px', border: '1px solid #E5DDD5', background: '#fff', color: DARK, cursor: 'pointer', borderRadius: 6 }}>
+                                        <option value="unfulfilled">Unfulfilled</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="fulfilled">Fulfilled</option>
+                                      </select>
+                                    </td>
+                                  </tr>
+                                  {expandedOrder === o.id && (
+                                    <tr>
+                                      <td colSpan={8} style={{ ...TD, background: '#F9F6F2', borderBottom: '2px solid #E5DDD5' }}>
+                                        <div style={{ display: 'flex', gap: 24, padding: '4px 0', alignItems: 'flex-start' }}>
+                                          {o.generated_image_url && (
+                                            <button
+                                              onClick={e => { e.stopPropagation(); setLightboxUrl(o.generated_image_url) }}
+                                              style={{ background: 'none', border: '1px solid #E5DDD5', borderRadius: 10, padding: 0, cursor: 'zoom-in', flexShrink: 0, overflow: 'hidden', width: 80, height: 80 }}
+                                              title="Click to enlarge"
+                                            >
+                                              <img src={o.generated_image_url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
+                                            </button>
+                                          )}
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 40px', flex: 1 }}>
+                                          <div>
+                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Delivery Address</p>
+                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.shipping_address || '—'}</p>
+                                          </div>
+                                          <div>
+                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Phone</p>
+                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_phone || '—'}</p>
+                                          </div>
+                                          <div>
+                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Spacer</p>
+                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0, textTransform: 'capitalize' }}>{o.spacer_choice || '—'}</p>
+                                          </div>
+                                          {o.remark && (
+                                            <div>
+                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Remark</p>
+                                              <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.remark}</p>
+                                            </div>
+                                          )}
+                                          {(o.weak_element || o.strong_element) && (
+                                            <div>
+                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Element Analysis</p>
+                                              <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>Weak: {o.weak_element || '—'} · Strong: {o.strong_element || '—'}</p>
+                                            </div>
+                                          )}
+                                          {o.analysis_summary && (
+                                            <div style={{ width: '100%' }}>
+                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Analysis Summary</p>
+                                              <p style={{ ...BODY, fontSize: 12, color: '#7A6355', margin: 0, lineHeight: 1.7 }}>{o.analysis_summary}</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </React.Fragment>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Count footer */}
+                    <p style={{ ...BODY, fontSize: 11, color: '#B0A090', textAlign: 'center', letterSpacing: '0.1em', paddingTop: 4 }}>
+                      {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'}
+                      {tabCounts.processing > 0 && <span style={{ color: GOLD }}> · {tabCounts.processing} processing</span>}
+                      {tabCounts.unfulfilled > 0 && <span style={{ color: '#C0392B' }}> · {tabCounts.unfulfilled} unfulfilled</span>}
+                    </p>
+                  </div>
+                )
+              })()}
 
               {/* ── USERS ── */}
               {tab === 'users' && (
@@ -770,6 +929,68 @@ export default function AdminPage() {
               )}
 
               {/* ── AI PROMPT ── */}
+              {tab === 'shop' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Toolbar */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopProducts.length} product{shopProducts.length !== 1 ? 's' : ''}</p>
+                    <button
+                      onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '' }) }}
+                      style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    >
+                      + Add Product
+                    </button>
+                  </div>
+
+                  {shopLoading ? (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
+                  ) : shopProducts.length === 0 ? (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No products yet. Add your first one.</p>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+                      {shopProducts.map(p => (
+                        <div key={p.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ position: 'relative', aspectRatio: '1', background: '#F8F4EF' }}>
+                            {p.image_url
+                              ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: GOLD, opacity: 0.3 }}>✦</div>
+                            }
+                            <span style={{ position: 'absolute', top: 8, right: 8, ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 999, background: p.active ? '#22C55E22' : '#E5DDD5', color: p.active ? '#15803D' : '#9A8573', border: `1px solid ${p.active ? '#22C55E44' : '#E5DDD5'}` }}>
+                              {p.active ? 'Active' : 'Hidden'}
+                            </span>
+                          </div>
+                          <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>{p.category}</p>
+                            <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: DARK, margin: 0 }}>{p.name}</p>
+                            {p.description && <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0, lineHeight: 1.6 }}>{p.description}</p>}
+                            <p style={{ ...SERIF, fontSize: 18, color: DARK, margin: '4px 0 0' }}>S${p.price.toFixed(2)}</p>
+                          </div>
+                          <div style={{ padding: '0 16px 14px', display: 'flex', gap: 8 }}>
+                            <button
+                              onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '' }) }}
+                              style={{ ...BODY, flex: 1, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 8, cursor: 'pointer', color: DARK }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!confirm('Delete this product?')) return
+                                const token = (await supabase.auth.getSession()).data.session?.access_token
+                                await fetch('/api/shop/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id }) })
+                                fetchShopProducts()
+                              }}
+                              style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, cursor: 'pointer', color: '#DC2626' }}
+                            >
+                              Del
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {tab === 'ai-prompt' && (
                 <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '28px 32px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
@@ -788,6 +1009,27 @@ export default function AdminPage() {
           )}
         </div>
       </div>
+
+      {/* ── IMAGE LIGHTBOX ── */}
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, cursor: 'zoom-out' }}
+        >
+          <button
+            onClick={() => setLightboxUrl(null)}
+            style={{ position: 'absolute', top: 20, right: 24, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Bracelet"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 32px 80px rgba(0,0,0,0.6)', cursor: 'default' }}
+          />
+        </div>
+      )}
 
       {/* ── ADD CRYSTAL MODAL ── */}
       {showAddCrystal && (
@@ -887,6 +1129,135 @@ export default function AdminPage() {
               </button>
               <button onClick={addCrystal} disabled={addCrystalLoading} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: addCrystalLoading ? 'not-allowed' : 'pointer', opacity: addCrystalLoading ? 0.7 : 1 }}>
                 {addCrystalLoading ? 'Saving…' : 'Add Crystal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD PRODUCT MODAL ── */}
+      {showAddProduct && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAddProduct(false) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+              <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Add Product</h2>
+              <button onClick={() => setShowAddProduct(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(['name', 'description', 'price'] as const).map(k => (
+                <div key={k}>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>{k.charAt(0).toUpperCase() + k.slice(1)}{k === 'name' || k === 'price' ? ' *' : ''}</label>
+                  <input value={newProduct[k]} onChange={e => setNewProduct(p => ({ ...p, [k]: e.target.value }))} placeholder={k === 'price' ? 'e.g. 88.00' : ''} type={k === 'price' ? 'number' : 'text'}
+                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              ))}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Category *</label>
+                <select value={newProduct.category} onChange={e => setNewProduct(p => ({ ...p, category: e.target.value }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}>
+                  <option value="bracelet">Bracelet</option>
+                  <option value="crystal">Crystal</option>
+                  <option value="accessory">Accessory</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Product Image</label>
+                {newProduct.image_url && (
+                  <img src={newProduct.image_url} alt="Preview" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginBottom: 8, border: '1px solid #E5DDD5' }} />
+                )}
+                <label style={{ ...BODY, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', border: '1px dashed #D5CDC6', borderRadius: 8, cursor: productImageUploading ? 'not-allowed' : 'pointer', background: '#FAFAF8', fontSize: 11, color: '#9A8573', opacity: productImageUploading ? 0.6 : 1 }}>
+                  {productImageUploading ? 'Uploading…' : '⬆ Upload Image'}
+                  <input type="file" accept="image/*" style={{ display: 'none' }} disabled={productImageUploading} onChange={async e => {
+                    const file = e.target.files?.[0]; if (!file) return
+                    setProductImageUploading(true)
+                    const token = (await supabase.auth.getSession()).data.session?.access_token
+                    const fd = new FormData(); fd.append('file', file)
+                    const r = await fetch('/api/admin/shop/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+                    const d = await r.json()
+                    if (d.url) setNewProduct(p => ({ ...p, image_url: d.url }))
+                    setProductImageUploading(false)
+                  }} />
+                </label>
+              </div>
+            </div>
+            {addProductError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '12px 0 0' }}>{addProductError}</p>}
+            <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAddProduct(false)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>Cancel</button>
+              <button disabled={addProductLoading} onClick={async () => {
+                setAddProductError(null)
+                if (!newProduct.name || !newProduct.price) { setAddProductError('Name and price are required.'); return }
+                setAddProductLoading(true)
+                const token = (await supabase.auth.getSession()).data.session?.access_token
+                const r = await fetch('/api/shop/products', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...newProduct, price: parseFloat(newProduct.price), image_url: newProduct.image_url || null, description: newProduct.description || null }) })
+                if (!r.ok) { const d = await r.json(); setAddProductError(d.error || 'Failed'); setAddProductLoading(false); return }
+                setAddProductLoading(false); setShowAddProduct(false); fetchShopProducts()
+              }} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: addProductLoading ? 'not-allowed' : 'pointer', opacity: addProductLoading ? 0.7 : 1 }}>
+                {addProductLoading ? 'Saving…' : 'Add Product'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EDIT PRODUCT MODAL ── */}
+      {editProductId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setEditProductId(null) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+              <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Edit Product</h2>
+              <button onClick={() => setEditProductId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(['name', 'description', 'price'] as const).map(k => (
+                <div key={k}>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>{k.charAt(0).toUpperCase() + k.slice(1)}{k === 'name' || k === 'price' ? ' *' : ''}</label>
+                  <input value={editProduct[k]} onChange={e => setEditProduct(p => ({ ...p, [k]: e.target.value }))} type={k === 'price' ? 'number' : 'text'}
+                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              ))}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Product Image</label>
+                {editProduct.image_url && (
+                  <img src={editProduct.image_url} alt="Preview" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginBottom: 8, border: '1px solid #E5DDD5' }} />
+                )}
+                <label style={{ ...BODY, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', border: '1px dashed #D5CDC6', borderRadius: 8, cursor: productImageUploading ? 'not-allowed' : 'pointer', background: '#FAFAF8', fontSize: 11, color: '#9A8573', opacity: productImageUploading ? 0.6 : 1 }}>
+                  {productImageUploading ? 'Uploading…' : editProduct.image_url ? '⬆ Change Image' : '⬆ Upload Image'}
+                  <input type="file" accept="image/*" style={{ display: 'none' }} disabled={productImageUploading} onChange={async e => {
+                    const file = e.target.files?.[0]; if (!file) return
+                    setProductImageUploading(true)
+                    const tok = (await supabase.auth.getSession()).data.session?.access_token
+                    const fd = new FormData(); fd.append('file', file)
+                    const r = await fetch('/api/admin/shop/upload', { method: 'POST', headers: { Authorization: `Bearer ${tok}` }, body: fd })
+                    const d = await r.json()
+                    if (d.url) setEditProduct(p => ({ ...p, image_url: d.url }))
+                    setProductImageUploading(false)
+                  }} />
+                </label>
+              </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Category</label>
+                <select value={editProduct.category} onChange={e => setEditProduct(p => ({ ...p, category: e.target.value }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}>
+                  <option value="bracelet">Bracelet</option>
+                  <option value="crystal">Crystal</option>
+                  <option value="accessory">Accessory</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditProductId(null)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={async () => {
+                const token = (await supabase.auth.getSession()).data.session?.access_token
+                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: editProductId, ...editProduct, price: parseFloat(editProduct.price), image_url: editProduct.image_url || null, description: editProduct.description || null }) })
+                setEditProductId(null); fetchShopProducts()
+              }} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                Save Changes
               </button>
             </div>
           </div>

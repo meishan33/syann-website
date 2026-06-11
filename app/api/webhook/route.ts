@@ -28,7 +28,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const { resultId, spacer, remark } = session.metadata ?? {}
+    const { order_type, resultId, spacer, remark, userId, savedAddress: savedAddressJson, items: itemsJson } = session.metadata ?? {}
+
+    // ── Shop order ──────────────────────────────────────────────────────────
+    if (order_type === 'shop') {
+      const { data: existingShop } = await supabaseAdmin
+        .from('shop_orders')
+        .select('id')
+        .eq('stripe_session_id', session.id)
+        .maybeSingle()
+
+      if (existingShop) return NextResponse.json({ received: true })
+
+      type ShippingAddr = { name?: string | null; phone?: string | null; line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null }
+      type SessionExt = { shipping_details?: { address?: ShippingAddr }; collected_information?: { shipping_details?: { address?: ShippingAddr } } }
+
+      let savedAddr: ShippingAddr | null = null
+      try { if (savedAddressJson) savedAddr = JSON.parse(savedAddressJson) } catch {}
+
+      const sessionExt = session as unknown as SessionExt
+      const addr: ShippingAddr | null | undefined = savedAddr ?? sessionExt.collected_information?.shipping_details?.address ?? sessionExt.shipping_details?.address
+
+      const orderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data).catch(() => null)
+
+      await supabaseAdmin.from('shop_orders').insert({
+        order_number: orderNumber,
+        customer_name: addr?.name || session.customer_details?.name || null,
+        customer_email: session.customer_details?.email || null,
+        customer_phone: addr?.phone || session.customer_details?.phone || null,
+        shipping_address: addr ?? null,
+        items: itemsJson ? JSON.parse(itemsJson) : [],
+        total_amount: (session.amount_total ?? 0) / 100,
+        payment_status: 'paid',
+        fulfillment_status: 'unfulfilled',
+        stripe_session_id: session.id,
+      })
+
+      return NextResponse.json({ received: true })
+    }
+
+    // ── Bracelet order ───────────────────────────────────────────────────────
 
     // Look up crystal names from the quiz result
     const { data: result } = await supabaseAdmin
@@ -48,11 +87,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    type ShippingAddr = { line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null }
+    type ShippingAddr = { name?: string | null; phone?: string | null; line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null }
     type SessionExt = { shipping_details?: { address?: ShippingAddr }; collected_information?: { shipping_details?: { address?: ShippingAddr } } }
+
+    // If user picked a saved address, it's in metadata; otherwise read from Stripe's collected shipping
+    let savedAddress: ShippingAddr | null = null
+    try { if (savedAddressJson) savedAddress = JSON.parse(savedAddressJson) } catch {}
+
     const sessionExt = session as unknown as SessionExt
     // dahlia API version uses collected_information.shipping_details; fall back to shipping_details for older versions
-    const addr = sessionExt.collected_information?.shipping_details?.address ?? sessionExt.shipping_details?.address
+    const addr: ShippingAddr | null | undefined = savedAddress ?? sessionExt.collected_information?.shipping_details?.address ?? sessionExt.shipping_details?.address
     const shippingAddress = addr
       ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country]
           .filter(Boolean)
@@ -81,6 +125,29 @@ export async function POST(req: NextRequest) {
     if (insertError) {
       console.error('Webhook order insert failed:', insertError.message)
       return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    // Auto-save new Stripe-collected address to delivery_addresses (only if user didn't pick a saved one)
+    if (userId && addr && !savedAddress) {
+      const { count } = await supabaseAdmin
+        .from('delivery_addresses')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+
+      if (count === 0) {
+        await supabaseAdmin.from('delivery_addresses').insert({
+          user_id: userId,
+          name: session.customer_details?.name || null,
+          phone: session.customer_details?.phone || null,
+          line1: addr.line1 || null,
+          line2: addr.line2 || null,
+          city: addr.city || null,
+          state: addr.state || null,
+          postal_code: addr.postal_code || null,
+          country: addr.country || 'MY',
+          is_default: true,
+        })
+      }
     }
   }
 

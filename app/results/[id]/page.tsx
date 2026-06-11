@@ -1,7 +1,9 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import PurchasePanel from "./PurchasePanel";
+import BraceletRenderer from "@/components/BraceletRenderer";
+import { generateBeadSequence } from "@/lib/design-engine";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -12,7 +14,7 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 export default async function ResultsPage({ params }: Props) {
   const { id } = await params;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("energy_quiz_results")
     .select("*")
     .eq("id", id)
@@ -22,11 +24,21 @@ export default async function ResultsPage({ params }: Props) {
   const crystalExplanations: Record<string, string> = data?.crystal_explanations ?? {};
 
   const { data: crystalDetails } = crystalNames.length
-    ? await supabase
+    ? await supabaseAdmin
         .from("crystals")
         .select("name, meaning, bead_image_url")
         .in("name", crystalNames)
     : { data: [] };
+
+  const imageMap: Record<string, string> = {}
+  for (const c of crystalDetails ?? []) {
+    if (c.bead_image_url) imageMap[c.name] = c.bead_image_url
+  }
+
+  const [c1, c2, c3] = crystalNames
+  const beadSequence = c1 && c2 && c3
+    ? generateBeadSequence([c1, c2, c3])
+    : []
 
   /* ── Error state ── */
   if (error || !data) {
@@ -90,40 +102,16 @@ export default async function ResultsPage({ params }: Props) {
 
             <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-7 lg:flex lg:flex-col lg:h-full">
 
-              {data.cached_image_url ? (
-                <div className="relative aspect-square w-full overflow-hidden rounded-[20px] bg-[#F8F4EF] lg:aspect-auto lg:flex-1">
-                  <Image
-                    src={data.cached_image_url}
-                    alt="Your personalized crystal bracelet"
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 60vw"
-                    className="object-contain"
-                  />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-                    <span
-                      style={{ fontFamily: "'Cormorant Garamond', serif", letterSpacing: '0.65em' }}
-                      className="text-[15px] font-light text-white/80 uppercase drop-shadow-sm"
-                    >
-                      SYANN.CO
-                    </span>
-                    <span
-                      style={{ fontFamily: 'sans-serif', letterSpacing: '0.28em' }}
-                      className="text-[6.5px] font-light text-white/55 uppercase drop-shadow-sm"
-                    >
-                      CRYSTALS · ENERGY · YOU
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="aspect-square flex flex-col items-center justify-center gap-4 rounded-[20px] bg-[#EFE7DD] lg:aspect-auto lg:flex-1">
-                  <span className="text-4xl text-[#B08B57] opacity-40">✦</span>
-                  <p className="text-sm text-[#9A8573]">Bracelet preview generating…</p>
-                </div>
-              )}
+              <div className="w-full lg:flex-1">
+                <BraceletRenderer sequence={beadSequence} imageMap={imageMap} />
+              </div>
 
               <p className="mt-4 text-center text-[10px] uppercase tracking-[0.28em] text-[#9A8573]">
                 AI-curated · Five Elements · Handcrafted
+              </p>
+
+              <p className="mt-2 text-center text-[10px] leading-relaxed text-[#B5A898]" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                Each crystal is natural and unique — actual colors may vary slightly from the preview.
               </p>
 
             </div>

@@ -4,10 +4,11 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { getCart, cartCount } from '@/lib/cart'
 
 const NAV_LINKS = [
-  { href: '/',            label: 'Main' },
   { href: '/energy-quiz', label: 'Energy Quiz' },
+  { href: '/shop',        label: 'Shop' },
   { href: '/about',       label: 'About' },
   { href: '/faq',         label: 'FAQ' },
   { href: '/contact',     label: 'Contact' },
@@ -17,7 +18,15 @@ export default function Navbar() {
   const router = useRouter()
   const [loggedIn, setLoggedIn] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [cartItems, setCartItems] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setCartItems(cartCount(getCart()))
+    const onCartUpdate = () => setCartItems(cartCount(getCart()))
+    window.addEventListener('cart-updated', onCartUpdate)
+    return () => window.removeEventListener('cart-updated', onCartUpdate)
+  }, [])
 
   useEffect(() => {
     supabase.auth.refreshSession().then(({ data: { session } }) => {
@@ -73,6 +82,20 @@ export default function Navbar() {
       {/* RIGHT — ICONS */}
       <div className="navbar-icons">
 
+        {/* Cart */}
+        <Link href="/shop/cart" className="navbar-icon-btn" aria-label="Shopping cart" style={{ position: 'relative', marginRight: -14 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A2E14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+          </span>
+          {cartItems > 0 && (
+            <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 999, background: '#B08B57', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', fontFamily: "'Montserrat', sans-serif" }}>
+              {cartItems > 99 ? '99+' : cartItems}
+            </span>
+          )}
+        </Link>
+
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           {loggedIn ? (
             <button
@@ -81,7 +104,7 @@ export default function Navbar() {
               onClick={() => setDropdownOpen(o => !o)}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', background: '#A8936F', transition: 'background 0.3s ease' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', background: '#EDE3D0', transition: 'background 0.3s ease' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A2E14" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.418 3.582-7 8-7s8 2.582 8 7" />
                 </svg>

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { openai } from "@/lib/openai";
 import { analyzeFiveElements } from "@/lib/five-elements";
 import { buildSystemPrompt, buildUserMessage } from "@/lib/prompts";
 
 type AIRecommendation = {
   selectedCrystals: string[];
-  spacerName: string | null;
   analysisSummary: string;
   crystalExplanations: Record<string, string>;
   imagePrompt: string;
@@ -59,16 +59,13 @@ export async function POST(req: NextRequest) {
     console.log("Strong Element:", analysis.strongElement);
 
     // ============================================
-    // FETCH CRYSTALS + SPACERS IN PARALLEL
+    // FETCH CRYSTALS
     // ============================================
 
-    const [
-      { data: crystals, error: crystalError },
-      { data: spacers, error: spacerError },
-    ] = await Promise.all([
-      supabase.from("crystals").select("name, primary_element, meaning, energy_tags").eq("active", true),
-      supabase.from("spacers").select("name, color").eq("active", true),
-    ]);
+    const { data: crystals, error: crystalError } = await supabase
+      .from("crystals")
+      .select("name, primary_element, meaning, energy_tags")
+      .eq("active", true);
 
     if (crystalError || !crystals) {
       console.error("Crystal Fetch Error:", crystalError);
@@ -78,15 +75,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (spacerError) {
-      console.error("Spacer Fetch Error:", spacerError);
-      return NextResponse.json(
-        { error: spacerError.message },
-        { status: 500 }
-      );
-    }
-
-    console.log("Fetched crystals and spacers successfully");
+    console.log("Fetched crystals successfully");
 
     // ============================================
     // STAGE 1 — AI CRYSTAL SELECTION + EXPLANATION
@@ -108,7 +97,6 @@ export async function POST(req: NextRequest) {
       strongElement: analysis.strongElement,
       elementCounts,
       crystals,
-      spacers: spacers ?? [],
     });
 
     const aiResponse = await openai.chat.completions.create({
@@ -129,7 +117,12 @@ export async function POST(req: NextRequest) {
     const recommendation: AIRecommendation = JSON.parse(aiContent);
 
     console.log("AI selected crystals:", recommendation.selectedCrystals);
-    console.log("AI selected spacer:", recommendation.spacerName);
+    console.log("AI image prompt length:", recommendation.imagePrompt?.length ?? 0);
+
+    if (!recommendation.imagePrompt) {
+      console.error("AI response missing imagePrompt. Full response:", aiContent);
+      throw new Error("AI did not generate an image prompt — please try again.");
+    }
 
     // ============================================
     // RESOLVE CRYSTAL OBJECTS FROM CATALOG
@@ -147,10 +140,6 @@ export async function POST(req: NextRequest) {
         )
       )
       .filter(Boolean);
-
-    const selectedSpacer = spacers?.find(
-      (s) => s.name === recommendation.spacerName
-    ) || null;
 
     // ============================================
     // STAGE 2 — GENERATE BRACELET IMAGE
@@ -211,7 +200,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Saving result to Supabase...");
 
-    const { data: savedResult, error: saveError } = await supabase
+    const { data: savedResult, error: saveError } = await supabaseAdmin
       .from("energy_quiz_results")
       .insert([
         {
@@ -224,7 +213,6 @@ export async function POST(req: NextRequest) {
           calculated_strong_element: analysis.strongElement,
           crystal_names: recommendation.selectedCrystals,
           crystal_explanations: recommendation.crystalExplanations,
-          suggested_spacer: recommendation.spacerName || null,
           analysis_summary: recommendation.analysisSummary,
           cached_image_url: generatedImageUrl,
           generated_prompt: recommendation.imagePrompt,
@@ -253,7 +241,6 @@ export async function POST(req: NextRequest) {
       strongElement: analysis.strongElement,
       recommendedCrystals,
       crystalExplanations: recommendation.crystalExplanations,
-      spacer: selectedSpacer,
       generatedImageUrl,
       analysisSummary: recommendation.analysisSummary,
     });
@@ -262,8 +249,9 @@ export async function POST(req: NextRequest) {
 
     console.error("Analyze API Error:", error);
 
+    const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: message },
       { status: 500 }
     );
   }

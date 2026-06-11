@@ -2,9 +2,40 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useCurrency } from '@/context/CurrencyContext'
 import type { User } from '@supabase/supabase-js'
+
+type Tab = 'profile' | 'orders'
+
+type Order = {
+  id: string
+  order_number: number | null
+  customer_name: string
+  recommended_crystal_names: string[]
+  total_amount: number
+  payment_status: string
+  fulfillment_status: string
+  created_at: string
+  generated_image_url: string | null
+  weak_element: string | null
+  strong_element: string | null
+  analysis_summary: string | null
+  shipping_address: string | null
+  spacer_choice: string | null
+  remark: string | null
+  customer_phone: string | null
+}
+
+function StatusBadge({ label, color }: { label: string; color: string }) {
+  return (
+    <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase' as const, padding: '3px 10px', borderRadius: 999, background: color + '22', color, border: `1px solid ${color}44` }}>
+      {label}
+    </span>
+  )
+}
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
@@ -174,43 +205,39 @@ export default function AccountPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
+  const { format } = useCurrency()
+  const [tab, setTab] = useState<Tab>('profile')
+  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
-  type Address = {
-    delivery_name: string; delivery_phone: string
-    delivery_address_line1: string; delivery_address_line2: string
-    delivery_city: string; delivery_state: string
-    delivery_postal_code: string; delivery_country: string
+  type DeliveryAddress = {
+    id: string; label: string | null; name: string | null; phone: string | null
+    line1: string; line2: string | null; city: string | null; state: string | null
+    postal_code: string | null; country: string | null; is_default: boolean
   }
-  const EMPTY_ADDRESS: Address = { delivery_name: '', delivery_phone: '', delivery_address_line1: '', delivery_address_line2: '', delivery_city: '', delivery_state: '', delivery_postal_code: '', delivery_country: '' }
-  const [address, setAddress] = useState<Address>(EMPTY_ADDRESS)
-  const [addressEdit, setAddressEdit] = useState<Address>(EMPTY_ADDRESS)
-  const [editingAddress, setEditingAddress] = useState(false)
-  const [addressSaving, setAddressSaving] = useState(false)
-  const [addressError, setAddressError] = useState<string | null>(null)
+  type AddrForm = { label: string; name: string; phone: string; line1: string; line2: string; city: string; state: string; postal_code: string; country: string }
+  const EMPTY_FORM: AddrForm = { label: '', name: '', phone: '', line1: '', line2: '', city: '', state: '', postal_code: '', country: 'MY' }
+
+  const [addresses, setAddresses] = useState<DeliveryAddress[]>([])
+  const [addrForm, setAddrForm] = useState<AddrForm>(EMPTY_FORM)
+  const [editingId, setEditingId] = useState<string | 'new' | null>(null)
+  const [addrSaving, setAddrSaving] = useState(false)
+  const [addrError, setAddrError] = useState<string | null>(null)
+
+  const fetchAddresses = async (token: string) => {
+    const res = await fetch('/api/addresses', { headers: { Authorization: `Bearer ${token}` } })
+    if (res.ok) setAddresses(await res.json())
+  }
 
   useEffect(() => {
     supabase.auth.refreshSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null
       setUser(u)
       if (u) {
-        const { data } = await supabase.from('profiles')
-          .select('is_admin, delivery_name, delivery_phone, delivery_address_line1, delivery_address_line2, delivery_city, delivery_state, delivery_postal_code, delivery_country')
-          .eq('id', u.id).single()
+        const { data } = await supabase.from('profiles').select('is_admin').eq('id', u.id).single()
         setIsAdmin(data?.is_admin === true)
-        if (data) {
-          const addr: Address = {
-            delivery_name: data.delivery_name ?? '',
-            delivery_phone: data.delivery_phone ?? '',
-            delivery_address_line1: data.delivery_address_line1 ?? '',
-            delivery_address_line2: data.delivery_address_line2 ?? '',
-            delivery_city: data.delivery_city ?? '',
-            delivery_state: data.delivery_state ?? '',
-            delivery_postal_code: data.delivery_postal_code ?? '',
-            delivery_country: data.delivery_country ?? '',
-          }
-          setAddress(addr)
-          setAddressEdit(addr)
-        }
+        await fetchAddresses(session!.access_token)
       }
       setLoading(false)
     })
@@ -222,14 +249,49 @@ export default function AccountPage() {
     return () => subscription.unsubscribe()
   }, [router])
 
-  const saveAddress = async () => {
-    if (!user) return
-    setAddressSaving(true); setAddressError(null)
-    const { error } = await supabase.from('profiles').update(addressEdit).eq('id', user.id)
-    if (error) { setAddressError(error.message); setAddressSaving(false); return }
-    setAddress(addressEdit)
-    setEditingAddress(false)
-    setAddressSaving(false)
+  const getToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token ?? null
+  }
+
+  const saveAddr = async () => {
+    if (!addrForm.line1.trim()) { setAddrError('Address line 1 is required'); return }
+    setAddrSaving(true); setAddrError(null)
+    const token = await getToken()
+    if (!token) return
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    let res: Response
+    if (editingId === 'new') {
+      res = await fetch('/api/addresses', { method: 'POST', headers, body: JSON.stringify(addrForm) })
+    } else {
+      res = await fetch('/api/addresses', { method: 'PATCH', headers, body: JSON.stringify({ id: editingId, ...addrForm }) })
+    }
+    if (!res.ok) { const e = await res.json(); setAddrError(e.error || 'Failed to save'); setAddrSaving(false); return }
+    await fetchAddresses(token)
+    setEditingId(null); setAddrForm(EMPTY_FORM); setAddrSaving(false)
+  }
+
+  const deleteAddr = async (id: string) => {
+    const token = await getToken()
+    if (!token) return
+    await fetch('/api/addresses', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id }) })
+    await fetchAddresses(token)
+  }
+
+  const setDefault = async (id: string) => {
+    const token = await getToken()
+    if (!token) return
+    await fetch('/api/addresses', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id, is_default: true }) })
+    await fetchAddresses(token)
+  }
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setOrdersLoading(false); return }
+    const res = await fetch('/api/orders', { headers: { Authorization: `Bearer ${session.access_token}` } })
+    if (res.ok) setOrders(await res.json())
+    setOrdersLoading(false)
   }
 
   const handleSignOut = async () => {
@@ -311,9 +373,29 @@ export default function AccountPage() {
 
           {/* Nav items */}
           <nav style={{ padding: '10px 8px' }}>
+            {/* Profile tab */}
+            <button onClick={() => setTab('profile')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, textDecoration: 'none', color: '#4A3A32', marginBottom: 2, width: '100%', background: tab === 'profile' ? '#F6F1EB' : 'transparent', border: 'none', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
+              onMouseLeave={e => (e.currentTarget.style.background = tab === 'profile' ? '#F6F1EB' : 'transparent')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              <span style={{ ...BODY, fontSize: 12, fontWeight: tab === 'profile' ? 600 : 400 }}>My Profile</span>
+            </button>
+
+            {/* Orders tab */}
+            <button onClick={() => { setTab('orders'); fetchOrders() }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, color: '#4A3A32', marginBottom: 2, width: '100%', background: tab === 'orders' ? '#F6F1EB' : 'transparent', border: 'none', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
+              onMouseLeave={e => (e.currentTarget.style.background = tab === 'orders' ? '#F6F1EB' : 'transparent')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+              <span style={{ ...BODY, fontSize: 12, fontWeight: tab === 'orders' ? 600 : 400 }}>My Orders</span>
+            </button>
+
+            {/* External links */}
             {[
               { href: '/energy-quiz', label: 'New Crystal Reading', icon: <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/> },
-              { href: '/orders',      label: 'My Orders',           icon: <><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></> },
               { href: '/contact',     label: 'Contact Support',     icon: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></> },
               { href: '/about',       label: 'About SYANN',         icon: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></> },
               ...(isAdmin ? [{ href: '/admin', label: 'Admin Dashboard', icon: <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></> }] : []),
@@ -343,6 +425,130 @@ export default function AccountPage() {
 
         {/* ── RIGHT CONTENT ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* ── ORDERS TAB ── */}
+          {tab === 'orders' && (
+            <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '32px 36px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+                <Diamond />
+                <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>My Orders</p>
+              </div>
+              {ordersLoading ? (
+                <p style={{ ...BODY, fontSize: 11, letterSpacing: '0.28em', color: GOLD, textTransform: 'uppercase', textAlign: 'center', padding: '32px 0' }}>Loading…</p>
+              ) : orders.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <p style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: '#4A3A32', margin: '0 0 8px' }}>No Orders Yet</p>
+                  <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#9A8573', margin: '0 0 24px', lineHeight: 1.7 }}>Your crystal bracelet orders will appear here.</p>
+                  <Link href="/energy-quiz" style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 24px', background: '#4A3A32', color: '#F6F1EB', borderRadius: 999, textDecoration: 'none', fontSize: 11, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase' }}>
+                    Discover Your Bracelet
+                  </Link>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {orders.map((order) => {
+                    const isOpen = expandedOrder === order.id
+                    return (
+                    <div key={order.id} style={{ background: '#F9F5F0', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                      {/* Clickable header */}
+                      <button
+                        onClick={() => setExpandedOrder(isOpen ? null : order.id)}
+                        style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}
+                      >
+                        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: 1, flexWrap: 'wrap', textAlign: 'left' }}>
+                          {order.generated_image_url && (
+                            <div style={{ position: 'relative', width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
+                              <Image src={order.generated_image_url} alt="Crystal bracelet" fill sizes="60px" style={{ objectFit: 'contain' }} />
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>
+                              {order.order_number ? `#${order.order_number}` : '—'} · {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </span>
+                            <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: '#4A3A32', margin: 0 }}>Crystal Bracelet</p>
+                            <p style={{ ...BODY, fontSize: 11, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.6 }}>
+                              {order.recommended_crystal_names?.join(' · ') || '—'}
+                            </p>
+                            {(order.weak_element || order.strong_element) && (
+                              <p style={{ ...BODY, fontSize: 10, color: GOLD, margin: 0 }}>
+                                Weak: {order.weak_element || '—'} · Strong: {order.strong_element || '—'}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                          <p style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32', margin: 0 }}>{format(Number(order.total_amount))}</p>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                            <StatusBadge label={order.payment_status} color={order.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} />
+                            <StatusBadge label={order.fulfillment_status} color={order.fulfillment_status === 'fulfilled' ? '#7CB98A' : order.fulfillment_status === 'processing' ? GOLD : '#9A8573'} />
+                          </div>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginTop: 4 }}><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                      </button>
+
+                      {/* Expanded details */}
+                      {isOpen && (
+                        <div style={{ borderTop: '1px solid #E5DDD5', padding: '16px 24px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                          {/* Delivery info */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '12px 24px' }}>
+                            {order.customer_name && <>
+                              <div>
+                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Name</p>
+                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.customer_name}</p>
+                              </div>
+                              {order.shipping_address
+                                ? <div>
+                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Delivery Address</p>
+                                    <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.shipping_address}</p>
+                                  </div>
+                                : <div />
+                              }
+                            </>}
+                            {order.customer_phone && <>
+                              <div>
+                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Phone</p>
+                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.customer_phone}</p>
+                              </div>
+                              {order.remark
+                                ? <div>
+                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Remarks</p>
+                                    <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.remark}</p>
+                                  </div>
+                                : <div />
+                              }
+                            </>}
+                            {!order.customer_phone && order.remark && <>
+                              <div>
+                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Remarks</p>
+                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.remark}</p>
+                              </div>
+                              <div />
+                            </>}
+                          </div>
+
+                          {/* Element analysis */}
+                          {order.analysis_summary && (
+                            <div style={{ background: '#F6F1EB', borderRadius: 10, padding: '14px 16px' }}>
+                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 6px' }}>Elemental Analysis</p>
+                              <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.8 }}>{order.analysis_summary}</p>
+                            </div>
+                          )}
+
+                        </div>
+                      )}
+                    </div>
+                    )
+                  })}
+                  <p style={{ ...BODY, fontSize: 11, color: '#B0A090', textAlign: 'center', letterSpacing: '0.1em', paddingTop: 4 }}>
+                    {orders.length} {orders.length === 1 ? 'order' : 'orders'} total
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── PROFILE TAB ── */}
+          {tab === 'profile' && <>
 
           {/* Account Details */}
           <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '32px 36px' }}>
@@ -374,89 +580,87 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Delivery Address */}
+          {/* Delivery Addresses */}
           <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '32px 36px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Diamond />
-                <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>Delivery Address</p>
+                <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>Delivery Addresses</p>
               </div>
-              {!editingAddress && (
-                <button onClick={() => { setAddressEdit(address); setEditingAddress(true); setAddressError(null) }}
+              {editingId === null && (
+                <button onClick={() => { setEditingId('new'); setAddrForm(EMPTY_FORM); setAddrError(null) }}
                   style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '7px 16px', background: 'transparent', border: '1px solid #E5DDD5', borderRadius: 7, color: '#7A6355', cursor: 'pointer' }}>
-                  {Object.values(address).every(v => !v) ? 'Add Address' : 'Edit'}
+                  + Add Address
                 </button>
               )}
             </div>
 
-            {editingAddress ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {([
-                    { key: 'delivery_name',  label: 'Full Name',    placeholder: 'e.g. Jane Lim' },
-                    { key: 'delivery_phone', label: 'Phone Number', placeholder: 'e.g. +60 12 345 6789' },
-                  ] as { key: keyof Address; label: string; placeholder: string }[]).map(({ key, label, placeholder }) => (
-                    <div key={key}>
-                      <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>{label}</label>
-                      <input value={addressEdit[key]} onChange={e => setAddressEdit(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} style={{ ...INPUT, fontSize: 12, padding: '10px 14px' }} />
-                    </div>
-                  ))}
+            {/* Address form (new or edit) */}
+            {editingId !== null && (() => {
+              const f = (key: keyof AddrForm, label: string, placeholder: string) => (
+                <div key={key}>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: '#9A8573', display: 'block', marginBottom: 6 }}>{label}</label>
+                  <input value={addrForm[key]} onChange={e => setAddrForm(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} style={{ ...INPUT, fontSize: 12, padding: '10px 14px' }} />
                 </div>
-                {([
-                  { key: 'delivery_address_line1', label: 'Address Line 1', placeholder: 'Street, unit, block' },
-                  { key: 'delivery_address_line2', label: 'Address Line 2', placeholder: 'Apartment, suite (optional)' },
-                ] as { key: keyof Address; label: string; placeholder: string }[]).map(({ key, label, placeholder }) => (
-                  <div key={key}>
-                    <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>{label}</label>
-                    <input value={addressEdit[key]} onChange={e => setAddressEdit(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} style={{ ...INPUT, fontSize: 12, padding: '10px 14px' }} />
+              )
+              return (
+                <div style={{ background: '#F6F1EB', borderRadius: 12, padding: '20px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>{editingId === 'new' ? 'New Address' : 'Edit Address'}</p>
+                  {f('label', 'Label (optional)', 'e.g. Home, Office')}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    {f('name', 'Full Name', 'e.g. Jane Lim')}
+                    {f('phone', 'Phone', 'e.g. +60 12 345 6789')}
                   </div>
-                ))}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                  {([
-                    { key: 'delivery_city',        label: 'City',        placeholder: 'e.g. Kuala Lumpur' },
-                    { key: 'delivery_state',       label: 'State',       placeholder: 'e.g. Selangor' },
-                    { key: 'delivery_postal_code', label: 'Postal Code', placeholder: 'e.g. 50000' },
-                  ] as { key: keyof Address; label: string; placeholder: string }[]).map(({ key, label, placeholder }) => (
-                    <div key={key}>
-                      <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>{label}</label>
-                      <input value={addressEdit[key]} onChange={e => setAddressEdit(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} style={{ ...INPUT, fontSize: 12, padding: '10px 14px' }} />
-                    </div>
-                  ))}
+                  {f('line1', 'Address Line 1 *', 'Street, unit, block')}
+                  {f('line2', 'Address Line 2', 'Apartment, suite (optional)')}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    {f('city', 'City', 'e.g. Kuala Lumpur')}
+                    {f('state', 'State', 'e.g. Selangor')}
+                    {f('postal_code', 'Postal Code', 'e.g. 50000')}
+                  </div>
+                  {f('country', 'Country', 'e.g. MY')}
+                  {addrError && <p style={{ ...BODY, fontSize: 12, color: '#C0392B', margin: 0 }}>{addrError}</p>}
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                    <button onClick={() => { setEditingId(null); setAddrError(null) }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', borderRadius: 8, color: '#9A8573', cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={saveAddr} disabled={addrSaving} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 20px', background: '#4A3A32', border: 'none', borderRadius: 8, color: '#F6F1EB', cursor: addrSaving ? 'not-allowed' : 'pointer', opacity: addrSaving ? 0.7 : 1 }}>{addrSaving ? 'Saving…' : 'Save'}</button>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Country</label>
-                  <input value={addressEdit.delivery_country} onChange={e => setAddressEdit(p => ({ ...p, delivery_country: e.target.value }))} placeholder="e.g. Malaysia" style={{ ...INPUT, fontSize: 12, padding: '10px 14px' }} />
-                </div>
-                {addressError && <p style={{ ...BODY, fontSize: 12, color: '#C0392B', margin: 0 }}>{addressError}</p>}
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-                  <button onClick={() => { setEditingAddress(false); setAddressEdit(address) }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', borderRadius: 8, color: '#9A8573', cursor: 'pointer' }}>Cancel</button>
-                  <button onClick={saveAddress} disabled={addressSaving} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 20px', background: '#4A3A32', border: 'none', borderRadius: 8, color: '#F6F1EB', cursor: addressSaving ? 'not-allowed' : 'pointer', opacity: addressSaving ? 0.7 : 1 }}>{addressSaving ? 'Saving…' : 'Save Address'}</button>
-                </div>
-              </div>
-            ) : Object.values(address).every(v => !v) ? (
-              <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#C4B5A8', fontStyle: 'italic' }}>No delivery address saved yet.</p>
+              )
+            })()}
+
+            {/* Address list */}
+            {addresses.length === 0 && editingId === null ? (
+              <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#C4B5A8', fontStyle: 'italic' }}>No delivery addresses saved yet.</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {[
-                  { label: 'Name',        value: address.delivery_name },
-                  { label: 'Phone',       value: address.delivery_phone },
-                  { label: 'Address',     value: [address.delivery_address_line1, address.delivery_address_line2].filter(Boolean).join(', ') },
-                  { label: 'City',        value: address.delivery_city },
-                  { label: 'State',       value: address.delivery_state },
-                  { label: 'Postal Code', value: address.delivery_postal_code },
-                  { label: 'Country',     value: address.delivery_country },
-                ].filter(r => r.value).map(({ label, value }, i, arr) => (
-                  <div key={label}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', alignItems: 'center', gap: 12 }}>
-                      <p style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: 0 }}>{label}</p>
-                      <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#4A3A32', margin: 0 }}>{value}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {addresses.map(a => (
+                  <div key={a.id} style={{ border: `1px solid ${a.is_default ? GOLD + '66' : '#E5DDD5'}`, borderRadius: 10, padding: '16px 20px', background: a.is_default ? '#FEFAF4' : '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          {a.label && <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD }}>{a.label}</span>}
+                          {a.is_default && <span style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 999, background: GOLD + '22', color: GOLD, border: `1px solid ${GOLD}44` }}>Default</span>}
+                        </div>
+                        <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#4A3A32', margin: '0 0 2px' }}>{a.name || '—'} {a.phone && `· ${a.phone}`}</p>
+                        <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.6 }}>
+                          {[a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                        {!a.is_default && (
+                          <button onClick={() => setDefault(a.id)} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', background: 'transparent', border: '1px solid #E5DDD5', borderRadius: 6, color: '#7A6355', cursor: 'pointer' }}>Set Default</button>
+                        )}
+                        <button onClick={() => { setEditingId(a.id); setAddrForm({ label: a.label ?? '', name: a.name ?? '', phone: a.phone ?? '', line1: a.line1, line2: a.line2 ?? '', city: a.city ?? '', state: a.state ?? '', postal_code: a.postal_code ?? '', country: a.country ?? 'MY' }); setAddrError(null) }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', background: 'transparent', border: '1px solid #E5DDD5', borderRadius: 6, color: '#7A6355', cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => deleteAddr(a.id)} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', background: 'transparent', border: '1px solid #F0D0CC', borderRadius: 6, color: '#C0392B', cursor: 'pointer' }}>Delete</button>
+                      </div>
                     </div>
-                    {i < arr.length - 1 && <div style={{ height: 1, background: '#EDE8DF', marginTop: 14 }} />}
                   </div>
                 ))}
               </div>
             )}
           </div>
+
+          </>}
 
         </div>
       </section>

@@ -15,7 +15,7 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
 
 // ── Pricing — update these before going live ──────────────────────────────────
-const PRICE_BASE = 188;   // MYR
+const PRICE_BASE = 188;   // SGD
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default async function PaymentPage({ searchParams }: Props) {
@@ -40,12 +40,15 @@ export default async function PaymentPage({ searchParams }: Props) {
 
   const { data } = await supabase
     .from("energy_quiz_results")
-    .select("crystal_names, cached_image_url")
+    .select("crystal_names, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary")
     .eq("id", resultId)
     .single();
 
   const crystalNames: string[] = data?.crystal_names ?? [];
   const imageUrl: string | null = data?.cached_image_url ?? null;
+  const weakElement: string | null = data?.calculated_weak_element ?? null;
+  const strongElement: string | null = data?.calculated_strong_element ?? null;
+  const analysisSummary: string | null = data?.analysis_summary ?? null;
 
   return (
     <main className="min-h-screen bg-[#F6F1EB] text-[#4A3A32]">
@@ -113,18 +116,26 @@ export default async function PaymentPage({ searchParams }: Props) {
           <div className="flex flex-col gap-2.5">
             <div className="flex justify-between">
               <span style={BODY} className="text-[12px] text-[#7A5B45]">Crystal Bracelet</span>
-              <span style={BODY} className="text-[12px] text-[#4A3A32]">RM {PRICE_BASE}</span>
+              <span style={BODY} className="text-[12px] text-[#4A3A32]">S$ {PRICE_BASE}</span>
             </div>
             <div className="flex justify-between pt-3 border-t border-[#E5DDD5]">
               <span style={SERIF} className="text-[15px] font-light text-[#4A3A32]">Total</span>
-              <span style={SERIF} className="text-[20px] font-light text-[#4A3A32]">RM {PRICE_BASE}</span>
+              <span style={SERIF} className="text-[20px] font-light text-[#4A3A32]">S$ {PRICE_BASE}</span>
             </div>
           </div>
 
           <div className="h-px bg-[#E5DDD5]" />
 
           {/* ── Checkout button ── */}
-          <CheckoutButton resultId={resultId} spacer={spacer} remark={remark} imageUrl={imageUrl} />
+          <CheckoutButton
+            resultId={resultId}
+            spacer={spacer}
+            remark={remark}
+            imageUrl={imageUrl}
+            weakElement={weakElement}
+            strongElement={strongElement}
+            analysisSummary={analysisSummary}
+          />
 
           {/* ── Back link ── */}
           <p className="text-center -mt-3">

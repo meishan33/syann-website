@@ -5,6 +5,13 @@ import { supabase } from '@/lib/supabase'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
+const GOLD = '#B08B57'
+
+type DeliveryAddress = {
+  id: string; label: string | null; name: string | null; phone: string | null
+  line1: string; line2: string | null; city: string | null; state: string | null
+  postal_code: string | null; country: string | null; is_default: boolean
+}
 
 type Props = {
   analysisSummary: string
@@ -23,17 +30,29 @@ export default function PurchasePanel({ analysisSummary, resultId, suggestedSpac
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handlePurchase() {
-    setLoading(true)
-    setError(null)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const email = session?.user?.email ?? null
+  const [addrPickerOpen, setAddrPickerOpen] = useState(false)
+  const [savedAddresses, setSavedAddresses] = useState<DeliveryAddress[]>([])
+  const [selectedAddrId, setSelectedAddrId] = useState<string | 'new'>('new')
 
+  async function proceedToCheckout(
+    email: string | null,
+    userId: string | null,
+    savedAddress: DeliveryAddress | null
+  ) {
+    setLoading(true)
+    try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultId, spacer, remark, email, imageUrl, weakElement, strongElement }),
+        body: JSON.stringify({
+          resultId, spacer, remark, email, userId, imageUrl, weakElement, strongElement, analysisSummary,
+          savedAddress: savedAddress ? {
+            name: savedAddress.name, phone: savedAddress.phone,
+            line1: savedAddress.line1, line2: savedAddress.line2,
+            city: savedAddress.city, state: savedAddress.state,
+            postal_code: savedAddress.postal_code, country: savedAddress.country || 'MY',
+          } : null,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')
@@ -42,6 +61,50 @@ export default function PurchasePanel({ analysisSummary, resultId, suggestedSpac
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       setLoading(false)
     }
+  }
+
+  async function handlePurchase() {
+    setError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const email = session?.user?.email ?? null
+      const userId = session?.user?.id ?? null
+
+      if (session?.access_token) {
+        setLoading(true)
+        const res = await fetch('/api/addresses', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (res.ok) {
+          const addrs: DeliveryAddress[] = await res.json()
+          if (addrs.length > 0) {
+            setSavedAddresses(addrs)
+            const def = addrs.find(a => a.is_default)
+            setSelectedAddrId(def?.id ?? addrs[0].id)
+            setLoading(false)
+            setAddrPickerOpen(true)
+            return
+          }
+        }
+        setLoading(false)
+      }
+
+      await proceedToCheckout(email, userId, null)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setLoading(false)
+    }
+  }
+
+  async function confirmAddress() {
+    setAddrPickerOpen(false)
+    const { data: { session } } = await supabase.auth.getSession()
+    const email = session?.user?.email ?? null
+    const userId = session?.user?.id ?? null
+    const addr = selectedAddrId !== 'new'
+      ? (savedAddresses.find(a => a.id === selectedAddrId) ?? null)
+      : null
+    await proceedToCheckout(email, userId, addr)
   }
 
   return (
@@ -118,8 +181,9 @@ export default function PurchasePanel({ analysisSummary, resultId, suggestedSpac
             </span>
             <div className="flex flex-col gap-3">
               {[
-                <>All SYANN bracelet use <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> for a consistent, premium finish.</>,
-                <>The default bracelet size is <strong className="font-medium text-[#4A3A32]">16 cm with 20 beads</strong>. Please include your wrist size in the remarks if you&apos;d like it larger or smaller.{' '}
+                <>All SYANN bracelets use <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> for a consistent, premium finish.</>,
+                <>Every bracelet includes <strong className="font-medium text-[#4A3A32]">1 silver SYANN logo charm</strong> as standard. The spacer metal tone is selected to complement your crystals — you may specify a preference or placement in the remarks.</>,
+                <>The default bracelet size is <strong className="font-medium text-[#4A3A32]">16 cm</strong>. Please include your wrist size in the remarks if you&apos;d like it larger or smaller.{' '}
                   <button
                     type="button"
                     onClick={() => setMeasureOpen(true)}
@@ -129,7 +193,6 @@ export default function PurchasePanel({ analysisSummary, resultId, suggestedSpac
                     How to measure your wrist
                   </button>
                 </>,
-                <>You may change the spacer color in the remarks. If not specified, we will follow the color shown in the bracelet image.</>,
               ].map((text, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <span className="mt-[3px] shrink-0 text-[#B08B57]">
@@ -150,7 +213,7 @@ export default function PurchasePanel({ analysisSummary, resultId, suggestedSpac
             className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57] disabled:opacity-60 disabled:cursor-not-allowed"
             style={BODY}
           >
-            {loading ? 'Redirecting to Payment…' : <><span>Purchase My Bracelet</span><span aria-hidden="true">✦</span></>}
+            {loading ? 'Please wait…' : <><span>Purchase My Bracelet</span><span aria-hidden="true">✦</span></>}
           </button>
           {error && (
             <p className="text-center text-[11px] text-red-400" style={BODY}>{error}</p>
@@ -158,6 +221,116 @@ export default function PurchasePanel({ analysisSummary, resultId, suggestedSpac
         </div>
 
       </div>
+
+
+      {/* ADDRESS PICKER MODAL */}
+      {addrPickerOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Select delivery address"
+          className="fixed inset-0 z-50 flex items-center justify-center p-5"
+        >
+          <div
+            className="absolute inset-0 bg-[#2E2118]/50 backdrop-blur-sm"
+            onClick={() => setAddrPickerOpen(false)}
+          />
+          <div className="relative w-full max-w-md rounded-[28px] bg-[#FBF6EE] p-8 shadow-[0_40px_100px_-30px_rgba(74,58,50,0.5)]" style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+
+            <button
+              onClick={() => setAddrPickerOpen(false)}
+              aria-label="Close"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full text-[#9A8573] transition-colors hover:bg-[#E5DDD5] hover:text-[#4A3A32]"
+            >
+              ✕
+            </button>
+
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]" style={BODY}>
+              Delivery
+            </p>
+            <h3 style={SERIF} className="mb-6 text-2xl font-light text-[#4A3A32]">
+              Ship To
+            </h3>
+
+            <div className="flex flex-col gap-3 overflow-y-auto pr-1" style={{ flex: 1 }}>
+              {savedAddresses.map(a => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setSelectedAddrId(a.id)}
+                  style={{
+                    ...BODY,
+                    display: 'block', width: '100%', textAlign: 'left',
+                    padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                    border: `1.5px solid ${selectedAddrId === a.id ? GOLD : '#E5DDD5'}`,
+                    background: selectedAddrId === a.id ? '#FEF9F2' : '#fff',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <div style={{
+                      width: 14, height: 14, borderRadius: '50%',
+                      border: `2px solid ${selectedAddrId === a.id ? GOLD : '#C5B8AD'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      {selectedAddrId === a.id && (
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD }} />
+                      )}
+                    </div>
+                    {a.label && (
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: GOLD }}>{a.label}</span>
+                    )}
+                    {a.is_default && (
+                      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, padding: '2px 7px', borderRadius: 999, background: GOLD + '22', color: GOLD, border: `1px solid ${GOLD}44` }}>Default</span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: '#4A3A32', margin: '0 0 2px', paddingLeft: 22 }}>{a.name || '—'} {a.phone && `· ${a.phone}`}</p>
+                  <p style={{ fontSize: 11, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.6, paddingLeft: 22 }}>
+                    {[a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean).join(', ')}
+                  </p>
+                </button>
+              ))}
+
+              {/* Enter new address option */}
+              <button
+                type="button"
+                onClick={() => setSelectedAddrId('new')}
+                style={{
+                  ...BODY,
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                  padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                  border: `1.5px solid ${selectedAddrId === 'new' ? GOLD : '#E5DDD5'}`,
+                  background: selectedAddrId === 'new' ? '#FEF9F2' : '#fff',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <div style={{
+                  width: 14, height: 14, borderRadius: '50%',
+                  border: `2px solid ${selectedAddrId === 'new' ? GOLD : '#C5B8AD'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  {selectedAddrId === 'new' && (
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD }} />
+                  )}
+                </div>
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: '#4A3A32', margin: '0 0 2px' }}>Enter a new address</p>
+                  <p style={{ fontSize: 11, fontWeight: 300, color: '#9A8573', margin: 0 }}>You&apos;ll fill it in on the next step</p>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={confirmAddress}
+              className="mt-6 w-full rounded-full border border-[#4A3A32] bg-[#4A3A32] py-3.5 text-[11px] font-medium uppercase tracking-[0.28em] text-white transition-colors hover:bg-[#B08B57] hover:border-[#B08B57]"
+              style={BODY}
+            >
+              Continue to Payment ✦
+            </button>
+
+          </div>
+        </div>
+      )}
 
 
       {/* MEASURE WRIST MODAL */}

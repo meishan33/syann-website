@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import { useCurrency } from '@/context/CurrencyContext'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
@@ -34,6 +35,7 @@ function StatusBadge({ label, color }: { label: string; color: string }) {
 
 export default function OrdersPage() {
   const router = useRouter()
+  const { format } = useCurrency()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -121,7 +123,7 @@ export default function OrdersPage() {
                   {/* Right */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
                     <p style={{ ...SERIF, fontSize: 20, fontWeight: 400, color: DARK, margin: 0 }}>
-                      RM {Number(order.total_amount).toFixed(2)}
+                      {format(Number(order.total_amount))}
                     </p>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       <StatusBadge

@@ -8,9 +8,12 @@ type Props = {
   spacer: string
   remark: string
   imageUrl: string | null
+  weakElement: string | null
+  strongElement: string | null
+  analysisSummary: string | null
 }
 
-export default function CheckoutButton({ resultId, spacer, remark, imageUrl }: Props) {
+export default function CheckoutButton({ resultId, spacer, remark, imageUrl, weakElement, strongElement, analysisSummary }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,11 +23,35 @@ export default function CheckoutButton({ resultId, spacer, remark, imageUrl }: P
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const email = session?.user?.email ?? null
+      const userId = session?.user?.id ?? null
+
+      // Reuse saved default address if available
+      let savedAddress = null
+      if (session?.access_token) {
+        const res = await fetch('/api/addresses', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (res.ok) {
+          const addrs = await res.json()
+          if (addrs.length > 0) {
+            const def = addrs.find((a: { is_default: boolean }) => a.is_default) ?? addrs[0]
+            savedAddress = {
+              name: def.name, phone: def.phone,
+              line1: def.line1, line2: def.line2,
+              city: def.city, state: def.state,
+              postal_code: def.postal_code, country: def.country || 'MY',
+            }
+          }
+        }
+      }
 
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultId, spacer, remark, email, imageUrl }),
+        body: JSON.stringify({
+          resultId, spacer, remark, email, userId, imageUrl,
+          weakElement, strongElement, analysisSummary, savedAddress,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')

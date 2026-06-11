@@ -3,6 +3,7 @@ import "./home.css";
 import "../components/navbar.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 
 export const metadata = {
   title: "SYANN",
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        {children}
-        <Footer />
+        <CurrencyProvider>
+          <Navbar />
+          {children}
+          <Footer />
+        </CurrencyProvider>
       </body>
     </html>
   );

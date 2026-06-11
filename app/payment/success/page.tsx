@@ -84,7 +84,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
             </p>
             {totalAmount && (
               <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: '8px 0 0' }}>
-                RM {totalAmount.toFixed(2)} — paid
+                S$ {totalAmount.toFixed(2)} — paid
               </p>
             )}
           </div>

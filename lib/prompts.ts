@@ -3,12 +3,10 @@
 // Add new crystals here when they are added to the catalog.
 
 export const CRYSTAL_COLOR_REFERENCE = `
-SILVER SPACER: small 4×2mm flat disc rondelle spacer beads with a bright mirror-like polished silver finish, smooth rounded edges, and a clean center hole — highly reflective chrome-silver surface with a crisp minimalist look
-GOLD SPACER: small 4×1.5mm flat disc rondelle spacer beads with a bright mirror-like polished gold finish, smooth rounded edges, and a clean center hole — warm gleaming gold surface with a refined luxurious look
 AMETHYST: transparent lavender-purple crystal beads with soft natural marbling and elegant glass-like reflections
 AQUAMARINE: icy translucent pale blue crystal beads with watery clarity and soft luminous reflections
 BLACK OBSIDIAN: deep glossy black crystal beads with smooth mirror-like polished surface and grounding luxurious finish
-BLUE MOONSTONE: milky translucent white crystal beads with soft blue iridescent flash and dreamy luminous glow
+BLUE MOONSTONE: semi-transparent white crystal beads — the body is half-translucent, glassy white with a soft milky inner glow, and the surface shows a clearly visible blue adularescent sheen that shifts and glows across the bead like a moonlit shimmer; the blue flash must be present and noticeable on the surface, not hidden — never fully opaque, never fully clear, always that signature semi-transparent white with visible blue surface shine
 BLUE TIGER EYE: deep navy-blue crystal beads with silky chatoyant stripes and mysterious reflective shimmer
 CITRINE: light pale golden-yellow translucent crystal beads with a clean, clear glassy appearance and soft warm glow — lighter and more transparent than gold rutilated quartz, with no visible inclusions
 CLEAR QUARTZ: clear transparent crystal beads with elegant glass-like clarity and subtle rainbow reflections
@@ -16,7 +14,7 @@ GOLD RUTILATED QUARTZ: deep amber-honey translucent crystal beads with clearly v
 GREEN AVENTURINE: opaque medium-to-deep sage green crystal beads with a warm earthy hue and subtle sparkling aventurescent shimmer — noticeably darker and more saturated than prehnite, with a fully solid opaque finish and zero translucency
 LAPIS LAZULI: deep royal blue crystal beads with natural golden flecks and rich luxurious texture
 MALACHITE: rich emerald green crystal beads with dramatic natural banding and glossy polished finish
-PREHNITE: soft translucent pale yellow-green crystal beads with a delicate honeydew or celadon tone — noticeably lighter and more washed-out than green aventurine, with a milky cloudy inner glow and no visible sparkle or opacity
+PREHNITE: soft translucent pale celadon-green crystal beads — the dominant hue is clearly green (not yellow, not lime, not chartreuse), a cool minty sage-green with a milky cloudy inner glow; noticeably lighter and more washed-out than green aventurine, with zero opacity and no visible sparkle — if it looks yellow it is wrong, it must read as green
 RED TIGER EYE: deep reddish-brown crystal beads with fiery chatoyant stripes and warm reflective shimmer
 ROSE QUARTZ: soft translucent blush-pink crystal beads with gentle cloudy texture and delicate luminous reflections
 YELLOW TIGER EYE: warm golden-amber and deep brown banded crystal beads with silky chatoyant stripes, glossy polished finish, and a rich earthy shimmer that shifts with the light
@@ -28,24 +26,17 @@ YELLOW TIGER EYE: warm golden-amber and deep brown banded crystal beads with sil
 
 export const IMAGE_COMPOSITION_RULES = `
 Photography style:
-- Luxury crystal bracelet product photography, top-down flat lay view, bracelet laid flat facing upward, perfect circular arrangement, centered composition, clean ivory background, soft warm studio lighting, elegant minimal jewelry aesthetic
+- Luxury crystal bracelet product photography, top-down flat lay view, bracelet laid flat facing upward, perfect circular arrangement, centered composition, pure clean off-white background (#F5F0EB light cream white), soft warm studio lighting, elegant minimal jewelry aesthetic
+- Photorealistic product photography quality — no illustrations, no paintings, no stylised renders
+- No charms, no pendants, no spacers, no human hands or body parts, no props
 
 Composition & arrangement:
 - Bracelet centered and prominent in the frame — it must occupy the majority of the image with nothing cropped
-- If spacer is included, it must be ONE consistent metal color throughout (never mix gold and silver in the same bracelet)
-- Spacer beads are accent pieces only — placed selectively every few crystal beads, never between every bead
 
-Crystal & spacer description:
-- The bracelet contains approximately 20 beads total (crystal beads + spacer beads combined if spacer is used)
+Crystal description:
+- The bracelet contains approximately 20 crystal beads total
 - All crystal beads are 8mm perfectly round spheres — no oval, faceted, or irregular shapes; explicitly state "perfectly round spherical beads"
 - Use the CRYSTAL COLOR REFERENCE for each selected crystal's exact color description — do not invent or deviate
-- If spacer included: use a maximum of 6 spacer beads total. The image prompt must explicitly state all of the following:
-  1. Spacers are exactly half the size of the crystal beads (4mm) — must appear visually noticeably smaller
-  2. Both gold and silver spacers are flat disc rondelle-shaped — no other shape allowed
-  3. Maximum 2 spacers may be placed continuously; never 3 or more in a row
-  4. Spacers must NOT appear between every crystal bead — they are accent pieces placed selectively
-  5. Every single spacer bead is absolutely identical — machine-stamped uniform flat disc rondelle, identical diameter, thickness, and finish, zero variation. State explicitly: "every spacer is perfectly uniform — identical shape, identical size, identical finish, no variation whatsoever between any spacer bead"
-  State the exact placement (e.g. "6 machine-identical 4mm flat disc gold rondelle spacer beads, each exactly half the size of the 8mm crystal beads, every spacer uniform with zero variation in shape or size, placed selectively with no more than 2 consecutive spacers at any point, never between every bead")
 `.trim()
 
 
@@ -58,27 +49,31 @@ Your role is to curate a deeply personalized crystal bracelet based on the custo
 
 CRYSTAL SELECTION RULES:
 - Choose exactly 3 crystals from the provided catalog
-- Prioritize crystals that strengthen the customer's weak element
+- Prioritize crystals that strengthen the customer's weak element — use the element distribution counts as a guide: an element with 0 count needs more support than one with 1, even if both are considered weak
 - Avoid crystals that amplify the already dominant element
 - Factor in the customer's intention and emotional state
-- Aim for color and energy harmony across the 3 crystals
+- Aim for elemental variety — do not select all 3 crystals from the same element; at most 2 may share an element
 
-SPACER DECISION:
-As the designer, you decide whether a spacer enhances or disrupts this bracelet's aesthetic:
-- A spacer adds rhythm and visual breathing room — consider it when the stones are bold, heavy, or visually dense
-- Gold spacers bring warmth and elevate earth, fire, and wood energy combinations
-- Silver spacers add cool refinement and complement water and metal energy combinations
-- Sometimes the crystals are perfect alone — set spacerName to null if a spacer would take away from the composition
+COLOR HARMONY RULES:
+- Before finalising your 3 crystals, classify each by tone: warm (reds, yellows, ambers, golds), cool (blues, purples, teals), neutral/soft (pale pinks, whites, clears, soft pale greens), or dark/grounding (deep blacks, deep navies, deep saturated greens)
+- Do not select 3 crystals from the same tone category — ensure variety across at least 2 tone categories
+- MANDATORY: You must always include at least 1 crystal that is translucent, soft, or light in colour (e.g. Rose Quartz, Clear Quartz, Aquamarine, Prehnite, Citrine, Blue Moonstone). This is non-negotiable — a combination of 3 bold, opaque, or heavily saturated stones is forbidden regardless of elemental fit
+- MANDATORY: If 2 of your 3 crystals are warm-toned (reds, yellows, ambers, golds — e.g. Citrine, Gold Rutilated Quartz, Yellow Tiger Eye, Red Tiger Eye), the third crystal must be cool (blue, purple, teal) or neutral/soft (pale pink, white, clear, pale green). Selecting a third warm stone when 2 are already warm is forbidden
+- If two crystals are both dark and opaque (e.g. Black Obsidian + Lapis Lazuli), the third must be light, clear, or softly translucent — this is required, not optional
+- You must not select 3 crystals from the same hue family (e.g. three blue-toned, or three green-toned) — meaningful colour contrast between at least two of the three is required
+- Before finalising, verify your combination passes all of the above. If it fails any rule, replace the offending crystal with one that satisfies both the elemental need and the colour rule
 
 EXPLANATION TONE:
 - Warm, personal, and reassuring — like a trusted guide who understands energy healing
-- Address the customer by first name if provided
+- Address the customer by first name if provided; if no name is given, use a warm impersonal opener such as "Your energy profile reveals…"
 - Acknowledge their feelings with genuine empathy before explaining how each crystal helps
+- Reference the customer's specific intention and current feelings by name — never write a generic response that could apply to anyone
+- If feelings or intention were not shared, focus the summary on what the elemental profile reveals rather than guessing their emotional state
 - Keep it grounded and beautiful, not overly mystical
 - Each crystal explanation: 2–3 sentences
 
 IMAGE PROMPT:
-Write a detailed image generation prompt for the bracelet using these rules:
+Write a concise image generation prompt (under 200 words) for the bracelet using these rules:
 
 ${IMAGE_COMPOSITION_RULES}
 
@@ -88,8 +83,7 @@ ${CRYSTAL_COLOR_REFERENCE}
 Return ONLY valid JSON in this exact structure:
 {
   "selectedCrystals": ["Name1", "Name2", "Name3"],
-  "spacerName": "Gold Spacer" | "Silver Spacer" | null,
-  "analysisSummary": "One paragraph (2–3 sentences): acknowledge the customer's current feelings and energy with warmth and empathy, then explain what energetic shift this bracelet will bring them — make them feel truly seen.\\n\\n• Short key benefit point 1\\n• Short key benefit point 2\\n• Short key benefit point 3",
+  "analysisSummary": "One paragraph (2–3 sentences): acknowledge the customer's current feelings and energy with warmth and empathy, then explain what energetic shift this bracelet will bring them — make them feel truly seen. Reference their specific intention and feelings; never write something generic that could apply to anyone. If feelings or intention were not shared, open with what their elemental profile reveals instead.\\n\\n• Short key benefit point 1\\n• Short key benefit point 2\\n• Short key benefit point 3",
   "crystalExplanations": {
     "Name1": "Why this crystal for them specifically (2–3 sentences)",
     "Name2": "...",
@@ -112,7 +106,6 @@ type UserMessageParams = {
   strongElement: string
   elementCounts: { wood: number; fire: number; earth: number; metal: number; water: number }
   crystals: unknown[]
-  spacers: unknown[]
 }
 
 export function buildUserMessage({
@@ -125,7 +118,6 @@ export function buildUserMessage({
   strongElement,
   elementCounts,
   crystals,
-  spacers,
 }: UserMessageParams): string {
   return `CUSTOMER PROFILE:
 Name: ${fullName || 'Not provided'}
@@ -142,9 +134,6 @@ CURRENT FEELINGS: ${feeling || 'Not shared'}
 
 AVAILABLE CRYSTALS:
 ${JSON.stringify(crystals, null, 2)}
-
-AVAILABLE SPACERS:
-${JSON.stringify(spacers, null, 2)}
 
 Please select 3 crystals and craft a personalized bracelet recommendation.`
 }

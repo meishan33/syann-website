@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-
-const PRICE_BASE_CENTS = 18800   // SGD 188.00 — update before going live
+import { CartItem } from '@/lib/cart'
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: 'Stripe is not configured yet.' }, { status: 503 })
+    return NextResponse.json({ error: 'Stripe is not configured.' }, { status: 503 })
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -13,46 +12,49 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, remark, email, userId, imageUrl, analysisSummary, savedAddress } = await req.json()
+    const { items, email, userId, savedAddress } = await req.json() as {
+      items: CartItem[]
+      email: string | null
+      userId: string | null
+      savedAddress: object | null
+    }
+
+    if (!items || items.length === 0) {
+      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       ...(email ? { customer_email: email } : {}),
-      line_items: [
-        {
-          price_data: {
-            currency: 'sgd',
-            product_data: {
-              name: 'SYANN Crystal Bracelet',
-              description: [
-                analysisSummary && analysisSummary.slice(0, 200),
-                `Spacer: ${spacer}`,
-                remark && `Note: ${remark}`,
-              ].filter(Boolean).join(' · '),
-              ...(imageUrl ? { images: [imageUrl] } : {}),
-            },
-            unit_amount: PRICE_BASE_CENTS,
+      line_items: items.map(item => ({
+        price_data: {
+          currency: 'sgd',
+          product_data: {
+            name: item.name,
+            ...(item.imageUrl ? { images: [item.imageUrl] } : {}),
           },
-          quantity: 1,
+          unit_amount: Math.round(item.price * 100),
         },
-      ],
+        quantity: item.quantity,
+      })),
       mode: 'payment',
       phone_number_collection: { enabled: true },
-      // Only collect shipping if user didn't pick a saved address
       ...(!savedAddress ? { shipping_address_collection: { allowed_countries: ['SG'] } } : {}),
       metadata: {
-        resultId, spacer, remark: remark || '', userId: userId || '',
+        order_type: 'shop',
+        userId: userId || '',
+        items: JSON.stringify(items.map(i => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity }))),
         savedAddress: savedAddress ? JSON.stringify(savedAddress) : '',
       },
       success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/payment?result=${resultId}&spacer=${spacer}${remark ? `&remark=${encodeURIComponent(remark)}` : ''}`,
+      cancel_url: `${baseUrl}/shop/cart`,
     })
 
     return NextResponse.json({ url: session.url })
   } catch (err: unknown) {
-    console.error('Stripe checkout error:', err)
+    console.error('Shop checkout error:', err)
     const message = err instanceof Error ? err.message : 'Failed to create checkout session'
     return NextResponse.json({ error: message }, { status: 500 })
   }
