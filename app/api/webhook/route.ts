@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       const sessionExt = session as unknown as SessionExt
       const addr: ShippingAddr | null | undefined = savedAddr ?? sessionExt.collected_information?.shipping_details?.address ?? sessionExt.shipping_details?.address
 
-      const orderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data).catch(() => null)
+      const orderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data, () => null)
 
       await supabaseAdmin.from('shop_orders').insert({
         order_number: orderNumber,
