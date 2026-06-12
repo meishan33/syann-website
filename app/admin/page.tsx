@@ -34,6 +34,7 @@ type Crystal = {
   id: number; name: string; slug: string | null; element: string; primary_element: string | null
   color_family: string; meaning: string; active: boolean; price_tier: string
   luxury_score: number | null; energy_tags: string[] | null; bead_image_url: string | null
+  bead_image_urls: string[] | null
 }
 
 const CRYSTAL_COLUMNS: { key: keyof Crystal | 'toggle'; label: string }[] = [
@@ -150,10 +151,18 @@ export default function AdminPage() {
   const [inquirySearchField, setInquirySearchField] = useState<'name' | 'email' | 'subject'>('name')
   const [expandedReading, setExpandedReading] = useState<string | null>(null)
   const [showAddCrystal, setShowAddCrystal] = useState(false)
-  const [newCrystal, setNewCrystal] = useState({ name: '', slug: '', element: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_url: '', active: true })
+  const [newCrystal, setNewCrystal] = useState({ name: '', slug: '', element: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_urls: [] as string[], active: true })
   const [addCrystalError, setAddCrystalError] = useState<string | null>(null)
   const [addCrystalLoading, setAddCrystalLoading] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
+
+  // Edit crystal images
+  const [editCrystalId, setEditCrystalId] = useState<number | null>(null)
+  const [editCrystalName, setEditCrystalName] = useState('')
+  const [editCrystalImages, setEditCrystalImages] = useState<string[]>([])
+  const [editCrystalImageUploading, setEditCrystalImageUploading] = useState(false)
+  const [editCrystalError, setEditCrystalError] = useState<string | null>(null)
+  const [editCrystalSaving, setEditCrystalSaving] = useState(false)
 
   // Shop
   type ShopProduct = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; active: boolean }
@@ -235,7 +244,7 @@ export default function AdminPage() {
     if (!r.ok) { const e = await r.json(); setAddCrystalError(e.error || 'Failed to add crystal.'); setAddCrystalLoading(false); return }
     await fetchCrystals()
     setShowAddCrystal(false)
-    setNewCrystal({ name: '', slug: '', element: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_url: '', active: true })
+    setNewCrystal({ name: '', slug: '', element: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_urls: [], active: true })
     setAddCrystalLoading(false)
   }
 
@@ -245,8 +254,28 @@ export default function AdminPage() {
     const r = await fetch('/api/admin/crystals/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
     if (!r.ok) { const e = await r.json(); setAddCrystalError(e.error || 'Image upload failed.'); setImageUploading(false); return }
     const { url } = await r.json()
-    setNewCrystal(prev => ({ ...prev, bead_image_url: url }))
+    setNewCrystal(prev => ({ ...prev, bead_image_urls: [...prev.bead_image_urls, url] }))
     setImageUploading(false)
+  }
+
+  const uploadEditCrystalImage = async (file: File) => {
+    setEditCrystalImageUploading(true); setEditCrystalError(null)
+    const fd = new FormData(); fd.append('file', file)
+    const r = await fetch('/api/admin/crystals/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+    if (!r.ok) { const e = await r.json(); setEditCrystalError(e.error || 'Image upload failed.'); setEditCrystalImageUploading(false); return }
+    const { url } = await r.json()
+    setEditCrystalImages(prev => [...prev, url])
+    setEditCrystalImageUploading(false)
+  }
+
+  const saveEditCrystalImages = async () => {
+    if (editCrystalId === null) return
+    setEditCrystalSaving(true); setEditCrystalError(null)
+    const r = await fetch('/api/admin/crystals', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: editCrystalId, bead_image_urls: editCrystalImages }) })
+    if (!r.ok) { const e = await r.json(); setEditCrystalError(e.error || 'Save failed.'); setEditCrystalSaving(false); return }
+    await fetchCrystals()
+    setEditCrystalId(null)
+    setEditCrystalSaving(false)
   }
 
   if (authStatus === 'checking') return (
@@ -678,11 +707,17 @@ export default function AdminPage() {
                                   if (col.key === 'name') return <td key="name" style={{ ...TD, fontWeight: 400 }}>{c.name}</td>
                                   if (col.key === 'active') return <td key="active" style={TD}><Badge label={c.active ? 'Active' : 'Inactive'} color={c.active ? '#7CB98A' : '#9A8573'} /></td>
                                   if (col.key === 'toggle') return (
-                                    <td key="toggle" style={TD}>
-                                      <button disabled={actionLoading === String(c.id)} onClick={() => toggleCrystal(c.id, !c.active)}
-                                        style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 12px', background: 'transparent', border: `1px solid ${c.active ? '#C0392B' : '#7CB98A'}`, color: c.active ? '#C0392B' : '#7CB98A', borderRadius: 6, cursor: 'pointer' }}>
-                                        {actionLoading === String(c.id) ? '…' : c.active ? 'Deactivate' : 'Activate'}
-                                      </button>
+                                    <td key="toggle" style={{ ...TD, whiteSpace: 'nowrap' }}>
+                                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                        <button disabled={actionLoading === String(c.id)} onClick={() => toggleCrystal(c.id, !c.active)}
+                                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 12px', background: 'transparent', border: `1px solid ${c.active ? '#C0392B' : '#7CB98A'}`, color: c.active ? '#C0392B' : '#7CB98A', borderRadius: 6, cursor: 'pointer' }}>
+                                          {actionLoading === String(c.id) ? '…' : c.active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button onClick={() => { setEditCrystalId(c.id); setEditCrystalName(c.name); setEditCrystalImages(c.bead_image_urls ?? (c.bead_image_url ? [c.bead_image_url] : [])); setEditCrystalError(null) }}
+                                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 12px', background: 'transparent', border: '1px solid #B08B57', color: '#B08B57', borderRadius: 6, cursor: 'pointer' }}>
+                                          Images
+                                        </button>
+                                      </div>
                                     </td>
                                   )
                                   if (col.key === 'energy_tags') return (
@@ -1065,30 +1100,29 @@ export default function AdminPage() {
                 </div>
               ))}
 
-              {/* Bead Image Upload */}
+              {/* Bead Images Upload (multiple) */}
               <div>
-                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Bead Image</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  {newCrystal.bead_image_url
-                    ? <img src={newCrystal.bead_image_url} alt="" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '1px solid #E5DDD5', flexShrink: 0 }} />
-                    : <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#F6F1EB', border: '1px solid #E5DDD5', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4B5A8" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/></svg>
-                      </div>
-                  }
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, cursor: imageUploading ? 'not-allowed' : 'pointer', ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: imageUploading ? '#C4B5A8' : DARK, background: '#F6F1EB', border: '1px solid #E5DDD5', padding: '8px 16px', borderRadius: 7 }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      {imageUploading ? 'Uploading…' : newCrystal.bead_image_url ? 'Change Image' : 'Upload Image'}
-                      <input type="file" accept="image/*" style={{ display: 'none' }} disabled={imageUploading}
-                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadBeadImage(f) }} />
-                    </label>
-                    {newCrystal.bead_image_url && (
-                      <button onClick={() => setNewCrystal(prev => ({ ...prev, bead_image_url: '' }))}
-                        style={{ ...BODY, fontSize: 10, color: '#C0392B', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 10, letterSpacing: '0.1em' }}>
-                        Remove
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>
+                  Bead Images <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, fontSize: 10, color: '#C4B5A8' }}>— upload multiple for variety</span>
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+                  {newCrystal.bead_image_urls.map((url, i) => (
+                    <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+                      <img src={url} alt="" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '1px solid #E5DDD5', display: 'block' }} />
+                      <button onClick={() => setNewCrystal(prev => ({ ...prev, bead_image_urls: prev.bead_image_urls.filter((_, j) => j !== i) }))}
+                        style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: '50%', background: '#C0392B', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, lineHeight: '18px', textAlign: 'center', padding: 0 }}>
+                        ×
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  ))}
+                  <label style={{ width: 52, height: 52, borderRadius: '50%', border: '1px dashed #C4B5A8', background: '#F6F1EB', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: imageUploading ? 'not-allowed' : 'pointer', flexShrink: 0, opacity: imageUploading ? 0.5 : 1 }}>
+                    {imageUploading
+                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4B5A8" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    }
+                    <input type="file" accept="image/*" style={{ display: 'none' }} disabled={imageUploading}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) uploadBeadImage(f); e.target.value = '' }} />
+                  </label>
                 </div>
               </div>
 
@@ -1129,6 +1163,62 @@ export default function AdminPage() {
               </button>
               <button onClick={addCrystal} disabled={addCrystalLoading} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: addCrystalLoading ? 'not-allowed' : 'pointer', opacity: addCrystalLoading ? 0.7 : 1 }}>
                 {addCrystalLoading ? 'Saving…' : 'Add Crystal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EDIT CRYSTAL IMAGES MODAL ── */}
+      {editCrystalId !== null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setEditCrystalId(null) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Bead Images</h2>
+              <button onClick={() => setEditCrystalId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <p style={{ ...BODY, fontSize: 12, color: '#9A8573', marginBottom: 24 }}>{editCrystalName}</p>
+
+            <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 12 }}>
+              Images — upload multiple for variety
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 24 }}>
+              {editCrystalImages.map((url, i) => (
+                <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
+                  <img src={url} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E5DDD5', display: 'block' }} />
+                  <button onClick={() => setEditCrystalImages(prev => prev.filter((_, j) => j !== i))}
+                    style={{ position: 'absolute', top: -5, right: -5, width: 20, height: 20, borderRadius: '50%', background: '#C0392B', color: '#fff', border: '2px solid #fff', cursor: 'pointer', fontSize: 13, lineHeight: '16px', textAlign: 'center', padding: 0 }}>
+                    ×
+                  </button>
+                </div>
+              ))}
+              <label style={{ width: 64, height: 64, borderRadius: '50%', border: '2px dashed #C4B5A8', background: '#F6F1EB', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: editCrystalImageUploading ? 'not-allowed' : 'pointer', flexShrink: 0, opacity: editCrystalImageUploading ? 0.5 : 1 }}>
+                {editCrystalImageUploading
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C4B5A8" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>
+                  : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                }
+                <input type="file" accept="image/*" style={{ display: 'none' }} disabled={editCrystalImageUploading}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadEditCrystalImage(f); e.target.value = '' }} />
+              </label>
+            </div>
+
+            {editCrystalImages.length === 0 && (
+              <p style={{ ...BODY, fontSize: 11, color: '#C4B5A8', marginBottom: 16 }}>No images — upload at least one to show in the bracelet preview.</p>
+            )}
+
+            {editCrystalError && (
+              <p style={{ ...BODY, fontSize: 11, color: '#C0392B', marginBottom: 14 }}>{editCrystalError}</p>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditCrystalId(null)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={saveEditCrystalImages} disabled={editCrystalSaving} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: editCrystalSaving ? 'not-allowed' : 'pointer', opacity: editCrystalSaving ? 0.7 : 1 }}>
+                {editCrystalSaving ? 'Saving…' : 'Save Images'}
               </button>
             </div>
           </div>

@@ -26,13 +26,17 @@ export default async function ResultsPage({ params }: Props) {
   const { data: crystalDetails } = crystalNames.length
     ? await supabaseAdmin
         .from("crystals")
-        .select("name, meaning, bead_image_url")
+        .select("name, meaning, bead_image_url, bead_image_urls")
         .in("name", crystalNames)
     : { data: [] };
 
-  const imageMap: Record<string, string> = {}
+  const imageMap: Record<string, string[]> = {}
   for (const c of crystalDetails ?? []) {
-    if (c.bead_image_url) imageMap[c.name] = c.bead_image_url
+    if (c.bead_image_urls?.length) {
+      imageMap[c.name] = c.bead_image_urls
+    } else if (c.bead_image_url) {
+      imageMap[c.name] = [c.bead_image_url]
+    }
   }
 
   const [c1, c2, c3] = crystalNames

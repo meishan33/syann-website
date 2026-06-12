@@ -1,11 +1,12 @@
 // Renders a 20-bead bracelet in a circular layout using real crystal bead images.
+// imageMap accepts multiple URLs per crystal — beads cycle through them for visual variety.
 
 const RADIUS_PCT = 38   // circle radius as % of container width
 const BEAD_PCT   = 12.2 // bead diameter as % of container width
 
 type Props = {
   sequence: string[]
-  imageMap: Record<string, string>
+  imageMap: Record<string, string[]>
   className?: string
 }
 
@@ -44,6 +45,9 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
         const cx = 50 + RADIUS_PCT * Math.cos(angle)
         const cy = 50 + RADIUS_PCT * Math.sin(angle)
 
+        const urls = imageMap[crystal]
+        const url = urls?.length ? urls[i % urls.length] : null
+
         return (
           <div
             key={i}
@@ -60,8 +64,8 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
               boxShadow: '0 2px 8px rgba(50,30,10,0.28), inset 0 1px 3px rgba(255,255,255,0.35)',
             }}
           >
-            {imageMap[crystal]
-              ? <img src={imageMap[crystal]} alt={crystal} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(1.6)' }} />
+            {url
+              ? <img src={url} alt={crystal} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(1.6)' }} />
               : <div style={{ width: '100%', height: '100%', background: '#DDD0C4' }} />
             }
           </div>
