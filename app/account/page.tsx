@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -199,7 +199,7 @@ function SignInPanel() {
 }
 
 /* ── Profile panel (shown when logged in) ─────────────────── */
-export default function AccountPage() {
+function AccountPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [user, setUser] = useState<User | null>(null)
@@ -685,5 +685,14 @@ export default function AccountPage() {
       </section>
 
     </main>
+  )
+}
+
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccountPageContent />
+    </Suspense>
   )
 }
