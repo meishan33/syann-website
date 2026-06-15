@@ -1,8 +1,23 @@
 import { Solar } from "lunar-javascript";
 
+// Generating cycle (相生): each element is nourished by the one before it
+// water → wood → fire → earth → metal → water
+const GENERATING_PARENT: Record<string, string> = {
+  wood:  'water',
+  fire:  'wood',
+  earth: 'fire',
+  metal: 'earth',
+  water: 'metal',
+}
+
+export function supportingElement(weak: string): string {
+  return GENERATING_PARENT[weak] ?? weak
+}
+
 type FiveElementResult = {
   weakElement: string;
   strongElement: string;
+  supportingElement: string;
   elementCounts: {
     wood: number;
     fire: number;
@@ -86,6 +101,7 @@ export function analyzeFiveElements(
   return {
     weakElement,
     strongElement,
+    supportingElement: GENERATING_PARENT[weakElement] ?? weakElement,
     elementCounts: counts,
   };
 }

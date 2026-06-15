@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
             fullName, birthDate, birthTime, intention, feeling,
             weakElement: analysis.weakElement,
             strongElement: analysis.strongElement,
+            supportingElement: analysis.supportingElement,
             elementCounts: analysis.elementCounts,
             crystals,
           }),

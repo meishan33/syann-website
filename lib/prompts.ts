@@ -48,20 +48,13 @@ export function buildSystemPrompt(): string {
 Your role is to curate a deeply personalized crystal bracelet based on the customer's Ba Zi elemental profile, intention, and current feelings.
 
 CRYSTAL SELECTION RULES:
-- Choose exactly 3 crystals from the provided catalog
-- Prioritize crystals that strengthen the customer's weak element — use the element distribution counts as a guide: an element with 0 count needs more support than one with 1, even if both are considered weak
-- Avoid crystals that amplify the already dominant element
-- Factor in the customer's intention and emotional state
-- Aim for elemental variety — do not select all 3 crystals from the same element; at most 2 may share an element
+You will receive the customer's weak element, its supporting element (the one that generates it in the 相生 cycle), and the full crystal catalog.
 
-COLOR HARMONY RULES:
-- Before finalising your 3 crystals, classify each by tone: warm (reds, yellows, ambers, golds), cool (blues, purples, teals), neutral/soft (pale pinks, whites, clears, soft pale greens), or dark/grounding (deep blacks, deep navies, deep saturated greens)
-- Do not select 3 crystals from the same tone category — ensure variety across at least 2 tone categories
-- MANDATORY: You must always include at least 1 crystal that is translucent, soft, or light in colour (e.g. Rose Quartz, Clear Quartz, Aquamarine, Prehnite, Citrine, Blue Moonstone). This is non-negotiable — a combination of 3 bold, opaque, or heavily saturated stones is forbidden regardless of elemental fit
-- MANDATORY: If 2 of your 3 crystals are warm-toned (reds, yellows, ambers, golds — e.g. Citrine, Gold Rutilated Quartz, Yellow Tiger Eye, Red Tiger Eye), the third crystal must be cool (blue, purple, teal) or neutral/soft (pale pink, white, clear, pale green). Selecting a third warm stone when 2 are already warm is forbidden
-- If two crystals are both dark and opaque (e.g. Black Obsidian + Lapis Lazuli), the third must be light, clear, or softly translucent — this is required, not optional
-- You must not select 3 crystals from the same hue family (e.g. three blue-toned, or three green-toned) — meaningful colour contrast between at least two of the three is required
-- Before finalising, verify your combination passes all of the above. If it fails any rule, replace the offending crystal with one that satisfies both the elemental need and the colour rule
+- Crystal 1 (Primary) — MUST come from the weak element category. No exceptions.
+- Crystal 2 (Secondary) — MUST come from the supporting element category. No exceptions.
+- Crystal 3 (Accent) — Choose freely from any element. Factor in the customer's intention, emotional state, and avoid amplifying the already dominant element. This is your creative pick.
+
+The order in selectedCrystals must always be [Primary, Secondary, Accent].
 
 EXPLANATION TONE:
 - Warm, personal, and reassuring — like a trusted guide who understands energy healing
@@ -95,6 +88,7 @@ type UserMessageParams = {
   feeling: string
   weakElement: string
   strongElement: string
+  supportingElement: string
   elementCounts: { wood: number; fire: number; earth: number; metal: number; water: number }
   crystals: unknown[]
 }
@@ -107,6 +101,7 @@ export function buildUserMessage({
   feeling,
   weakElement,
   strongElement,
+  supportingElement,
   elementCounts,
   crystals,
 }: UserMessageParams): string {
@@ -117,8 +112,14 @@ Birth Time: ${birthTime || 'Not provided'}
 
 ELEMENTAL ANALYSIS:
 Weak Element (needs support): ${weakElement}
-Strong Element (already dominant): ${strongElement}
+Supporting Element (generates the weak one): ${supportingElement}
+Strong Element (already dominant, avoid amplifying): ${strongElement}
 Element Distribution — Wood: ${elementCounts.wood}, Fire: ${elementCounts.fire}, Earth: ${elementCounts.earth}, Metal: ${elementCounts.metal}, Water: ${elementCounts.water}
+
+CRYSTAL ASSIGNMENT:
+- Crystal 1 (Primary): must be from the "${weakElement}" element
+- Crystal 2 (Secondary): must be from the "${supportingElement}" element
+- Crystal 3 (Accent): your free choice — consider intention, feelings, avoid the dominant element
 
 INTENTION: ${intention || 'General energy alignment'}
 CURRENT FEELINGS: ${feeling || 'Not shared'}
