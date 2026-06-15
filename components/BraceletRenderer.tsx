@@ -1,8 +1,8 @@
-// Renders a 20-bead bracelet in a circular layout using real crystal bead images.
+// Renders a 19-bead bracelet in a circular layout using real crystal bead images.
 // imageMap accepts multiple URLs per crystal — beads cycle through them for visual variety.
 
-const RADIUS_PCT = 38   // circle radius as % of container width
-const BEAD_PCT   = 12.2 // bead diameter as % of container width
+const RADIUS_PCT = 28   // circle radius as % of container width
+const BEAD_PCT   = 9.2  // bead diameter sized to fill the 19-bead ring with no gaps
 
 type Props = {
   sequence: string[]
@@ -44,9 +44,8 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
         const angle = (i / sequence.length) * 2 * Math.PI - Math.PI / 2
         const cx = 50 + RADIUS_PCT * Math.cos(angle)
         const cy = 50 + RADIUS_PCT * Math.sin(angle)
-
-        const urls = imageMap[crystal]
-        const url = urls?.length ? urls[i % urls.length] : null
+        const urls = imageMap[crystal] ?? []
+        const url = urls.length ? urls[i % urls.length] : null
 
         return (
           <div
@@ -61,11 +60,13 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
               transform: 'translate(-50%, -50%)',
               borderRadius: '50%',
               overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(50,30,10,0.28), inset 0 1px 3px rgba(255,255,255,0.35)',
+              background: '#F5F0EB',
+              boxShadow: '0 1px 4px rgba(50,30,10,0.22)',
+              outline: '1.5px solid rgba(80,50,20,0.12)',
             }}
           >
             {url
-              ? <img src={url} alt={crystal} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(1.6)' }} />
+              ? <img src={url} alt={crystal} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(2.2)' }} />
               : <div style={{ width: '100%', height: '100%', background: '#DDD0C4' }} />
             }
           </div>

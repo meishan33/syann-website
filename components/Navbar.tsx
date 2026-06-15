@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCart, cartCount } from '@/lib/cart'
+import CartDrawer from './CartDrawer'
 
 const NAV_LINKS = [
   { href: '/energy-quiz', label: 'Energy Quiz' },
@@ -19,6 +20,7 @@ export default function Navbar() {
   const [loggedIn, setLoggedIn] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [cartItems, setCartItems] = useState(0)
+  const [cartOpen, setCartOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function Navbar() {
   }
 
   return (
+    <>
     <header className="navbar">
     <div className="navbar-inner">
 
@@ -83,7 +86,7 @@ export default function Navbar() {
       <div className="navbar-icons">
 
         {/* Cart */}
-        <Link href="/shop/cart" className="navbar-icon-btn" aria-label="Shopping cart" style={{ position: 'relative', marginRight: -14 }}>
+        <button onClick={() => setCartOpen(true)} className="navbar-icon-btn" aria-label="Shopping cart" style={{ position: 'relative', marginRight: -14, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A2E14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
@@ -94,7 +97,7 @@ export default function Navbar() {
               {cartItems > 99 ? '99+' : cartItems}
             </span>
           )}
-        </Link>
+        </button>
 
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           {loggedIn ? (
@@ -153,5 +156,8 @@ export default function Navbar() {
 
     </div>
     </header>
+
+    <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+    </>
   )
 }

@@ -1,29 +1,38 @@
-// Generates a 20-bead sequence from 3 crystals using even distribution.
-// Crystal order matters: index 0 = primary (10 beads), 1 = secondary (7), 2 = accent (3).
+// 7 bracelet layouts for 19 beads (9 primary / 6 secondary / 4 accent).
+// Each layout is an index sequence: 0=primary, 1=secondary, 2=accent.
+// variant is derived from the result ID so the same reading always shows the same design.
 
 export type BeadSequence = string[]
 
-function evenDistribute(counts: [number, number, number]): number[] {
-  const total = counts.reduce((a, b) => a + b, 0)
-  const remaining = [...counts]
-  const result: number[] = []
+type Idx = 0 | 1 | 2
 
-  for (let i = 0; i < total; i++) {
-    let bestIdx = 0
-    let bestScore = -Infinity
-    for (let j = 0; j < 3; j++) {
-      if (remaining[j] > 0) {
-        const score = remaining[j] / counts[j]
-        if (score > bestScore) { bestScore = score; bestIdx = j }
-      }
-    }
-    result.push(bestIdx)
-    remaining[bestIdx]--
-  }
+const LAYOUTS: Idx[][] = [
+  // 0: Banded — three continuous arcs
+  [0,0,0,0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2],
 
-  return result
-}
+  // 1: Symmetric — primary anchors top and bottom poles; secondary and accent fill the sides
+  [0,0,0,0, 1,1,1, 2,2, 0,0,0,0,0, 1,1,1, 2,2],
 
-export function generateBeadSequence(crystals: [string, string, string]): BeadSequence {
-  return evenDistribute([10, 7, 3]).map(i => crystals[i])
+  // 2: Cardinal — accent at four compass points; crystals cluster between
+  [2,0,0,1,0, 2,0,0,0,1, 2,0,0,1,1, 2,1,1,0],
+
+  // 3: Crown — accent beads crown the top; primary and secondary fill in groups
+  [2,2,2,0,0,0,1,1, 0,0,0,1,1, 0,0,0,1,1, 2],
+
+  // 4: Pinwheel — two repeating PPP-SS-AA groups
+  [0,0,0,1,1,2,2, 0,0,0,1,1,2,2, 0,0,0,1,1],
+
+  // 5: Heartbeat — accent separates four rhythmic crystal sections
+  [2,0,0,0,0, 2,0,0,1,1, 2,0,0,1,1, 2,1,1,0],
+
+  // 6: Crescent — primary fills one half; secondary and accent form a crescent
+  [0,0,0,0,0,0,0,0,0, 1,1,1,2,2,2,2,1,1,1],
+]
+
+export function generateBeadSequence(
+  crystals: [string, string, string],
+  variant: number
+): BeadSequence {
+  const layout = LAYOUTS[variant % LAYOUTS.length]
+  return layout.map(i => crystals[i])
 }

@@ -22,7 +22,7 @@ const FAQS = [
   },
   {
     q: 'Will my bracelet look exactly like the preview?',
-    a: 'The preview is an AI-generated visualization of your recommended bracelet design. The actual handcrafted bracelet will closely follow the crystal selection and color palette shown. As every crystal is natural and unique, each batch may have slight variations in color and texture — making your piece one-of-a-kind.',
+    a: 'The bracelet preview is a digital render using reference images of each crystal type to show you the design and bead arrangement. Because every crystal is a genuine natural gemstone, no two beads are exactly alike — your actual handcrafted bracelet may have slight differences in color, tone, and texture compared to the preview. These natural variations are what make each piece uniquely yours.',
   },
   {
     q: 'What is included in every SYANN bracelet?',

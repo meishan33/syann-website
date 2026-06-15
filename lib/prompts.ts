@@ -72,14 +72,6 @@ EXPLANATION TONE:
 - Keep it grounded and beautiful, not overly mystical
 - Each crystal explanation: 2–3 sentences
 
-IMAGE PROMPT:
-Write a concise image generation prompt (under 200 words) for the bracelet using these rules:
-
-${IMAGE_COMPOSITION_RULES}
-
-CRYSTAL COLOR REFERENCE — use these exact descriptions when writing the imagePrompt:
-${CRYSTAL_COLOR_REFERENCE}
-
 Return ONLY valid JSON in this exact structure:
 {
   "selectedCrystals": ["Name1", "Name2", "Name3"],
@@ -88,8 +80,7 @@ Return ONLY valid JSON in this exact structure:
     "Name1": "Why this crystal for them specifically (2–3 sentences)",
     "Name2": "...",
     "Name3": "..."
-  },
-  "imagePrompt": "Detailed image generation prompt for the bracelet"
+  }
 }`
 }
 

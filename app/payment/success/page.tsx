@@ -99,7 +99,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link
-            href="/orders"
+            href="/account?tab=orders"
             style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999, background: '#4A3A32', padding: '12px 28px', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none' }}
           >
             View My Orders

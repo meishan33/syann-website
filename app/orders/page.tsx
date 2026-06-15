@@ -14,6 +14,7 @@ const DARK = '#4A3A32'
 
 type Order = {
   id: string
+  order_number: number | null
   customer_name: string
   recommended_crystal_names: string[]
   total_amount: number
@@ -141,7 +142,7 @@ export default function OrdersPage() {
                 {/* Order ID */}
                 <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EDE8DF' }}>
                   <p style={{ ...BODY, fontSize: 10, color: '#C4B5A8', margin: 0, letterSpacing: '0.06em' }}>
-                    Order ID: <span style={{ fontWeight: 500, color: '#9A8573' }}>{order.id}</span>
+                    Order ID: <span style={{ fontWeight: 500, color: '#9A8573' }}>#{order.order_number ?? order.id}</span>
                   </p>
                 </div>
               </div>

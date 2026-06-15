@@ -136,11 +136,11 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
-  const [orderFilter, setOrderFilter] = useState<'all' | 'unfulfilled' | 'processing' | 'fulfilled'>('all')
+  const [orderFilter, setOrderFilter] = useState<'all' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>('all')
   const [orderSort, setOrderSort] = useState<'created_at' | 'customer_name' | 'total_amount'>('created_at')
   const [orderSortAsc, setOrderSortAsc] = useState(false)
   const [orderSearch, setOrderSearch] = useState('')
-  const [orderSearchField, setOrderSearchField] = useState<'customer_name' | 'customer_email'>('customer_name')
+  const [orderSearchField, setOrderSearchField] = useState<'customer_name' | 'customer_email' | 'order_number'>('customer_name')
   const [showOrderSortDropdown, setShowOrderSortDropdown] = useState(false)
   const [expandedInquiry, setExpandedInquiry] = useState<string | null>(null)
   const [inquirySort, setInquirySort] = useState<InquirySortKey>('submitted_at')
@@ -396,12 +396,13 @@ export default function AdminPage() {
               {/* ── ORDERS ── */}
               {tab === 'orders' && (() => {
                 const q = orderSearch.trim().toLowerCase()
-                const searchFiltered = orders.filter(o => !q || (o[orderSearchField] || '').toLowerCase().includes(q))
+                const searchFiltered = orders.filter(o => !q || String(o[orderSearchField] ?? '').toLowerCase().includes(q))
                 const tabCounts = {
                   all: searchFiltered.length,
-                  unfulfilled: searchFiltered.filter(o => o.fulfillment_status === 'unfulfilled').length,
-                  processing:  searchFiltered.filter(o => o.fulfillment_status === 'processing').length,
-                  fulfilled:   searchFiltered.filter(o => o.fulfillment_status === 'fulfilled').length,
+                  processing: searchFiltered.filter(o => o.fulfillment_status === 'processing').length,
+                  shipped:    searchFiltered.filter(o => o.fulfillment_status === 'shipped').length,
+                  delivered:  searchFiltered.filter(o => o.fulfillment_status === 'delivered').length,
+                  cancelled:  searchFiltered.filter(o => o.fulfillment_status === 'cancelled').length,
                 }
                 const ORDER_SORT_OPTIONS: { key: 'created_at' | 'customer_name' | 'total_amount'; label: string }[] = [
                   { key: 'created_at',    label: 'Date' },
@@ -425,7 +426,7 @@ export default function AdminPage() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                       {/* Filter tabs */}
                       <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 4 }}>
-                        {(['all', 'unfulfilled', 'processing', 'fulfilled'] as const).map(f => (
+                        {(['all', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map(f => (
                           <button key={f} onClick={() => setOrderFilter(f)}
                             style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 14px', background: orderFilter === f ? DARK : 'transparent', color: orderFilter === f ? '#F6F1EB' : '#9A8573', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
                             {f}
@@ -443,18 +444,19 @@ export default function AdminPage() {
                         <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E5DDD5', borderRadius: 7, background: '#fff', overflow: 'hidden' }}>
                           <select
                             value={orderSearchField}
-                            onChange={e => { setOrderSearchField(e.target.value as 'customer_name' | 'customer_email'); setOrderSearch('') }}
+                            onChange={e => { setOrderSearchField(e.target.value as 'customer_name' | 'customer_email' | 'order_number'); setOrderSearch('') }}
                             style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '7px 8px', border: 'none', borderRight: '1px solid #E5DDD5', background: '#F6F1EB', color: '#7A6355', cursor: 'pointer', outline: 'none' }}
                           >
                             <option value="customer_name">Name</option>
                             <option value="customer_email">Email</option>
+                            <option value="order_number">Order ID</option>
                           </select>
                           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 8, pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             <input
                               value={orderSearch}
                               onChange={e => setOrderSearch(e.target.value)}
-                              placeholder={`Search by ${orderSearchField === 'customer_name' ? 'name' : 'email'}…`}
+                              placeholder={`Search by ${orderSearchField === 'customer_name' ? 'name' : orderSearchField === 'customer_email' ? 'email' : 'order ID'}…`}
                               style={{ ...BODY, fontSize: 11, padding: '7px 28px 7px 26px', border: 'none', color: DARK, background: 'transparent', outline: 'none', width: 180 }}
                             />
                             {orderSearch && (
@@ -523,14 +525,15 @@ export default function AdminPage() {
                                     <td style={TD}><p style={{ margin: 0, fontSize: 11, lineHeight: 1.6 }}>{o.recommended_crystal_names?.join(', ') || '—'}</p></td>
                                     <td style={TD}>S${Number(o.total_amount).toFixed(2)}</td>
                                     <td style={TD}><Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} /></td>
-                                    <td style={TD}><Badge label={o.fulfillment_status} color={o.fulfillment_status === 'fulfilled' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : '#9A8573'} /></td>
+                                    <td style={TD}><Badge label={o.fulfillment_status} color={o.fulfillment_status === 'delivered' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : o.fulfillment_status === 'cancelled' ? '#C0392B' : '#9A8573'} /></td>
                                     <td style={TD}>{new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                                     <td style={TD} onClick={e => e.stopPropagation()}>
                                       <select value={o.fulfillment_status} disabled={actionLoading === o.id} onChange={e => updateFulfillment(o.id, e.target.value)}
                                         style={{ ...BODY, fontSize: 11, padding: '6px 10px', border: '1px solid #E5DDD5', background: '#fff', color: DARK, cursor: 'pointer', borderRadius: 6 }}>
-                                        <option value="unfulfilled">Unfulfilled</option>
                                         <option value="processing">Processing</option>
-                                        <option value="fulfilled">Fulfilled</option>
+                                        <option value="shipped">Shipped</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
                                       </select>
                                     </td>
                                   </tr>
@@ -595,7 +598,7 @@ export default function AdminPage() {
                     <p style={{ ...BODY, fontSize: 11, color: '#B0A090', textAlign: 'center', letterSpacing: '0.1em', paddingTop: 4 }}>
                       {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'}
                       {tabCounts.processing > 0 && <span style={{ color: GOLD }}> · {tabCounts.processing} processing</span>}
-                      {tabCounts.unfulfilled > 0 && <span style={{ color: '#C0392B' }}> · {tabCounts.unfulfilled} unfulfilled</span>}
+                      {tabCounts.shipped > 0 && <span style={{ color: '#C0392B' }}> · {tabCounts.shipped} shipped</span>}
                     </p>
                   </div>
                 )

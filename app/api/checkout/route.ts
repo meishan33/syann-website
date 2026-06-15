@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, remark, email, userId, imageUrl, analysisSummary, savedAddress } = await req.json()
+    const { resultId, spacer, includeCharm, remark, email, userId, imageUrl, analysisSummary, savedAddress } = await req.json()
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
               description: [
                 analysisSummary && analysisSummary.slice(0, 200),
                 `Spacer: ${spacer}`,
+                `Charm: ${includeCharm === false ? 'excluded' : 'included'}`,
                 remark && `Note: ${remark}`,
               ].filter(Boolean).join(' · '),
               ...(imageUrl ? { images: [imageUrl] } : {}),
@@ -43,7 +44,8 @@ export async function POST(req: NextRequest) {
       // Only collect shipping if user didn't pick a saved address
       ...(!savedAddress ? { shipping_address_collection: { allowed_countries: ['SG'] } } : {}),
       metadata: {
-        resultId, spacer, remark: remark || '', userId: userId || '',
+        resultId, spacer, includeCharm: String(includeCharm !== false),
+        remark: remark || '', userId: userId || '',
         savedAddress: savedAddress ? JSON.stringify(savedAddress) : '',
       },
       success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,

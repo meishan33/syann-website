@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import PurchasePanel from "./PurchasePanel";
-import BraceletRenderer from "@/components/BraceletRenderer";
+import BraceletCapture from "@/components/BraceletCapture";
 import { generateBeadSequence } from "@/lib/design-engine";
 
 type Props = {
@@ -40,8 +40,10 @@ export default async function ResultsPage({ params }: Props) {
   }
 
   const [c1, c2, c3] = crystalNames
+  // Deterministic layout variant (0-6) from first hex char of result ID
+  const variant = parseInt(id.replace(/-/g, '')[0], 16) % 7
   const beadSequence = c1 && c2 && c3
-    ? generateBeadSequence([c1, c2, c3])
+    ? generateBeadSequence([c1, c2, c3], variant)
     : []
 
   /* ── Error state ── */
@@ -104,19 +106,24 @@ export default async function ResultsPage({ params }: Props) {
           {/* ── LEFT: BRACELET IMAGE (3/5) ── */}
           <div className="lg:col-span-3 lg:h-full">
 
-            <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-7 lg:flex lg:flex-col lg:h-full">
+            <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
 
               <div className="w-full lg:flex-1">
-                <BraceletRenderer sequence={beadSequence} imageMap={imageMap} />
+                <BraceletCapture
+                  sequence={beadSequence}
+                  imageMap={imageMap}
+                  resultId={id}
+                  alreadySaved={!!(data.cached_image_url)}
+                />
               </div>
 
-              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.28em] text-[#9A8573]">
-                AI-curated · Five Elements · Handcrafted
-              </p>
+              <div className="mt-3 px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B08B57] mb-1">AI-curated · Five Elements · Handcrafted</p>
+                <p className="text-[11px] leading-relaxed text-[#C5B8AD]">
+                  Every crystal bead is a genuine natural gemstone — no two are exactly alike. Your actual handcrafted bracelet may have slight variations in color, tone, and texture, making it beautifully one-of-a-kind.
+                </p>
+              </div>
 
-              <p className="mt-2 text-center text-[10px] leading-relaxed text-[#B5A898]" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                Each crystal is natural and unique — actual colors may vary slightly from the preview.
-              </p>
 
             </div>
 
@@ -128,8 +135,9 @@ export default async function ResultsPage({ params }: Props) {
 
             <PurchasePanel
               analysisSummary={data.analysis_summary ?? ""}
+              crystalNames={crystalNames}
+              userName={data.user_name ?? null}
               resultId={id}
-              suggestedSpacer={data.suggested_spacer ?? null}
               imageUrl={data.cached_image_url ?? null}
               weakElement={data.calculated_weak_element ?? null}
               strongElement={data.calculated_strong_element ?? null}

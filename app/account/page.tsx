@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useCurrency } from '@/context/CurrencyContext'
 import type { User } from '@supabase/supabase-js'
@@ -201,12 +201,13 @@ function SignInPanel() {
 /* ── Profile panel (shown when logged in) ─────────────────── */
 export default function AccountPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
   const { format } = useCurrency()
-  const [tab, setTab] = useState<Tab>('profile')
+  const [tab, setTab] = useState<Tab>(searchParams.get('tab') === 'orders' ? 'orders' : 'profile')
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
@@ -293,6 +294,10 @@ export default function AccountPage() {
     if (res.ok) setOrders(await res.json())
     setOrdersLoading(false)
   }
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'orders') fetchOrders()
+  }, [])
 
   const handleSignOut = async () => {
     setSigningOut(true)
@@ -397,8 +402,6 @@ export default function AccountPage() {
             {[
               { href: '/energy-quiz', label: 'New Crystal Reading', icon: <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/> },
               { href: '/contact',     label: 'Contact Support',     icon: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></> },
-              { href: '/about',       label: 'About SYANN',         icon: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></> },
-              ...(isAdmin ? [{ href: '/admin', label: 'Admin Dashboard', icon: <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></> }] : []),
             ].map(({ href, label, icon }) => (
               <Link key={href} href={href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, textDecoration: 'none', color: '#4A3A32', marginBottom: 2 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
@@ -408,6 +411,22 @@ export default function AccountPage() {
                 <span style={{ ...BODY, fontSize: 12, fontWeight: 400 }}>{label}</span>
               </Link>
             ))}
+
+            {/* Admin Dashboard — boxed */}
+            {isAdmin && (
+              <div style={{ padding: '8px 4px 2px' }}>
+                <Link href="/admin"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, textDecoration: 'none', color: '#7A5B3A', background: '#F5EDE0', border: '1px solid #D9C4A8' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#EFE0C8'; e.currentTarget.style.borderColor = '#C4A870' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#F5EDE0'; e.currentTarget.style.borderColor = '#D9C4A8' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A7040" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                  </svg>
+                  <span style={{ ...BODY, fontSize: 12, fontWeight: 600, color: '#7A5B3A' }}>Admin Dashboard</span>
+                </Link>
+              </div>
+            )}
           </nav>
 
           {/* Sign out */}
