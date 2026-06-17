@@ -12,8 +12,29 @@ type AIRecommendation = {
   crystalExplanations: Record<string, string>;
 };
 
+// Simple in-memory rate limiter: max 5 requests per IP per 10 minutes
+const ipHits = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 5
+const WINDOW_MS = 10 * 60 * 1000
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = ipHits.get(ip)
+  if (!entry || now > entry.resetAt) {
+    ipHits.set(ip, { count: 1, resetAt: now + WINDOW_MS })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT) return false
+  entry.count++
+  return true
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+    }
 
     console.log("ANALYZE API HIT");
 
@@ -23,6 +44,11 @@ export async function POST(req: NextRequest) {
     if (!birthDate) {
       return NextResponse.json({ error: "Birth date is required" }, { status: 400 });
     }
+
+    // Truncate free-text fields to prevent prompt injection
+    const safeIntention = (intention || '').slice(0, 500)
+    const safeFeeling = (feeling || '').slice(0, 500)
+    const safeName = (fullName || '').slice(0, 100)
 
     // ── Five Element Analysis ──────────────────────────────────────────────
 
@@ -55,7 +81,7 @@ export async function POST(req: NextRequest) {
       messages: [
         { role: "system", content: buildSystemPrompt() },
         { role: "user", content: buildUserMessage({
-            fullName, birthDate, birthTime, intention, feeling,
+            fullName: safeName, birthDate, birthTime, intention: safeIntention, feeling: safeFeeling,
             weakElement: analysis.weakElement,
             strongElement: analysis.strongElement,
             supportingElement: analysis.supportingElement,

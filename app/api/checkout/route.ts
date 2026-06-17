@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, includeCharm, remark, email, userId, imageUrl, analysisSummary, savedAddress } = await req.json()
+    const { resultId, spacer, includeCharm, remark: rawRemark, email, userId, imageUrl, analysisSummary, savedAddress } = await req.json()
+    const remark = (rawRemark || '').slice(0, 300)
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { supabase } from '@/lib/supabase'
 
 async function getUserId(req: NextRequest): Promise<string | null> {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) return null
-  const { data: { user } } = await supabase.auth.getUser(token)
+  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
   return user?.id ?? null
 }
 
@@ -57,7 +56,7 @@ export async function PATCH(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { id, is_default, ...fields } = body
+  const { id, is_default, label, name, phone, line1, line2, city, state, postal_code, country } = body
 
   if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
@@ -66,7 +65,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { error } = await supabaseAdmin.from('delivery_addresses')
-    .update({ ...fields, ...(is_default !== undefined ? { is_default } : {}) })
+    .update({ label, name, phone, line1, line2, city, state, postal_code, country, ...(is_default !== undefined ? { is_default } : {}) })
     .eq('id', id).eq('user_id', userId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
+import { supabase } from '@/lib/supabase'
 import BraceletRenderer from './BraceletRenderer'
 
 type Props = {
@@ -19,22 +20,29 @@ export default function BraceletCapture({ sequence, imageMap, resultId, alreadyS
   useEffect(() => {
     if (captured || !ref.current || sequence.length === 0) return
 
-    // Wait for all bead images to load before capturing
     const imgs = ref.current.querySelectorAll('img')
     const promises = Array.from(imgs).map(img =>
       img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res })
     )
 
-    Promise.all(promises).then(() => {
+    Promise.all(promises).then(async () => {
       if (!ref.current) return
-      toPng(ref.current, { cacheBust: true, pixelRatio: 2 })
-        .then(dataUrl => fetch(`/api/results/${resultId}/save-image`, {
+      try {
+        const dataUrl = await toPng(ref.current, { cacheBust: true, pixelRatio: 2 })
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token ?? null
+        await fetch(`/api/results/${resultId}/save-image`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ imageDataUrl: dataUrl }),
-        }))
-        .then(() => setCaptured(true))
-        .catch(() => {}) // silent — display is unaffected if save fails
+        })
+        setCaptured(true)
+      } catch {
+        // silent — display is unaffected if save fails
+      }
     })
   }, [sequence, resultId, captured])
 
