@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { supabase } from '@/lib/supabase'
 
 async function isAdmin(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -60,7 +59,10 @@ export async function PATCH(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { id, active, bead_image_urls, stock_qty, cost_price } = body
+  const {
+    id, active, bead_image_urls, stock_qty, cost_price,
+    name, slug, element, primary_element, color_family, meaning, price_tier, luxury_score, energy_tags,
+  } = body
   const update: Record<string, unknown> = {}
   if (active !== undefined) update.active = active
   if (bead_image_urls !== undefined) {
@@ -70,6 +72,19 @@ export async function PATCH(req: NextRequest) {
   }
   if (stock_qty !== undefined) update.stock_qty = stock_qty !== null ? Number(stock_qty) : null
   if (cost_price !== undefined) update.cost_price = cost_price !== null ? parseFloat(cost_price) : null
+  if (name !== undefined) update.name = name
+  if (slug !== undefined) update.slug = slug || null
+  if (element !== undefined) update.element = element || null
+  if (primary_element !== undefined) update.primary_element = primary_element || null
+  if (color_family !== undefined) update.color_family = color_family || null
+  if (meaning !== undefined) update.meaning = meaning || null
+  if (price_tier !== undefined) update.price_tier = price_tier || null
+  if (luxury_score !== undefined) update.luxury_score = luxury_score !== '' && luxury_score !== null ? Number(luxury_score) : null
+  if (energy_tags !== undefined) {
+    update.energy_tags = typeof energy_tags === 'string'
+      ? energy_tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+      : (Array.isArray(energy_tags) ? energy_tags : null)
+  }
   const { error } = await supabaseAdmin.from('crystals').update(update).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
