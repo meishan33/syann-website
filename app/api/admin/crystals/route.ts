@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('crystals')
-    .select('id, name, slug, element, primary_element, color_family, meaning, active, price_tier, luxury_score, energy_tags, bead_image_url, bead_image_urls')
+    .select('id, name, slug, element, primary_element, color_family, meaning, active, price_tier, luxury_score, energy_tags, bead_image_url, bead_image_urls, stock_qty, cost_price')
     .order('name')
     .limit(10000)
 
@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { id, active, bead_image_urls } = body
+  const { id, active, bead_image_urls, stock_qty, cost_price } = body
   const update: Record<string, unknown> = {}
   if (active !== undefined) update.active = active
   if (bead_image_urls !== undefined) {
@@ -68,6 +68,8 @@ export async function PATCH(req: NextRequest) {
     update.bead_image_urls = urls.length ? urls : null
     update.bead_image_url = urls[0] || null
   }
+  if (stock_qty !== undefined) update.stock_qty = stock_qty !== null ? Number(stock_qty) : null
+  if (cost_price !== undefined) update.cost_price = cost_price !== null ? parseFloat(cost_price) : null
   const { error } = await supabaseAdmin.from('crystals').update(update).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

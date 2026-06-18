@@ -9,7 +9,7 @@ const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 const DARK = '#4A3A32'
 
-type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram'
+type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock'
 
 type Order = {
   id: string; order_number: number | null; customer_name: string; customer_email: string; customer_phone: string | null
@@ -35,6 +35,7 @@ type Crystal = {
   color_family: string; meaning: string; active: boolean; price_tier: string
   luxury_score: number | null; energy_tags: string[] | null; bead_image_url: string | null
   bead_image_urls: string[] | null
+  stock_qty: number | null; cost_price: number | null
 }
 
 const CRYSTAL_COLUMNS: { key: keyof Crystal | 'toggle'; label: string }[] = [
@@ -88,6 +89,10 @@ const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   {
     key: 'instagram', label: 'Instagram',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
+  },
+  {
+    key: 'stock', label: 'Stock',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
   },
 ]
 
@@ -193,6 +198,14 @@ export default function AdminPage() {
   const [igResult, setIgResult] = useState<{ caption: string; hashtags: string; imageNote: string } | null>(null)
   const [igCopied, setIgCopied] = useState<'caption' | 'hashtags' | null>(null)
 
+  // Stock management
+  const [stockEdits, setStockEdits] = useState<Record<number, { stock_qty: string; cost_price: string }>>({})
+  const [stockSaving, setStockSaving] = useState<Record<number, boolean>>({})
+  const [calcCrystals, setCalcCrystals] = useState<[number | null, number | null, number | null]>([null, null, null])
+  const [calcBeads, setCalcBeads] = useState<[number, number, number]>([6, 8, 4])
+  const [calcOtherCost, setCalcOtherCost] = useState('5.00')
+  const [calcSellingPrice, setCalcSellingPrice] = useState('188')
+
   const [showColPicker, setShowColPicker] = useState(false)
   const [authStatus, setAuthStatus] = useState<'checking' | 'authorized' | 'denied'>('checking')
 
@@ -249,6 +262,24 @@ export default function AdminPage() {
     setActionLoading(id)
     await fetch('/api/admin/inquiry', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, is_replied }) })
     await fetchInquiries(); setActionLoading(null)
+  }
+
+  const saveStock = async (id: number) => {
+    const edit = stockEdits[id]
+    if (!edit) return
+    setStockSaving(prev => ({ ...prev, [id]: true }))
+    await fetch('/api/admin/crystals', {
+      method: 'PATCH',
+      headers: headers(),
+      body: JSON.stringify({
+        id,
+        stock_qty: edit.stock_qty !== '' ? Number(edit.stock_qty) : null,
+        cost_price: edit.cost_price !== '' ? parseFloat(edit.cost_price) : null,
+      }),
+    })
+    setStockEdits(prev => { const n = { ...prev }; delete n[id]; return n })
+    setStockSaving(prev => ({ ...prev, [id]: false }))
+    await fetchCrystals()
   }
 
   const addCrystal = async () => {
@@ -1059,6 +1090,229 @@ export default function AdminPage() {
               )}
 
               {/* ── INSTAGRAM GENERATOR ── */}
+              {/* ── STOCK ── */}
+              {tab === 'stock' && (() => {
+                const totalTypes = crystals.length
+                const lowStock = crystals.filter(c => (c.stock_qty ?? 0) < 10).length
+                const inventoryValue = crystals.reduce((sum, c) => sum + (c.stock_qty ?? 0) * (c.cost_price ?? 0), 0)
+
+                const cA = calcCrystals[0] !== null ? crystals.find(c => c.id === calcCrystals[0]) : null
+                const cB = calcCrystals[1] !== null ? crystals.find(c => c.id === calcCrystals[1]) : null
+                const cC = calcCrystals[2] !== null ? crystals.find(c => c.id === calcCrystals[2]) : null
+                const beadCostA = cA ? (cA.cost_price ?? 0) * calcBeads[0] : 0
+                const beadCostB = cB ? (cB.cost_price ?? 0) * calcBeads[1] : 0
+                const beadCostC = cC ? (cC.cost_price ?? 0) * calcBeads[2] : 0
+                const totalBeadCost = beadCostA + beadCostB + beadCostC
+                const otherCostNum = parseFloat(calcOtherCost) || 0
+                const totalCost = totalBeadCost + otherCostNum
+                const sellingPriceNum = parseFloat(calcSellingPrice) || 0
+                const profit = sellingPriceNum - totalCost
+                const margin = sellingPriceNum > 0 ? (profit / sellingPriceNum * 100) : 0
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                    {/* Summary cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                      {[
+                        { label: 'Crystal Types', value: String(totalTypes), color: GOLD },
+                        { label: 'Low Stock  (< 10 beads)', value: String(lowStock), color: lowStock > 0 ? '#C0392B' : '#7CB98A' },
+                        { label: 'Inventory Value', value: `S$${inventoryValue.toFixed(2)}`, color: '#7A6355' },
+                      ].map(({ label, value, color }) => (
+                        <div key={label} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '20px 24px' }}>
+                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 8px' }}>{label}</p>
+                          <p style={{ ...SERIF, fontSize: 28, fontWeight: 300, color, margin: 0 }}>{value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Table + Calculator */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
+
+                      {/* Stock table */}
+                      <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                        <div style={{ padding: '14px 20px', borderBottom: '1px solid #F0E8DF' }}>
+                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: 0 }}>Crystal Bead Inventory</p>
+                        </div>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ background: '#F6F1EB' }}>
+                                <th style={TH}></th>
+                                <th style={TH}>Crystal</th>
+                                <th style={TH}>Element</th>
+                                <th style={{ ...TH, textAlign: 'right' }}>Stock (beads)</th>
+                                <th style={{ ...TH, textAlign: 'right' }}>Cost / Bead (S$)</th>
+                                <th style={TH}></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {crystals.map(c => {
+                                const edit = stockEdits[c.id]
+                                const currentQty = edit?.stock_qty ?? String(c.stock_qty ?? 0)
+                                const currentCost = edit?.cost_price ?? String(c.cost_price ?? '')
+                                const isDirty = edit !== undefined && (
+                                  currentQty !== String(c.stock_qty ?? 0) ||
+                                  currentCost !== String(c.cost_price ?? '')
+                                )
+                                const isSaving = !!stockSaving[c.id]
+                                const isLow = (c.stock_qty ?? 0) < 10
+
+                                return (
+                                  <tr key={c.id} style={{ background: isDirty ? '#FFFDF8' : undefined }}>
+                                    <td style={{ ...TD, width: 40 }}>
+                                      {c.bead_image_url
+                                        ? <img src={c.bead_image_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '1px solid #E5DDD5', display: 'block' }} />
+                                        : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#EDE8DF', border: '1px solid #E5DDD5' }} />
+                                      }
+                                    </td>
+                                    <td style={{ ...TD, fontWeight: 400 }}>
+                                      {c.name}
+                                      {isLow && (
+                                        <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#C0392B', marginLeft: 7, background: '#FEE2E2', padding: '2px 6px', borderRadius: 999 }}>LOW</span>
+                                      )}
+                                    </td>
+                                    <td style={{ ...TD, textTransform: 'capitalize', color: '#7A6355' }}>{c.element || '—'}</td>
+                                    <td style={{ ...TD, textAlign: 'right' }}>
+                                      <input
+                                        type="number" min="0"
+                                        value={currentQty}
+                                        onChange={e => setStockEdits(prev => ({ ...prev, [c.id]: { stock_qty: e.target.value, cost_price: prev[c.id]?.cost_price ?? String(c.cost_price ?? '') } }))}
+                                        style={{ ...BODY, width: 72, fontSize: 12, padding: '5px 8px', border: `1px solid ${isDirty ? GOLD : '#E5DDD5'}`, borderRadius: 6, color: DARK, background: isDirty ? '#FFFBF3' : '#FAFAF8', outline: 'none', textAlign: 'right' }}
+                                      />
+                                    </td>
+                                    <td style={{ ...TD, textAlign: 'right' }}>
+                                      <input
+                                        type="number" min="0" step="0.01"
+                                        value={currentCost}
+                                        placeholder="0.00"
+                                        onChange={e => setStockEdits(prev => ({ ...prev, [c.id]: { stock_qty: prev[c.id]?.stock_qty ?? String(c.stock_qty ?? 0), cost_price: e.target.value } }))}
+                                        style={{ ...BODY, width: 80, fontSize: 12, padding: '5px 8px', border: `1px solid ${isDirty ? GOLD : '#E5DDD5'}`, borderRadius: 6, color: DARK, background: isDirty ? '#FFFBF3' : '#FAFAF8', outline: 'none', textAlign: 'right' }}
+                                      />
+                                    </td>
+                                    <td style={{ ...TD, width: 70, textAlign: 'right' }}>
+                                      {isDirty && (
+                                        <button
+                                          disabled={isSaving}
+                                          onClick={() => saveStock(c.id)}
+                                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 6, cursor: isSaving ? 'not-allowed' : 'pointer', opacity: isSaving ? 0.6 : 1 }}
+                                        >
+                                          {isSaving ? '…' : 'Save'}
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Profit Calculator */}
+                      <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: 0 }}>Profit Calculator</p>
+                        </div>
+
+                        {(['Primary', 'Secondary', 'Accent'] as const).map((label, i) => (
+                          <div key={label}>
+                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>{label} Crystal</p>
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                              <select
+                                value={calcCrystals[i] ?? ''}
+                                onChange={e => setCalcCrystals(prev => {
+                                  const n: [number | null, number | null, number | null] = [...prev] as [number | null, number | null, number | null]
+                                  n[i] = e.target.value ? Number(e.target.value) : null
+                                  return n
+                                })}
+                                style={{ ...BODY, flex: 1, fontSize: 11, padding: '6px 8px', border: '1px solid #E5DDD5', borderRadius: 6, color: DARK, background: '#FAFAF8', outline: 'none' }}
+                              >
+                                <option value="">— None —</option>
+                                {crystals.map(c => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.name}{c.cost_price ? ` (S$${Number(c.cost_price).toFixed(2)})` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                type="number" min="1" max="30"
+                                value={calcBeads[i]}
+                                onChange={e => setCalcBeads(prev => {
+                                  const n: [number, number, number] = [...prev] as [number, number, number]
+                                  n[i] = parseInt(e.target.value) || 0
+                                  return n
+                                })}
+                                style={{ ...BODY, width: 40, fontSize: 12, padding: '6px 4px', border: '1px solid #E5DDD5', borderRadius: 6, color: DARK, background: '#FAFAF8', outline: 'none', textAlign: 'center' }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+
+                        <div>
+                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>Material & Labour (S$)</p>
+                          <input type="number" min="0" step="0.50" value={calcOtherCost} onChange={e => setCalcOtherCost(e.target.value)}
+                            style={{ ...BODY, width: '100%', fontSize: 12, padding: '7px 10px', border: '1px solid #E5DDD5', borderRadius: 6, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+                          <p style={{ ...BODY, fontSize: 9, color: '#B0A090', margin: '4px 0 0', letterSpacing: '0.04em' }}>Thread, clasp, packaging, labour</p>
+                        </div>
+
+                        <div>
+                          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>Selling Price (S$)</p>
+                          <input type="number" min="0" step="1" value={calcSellingPrice} onChange={e => setCalcSellingPrice(e.target.value)}
+                            style={{ ...BODY, width: '100%', fontSize: 12, padding: '7px 10px', border: '1px solid #E5DDD5', borderRadius: 6, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+                        </div>
+
+                        {/* Results */}
+                        <div style={{ background: '#F6F1EB', borderRadius: 8, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ ...BODY, fontSize: 11, color: '#7A6355' }}>Bead Cost</span>
+                            <span style={{ ...BODY, fontSize: 11, color: DARK, fontWeight: 500 }}>S${totalBeadCost.toFixed(2)}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ ...BODY, fontSize: 11, color: '#7A6355' }}>Other Costs</span>
+                            <span style={{ ...BODY, fontSize: 11, color: DARK, fontWeight: 500 }}>S${otherCostNum.toFixed(2)}</span>
+                          </div>
+                          <div style={{ borderTop: '1px solid #DDD0C4', paddingTop: 7, display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ ...BODY, fontSize: 11, fontWeight: 600, color: DARK }}>Total Cost</span>
+                            <span style={{ ...BODY, fontSize: 11, fontWeight: 600, color: DARK }}>S${totalCost.toFixed(2)}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <span style={{ ...BODY, fontSize: 12, fontWeight: 700, color: profit >= 0 ? '#5A9B6A' : '#C0392B' }}>Profit</span>
+                            <span style={{ ...BODY, fontSize: 14, fontWeight: 700, color: profit >= 0 ? '#5A9B6A' : '#C0392B' }}>S${profit.toFixed(2)}</span>
+                          </div>
+                          {sellingPriceNum > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ ...BODY, fontSize: 11, color: '#7A6355' }}>Margin</span>
+                              <span style={{ ...SERIF, fontSize: 20, fontWeight: 300, color: margin >= 60 ? '#5A9B6A' : margin >= 30 ? GOLD : '#C0392B' }}>
+                                {margin.toFixed(1)}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bead breakdown */}
+                        {(cA || cB || cC) && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Bead Breakdown</p>
+                            {([
+                              { crystal: cA, beads: calcBeads[0], cost: beadCostA },
+                              { crystal: cB, beads: calcBeads[1], cost: beadCostB },
+                              { crystal: cC, beads: calcBeads[2], cost: beadCostC },
+                            ] as { crystal: Crystal | undefined | null; beads: number; cost: number }[]).filter(x => x.crystal).map(({ crystal, beads, cost }) => (
+                              <div key={crystal!.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ ...BODY, fontSize: 10, color: '#7A6355' }}>{crystal!.name} × {beads}</span>
+                                <span style={{ ...BODY, fontSize: 10, color: DARK, fontWeight: 500 }}>S${cost.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {tab === 'instagram' && (() => {
                 const PILLARS = [
                   { key: 'product',      label: 'Product Showcase',    desc: 'Highlight a crystal or bracelet' },
