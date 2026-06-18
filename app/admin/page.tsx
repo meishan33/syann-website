@@ -38,7 +38,7 @@ type Crystal = {
   stock_qty: number | null; cost_price: number | null
 }
 
-const CRYSTAL_COLUMNS: { key: keyof Crystal | 'toggle'; label: string }[] = [
+const CRYSTAL_COLUMNS: { key: keyof Crystal; label: string }[] = [
   { key: 'bead_image_url', label: 'Image' },
   { key: 'name',           label: 'Name' },
   { key: 'slug',           label: 'Slug' },
@@ -49,7 +49,6 @@ const CRYSTAL_COLUMNS: { key: keyof Crystal | 'toggle'; label: string }[] = [
   { key: 'luxury_score',   label: 'Luxury Score' },
   { key: 'energy_tags',    label: 'Energy Tags' },
   { key: 'active',         label: 'Status' },
-  { key: 'toggle',         label: 'Toggle' },
 ]
 type Inquiry = {
   id: string; name: string; email: string; subject: string; message: string; submitted_at: string; is_replied: boolean
@@ -185,7 +184,7 @@ export default function AdminPage() {
   const [editProductId, setEditProductId] = useState<string | null>(null)
   const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '' })
   const [visibleCols, setVisibleCols] = useState<Set<string>>(
-    new Set(['bead_image_url', 'name', 'primary_element', 'color_family', 'price_tier', 'active', 'toggle'])
+    new Set(['bead_image_url', 'name', 'primary_element', 'color_family', 'meaning', 'price_tier', 'energy_tags', 'active'])
   )
 
   // Instagram generator state
@@ -209,6 +208,7 @@ export default function AdminPage() {
   const [showColPicker, setShowColPicker] = useState(false)
   const [crystalSort, setCrystalSort] = useState<keyof Crystal | null>(null)
   const [crystalSortAsc, setCrystalSortAsc] = useState(true)
+  const [crystalFilter, setCrystalFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [authStatus, setAuthStatus] = useState<'checking' | 'authorized' | 'denied'>('checking')
 
   useEffect(() => {
@@ -704,11 +704,56 @@ export default function AdminPage() {
               )}
 
               {/* ── CRYSTALS ── */}
-              {tab === 'crystals' && (
+              {tab === 'crystals' && (() => {
+                const sortedCrystals = [...crystals].sort((a, b) => {
+                  if (!crystalSort) return 0
+                  let av: unknown = a[crystalSort]
+                  let bv: unknown = b[crystalSort]
+                  if (crystalSort === 'energy_tags') {
+                    av = (a.energy_tags || []).join(', ')
+                    bv = (b.energy_tags || []).join(', ')
+                  } else if (crystalSort === 'active') {
+                    av = a.active ? 1 : 0
+                    bv = b.active ? 1 : 0
+                  }
+                  if (av === null || av === undefined) av = ''
+                  if (bv === null || bv === undefined) bv = ''
+                  const result = typeof av === 'number' && typeof bv === 'number'
+                    ? av - bv
+                    : String(av).toLowerCase().localeCompare(String(bv).toLowerCase())
+                  return crystalSortAsc ? result : -result
+                })
+                const activeCount = sortedCrystals.filter(c => c.active).length
+                const inactiveCount = sortedCrystals.length - activeCount
+                const filteredCrystals = sortedCrystals.filter(c =>
+                  crystalFilter === 'all' ? true : crystalFilter === 'active' ? c.active : !c.active
+                )
+
+                return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
                   {/* Toolbar */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                    {/* Filter tabs */}
+                    <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 4 }}>
+                      {([
+                        { key: 'all',      label: 'all',      count: sortedCrystals.length },
+                        { key: 'active',   label: 'active',   count: activeCount },
+                        { key: 'inactive', label: 'inactive', count: inactiveCount },
+                      ] as const).map(f => (
+                        <button key={f.key} onClick={() => setCrystalFilter(f.key)}
+                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 14px', background: crystalFilter === f.key ? DARK : 'transparent', color: crystalFilter === f.key ? '#F6F1EB' : '#9A8573', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                          {f.label}
+                          {f.count > 0 && (
+                            <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 999, background: crystalFilter === f.key ? 'rgba(255,255,255,0.2)' : '#F0E8DF', color: crystalFilter === f.key ? '#F6F1EB' : '#9A8573' }}>
+                              {f.count}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {/* Column picker */}
                     <div style={{ position: 'relative' }}>
                       <button
@@ -746,18 +791,20 @@ export default function AdminPage() {
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                       Add Crystal
                     </button>
+                    </div>
                   </div>
 
                   {/* Table */}
                   <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }} onClick={() => setShowColPicker(false)}>
-                    {crystals.length === 0 ? (
+                    {filteredCrystals.length === 0 ? (
                       <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', padding: '48px 0' }}>No crystals found.</p>
                     ) : (
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                           <thead><tr style={{ background: '#F6F1EB' }}>
+                            <th style={{ ...TH, width: 40 }}>#</th>
                             {CRYSTAL_COLUMNS.filter(c => visibleCols.has(c.key)).map(col => {
-                              const sortable = col.key !== 'bead_image_url' && col.key !== 'toggle'
+                              const sortable = col.key !== 'bead_image_url'
                               return (
                                 <th key={col.key} style={{ ...TH, cursor: sortable ? 'pointer' : 'default', userSelect: 'none' }}
                                   onClick={!sortable ? undefined : () => {
@@ -778,25 +825,9 @@ export default function AdminPage() {
                             })}
                           </tr></thead>
                           <tbody>
-                            {[...crystals].sort((a, b) => {
-                              if (!crystalSort) return 0
-                              let av: unknown = a[crystalSort]
-                              let bv: unknown = b[crystalSort]
-                              if (crystalSort === 'energy_tags') {
-                                av = (a.energy_tags || []).join(', ')
-                                bv = (b.energy_tags || []).join(', ')
-                              } else if (crystalSort === 'active') {
-                                av = a.active ? 1 : 0
-                                bv = b.active ? 1 : 0
-                              }
-                              if (av === null || av === undefined) av = ''
-                              if (bv === null || bv === undefined) bv = ''
-                              const result = typeof av === 'number' && typeof bv === 'number'
-                                ? av - bv
-                                : String(av).toLowerCase().localeCompare(String(bv).toLowerCase())
-                              return crystalSortAsc ? result : -result
-                            }).map(c => (
+                            {filteredCrystals.map((c, idx) => (
                               <tr key={c.id}>
+                                <td style={{ ...TD, color: '#B0A090', fontSize: 11, letterSpacing: '0.06em' }}>#{idx + 1}</td>
                                 {CRYSTAL_COLUMNS.filter(col => visibleCols.has(col.key)).map(col => {
                                   if (col.key === 'bead_image_url') return (
                                     <td key="img" style={TD}>
@@ -807,13 +838,28 @@ export default function AdminPage() {
                                       </button>
                                     </td>
                                   )
-                                  if (col.key === 'name') return <td key="name" style={{ ...TD, fontWeight: 400 }}>{c.name}</td>
-                                  if (col.key === 'active') return <td key="active" style={TD}><Badge label={c.active ? 'Active' : 'Inactive'} color={c.active ? '#7CB98A' : '#9A8573'} /></td>
-                                  if (col.key === 'toggle') return (
-                                    <td key="toggle" style={{ ...TD, whiteSpace: 'nowrap' }}>
-                                      <button disabled={actionLoading === String(c.id)} onClick={() => toggleCrystal(c.id, !c.active)}
-                                        style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 12px', background: 'transparent', border: `1px solid ${c.active ? '#C0392B' : '#7CB98A'}`, color: c.active ? '#C0392B' : '#7CB98A', borderRadius: 6, cursor: 'pointer' }}>
-                                        {actionLoading === String(c.id) ? '…' : c.active ? 'Deactivate' : 'Activate'}
+                                  if (col.key === 'name') return (
+                                    <td key="name" style={{ ...TD, fontWeight: 400 }}>
+                                      <button onClick={() => openEditCrystal(c)} title="Edit crystal"
+                                        style={{ ...BODY, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 400, color: DARK, textAlign: 'left' }}>
+                                        {c.name}
+                                      </button>
+                                    </td>
+                                  )
+                                  if (col.key === 'active') return (
+                                    <td key="active" style={{ ...TD, whiteSpace: 'nowrap' }}>
+                                      <button
+                                        disabled={actionLoading === String(c.id)}
+                                        onClick={() => toggleCrystal(c.id, !c.active)}
+                                        title={c.active ? 'Click to deactivate' : 'Click to activate'}
+                                        style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'none', border: 'none', padding: 0, cursor: actionLoading === String(c.id) ? 'not-allowed' : 'pointer', opacity: actionLoading === String(c.id) ? 0.6 : 1 }}
+                                      >
+                                        <div style={{ width: 36, height: 20, borderRadius: 999, background: c.active ? '#7CB98A' : '#D5CDC6', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                                          <div style={{ position: 'absolute', top: 2, left: c.active ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                                        </div>
+                                        <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: c.active ? '#5A9B6A' : '#9A8573' }}>
+                                          {actionLoading === String(c.id) ? '…' : c.active ? 'Active' : 'Inactive'}
+                                        </span>
                                       </button>
                                     </td>
                                   )
@@ -833,7 +879,8 @@ export default function AdminPage() {
                     )}
                   </div>
                 </div>
-              )}
+                )
+              })()}
 
               {/* ── INQUIRY ── */}
               {tab === 'inquiry' && (() => {

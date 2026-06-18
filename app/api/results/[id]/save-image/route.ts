@@ -13,6 +13,17 @@ export async function POST(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { id } = await params
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return NextResponse.json({ error: 'Invalid result id' }, { status: 400 })
+    }
+
+    const { data: result } = await supabaseAdmin
+      .from('energy_quiz_results')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle()
+    if (!result) return NextResponse.json({ error: 'Result not found' }, { status: 404 })
+
     const { imageDataUrl } = await req.json()
 
     if (!imageDataUrl?.startsWith('data:image/png;base64,')) {
