@@ -39,7 +39,13 @@ export async function POST(req: NextRequest) {
     console.log("ANALYZE API HIT");
 
     const body = await req.json();
-    const { fullName, birthDate, birthTime, intention, feeling } = body;
+    const { fullName, birthDate, birthTime, intention, feeling, honeypot, elapsedMs } = body;
+
+    // Bot signals: honeypot filled in, or form submitted implausibly fast.
+    // Reject before any DB/AI calls so bot traffic never burns OpenAI cost.
+    if (honeypot || (typeof elapsedMs === 'number' && elapsedMs < 3000)) {
+      return NextResponse.json({ error: "Invalid submission" }, { status: 400 });
+    }
 
     if (!birthDate) {
       return NextResponse.json({ error: "Birth date is required" }, { status: 400 });

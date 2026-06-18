@@ -23,7 +23,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 })
     }
 
-    const { name, email, subject, message } = await req.json()
+    const { name, email, subject, message, honeypot, elapsedMs } = await req.json()
+
+    // Bot signals: honeypot filled in, or form submitted implausibly fast.
+    // Pretend success so spam tools don't notice and adapt — just skip the save.
+    if (honeypot || (typeof elapsedMs === 'number' && elapsedMs < 2500)) {
+      return NextResponse.json({ ok: true })
+    }
 
     if (!subject?.trim() || !message?.trim()) {
       return NextResponse.json({ error: 'Subject and message are required.' }, { status: 400 })

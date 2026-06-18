@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, includeCharm, remark: rawRemark, email, userId, imageUrl, analysisSummary, savedAddress } = await req.json()
+    const { resultId, spacer, includeCharm, remark: rawRemark, email, userId, imageUrl, savedAddress } = await req.json()
     const remark = (rawRemark || '').slice(0, 300)
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: 'SYANN Crystal Bracelet',
               description: [
-                analysisSummary && analysisSummary.slice(0, 200),
                 `Spacer: ${spacer}`,
                 `Charm: ${includeCharm === false ? 'excluded' : 'included'}`,
                 remark && `Note: ${remark}`,

@@ -6,23 +6,23 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Require a valid session — anonymous callers cannot overwrite bracelet images
-    const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
     const { id } = await params
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
       return NextResponse.json({ error: 'Invalid result id' }, { status: 400 })
     }
 
+    // The quiz is anonymous-by-design, so we can't check "ownership" — instead we
+    // only ever allow the very first save. The app only calls this once per result
+    // (right after the quiz, before any image exists), so blocking re-saves blocks
+    // the only realistic abuse case (overwriting someone else's cached image)
+    // without requiring login for legitimate guest quiz-takers.
     const { data: result } = await supabaseAdmin
       .from('energy_quiz_results')
-      .select('id')
+      .select('id, cached_image_url')
       .eq('id', id)
       .maybeSingle()
     if (!result) return NextResponse.json({ error: 'Result not found' }, { status: 404 })
+    if (result.cached_image_url) return NextResponse.json({ error: 'Image already saved' }, { status: 409 })
 
     const { imageDataUrl } = await req.json()
 

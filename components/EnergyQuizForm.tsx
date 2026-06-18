@@ -261,6 +261,8 @@ export default function EnergyQuizForm() {
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0])
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showDailyLimit, setShowDailyLimit] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
+  const [loadedAt] = useState(() => Date.now())
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -307,7 +309,7 @@ export default function EnergyQuizForm() {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, honeypot, elapsedMs: Date.now() - loadedAt }),
       })
 
       const data = await res.json()
@@ -404,6 +406,18 @@ export default function EnergyQuizForm() {
       )}
 
       <form className="home-quiz-form" onSubmit={handleSubmit} noValidate>
+
+        {/* Honeypot — invisible to humans, most bots fill it automatically */}
+        <input
+          type="text"
+          name="company"
+          value={honeypot}
+          onChange={e => setHoneypot(e.target.value)}
+          autoComplete="off"
+          tabIndex={-1}
+          aria-hidden="true"
+          style={{ position: 'absolute', left: '-9999px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}
+        />
 
         <div className="home-quiz-grid">
 

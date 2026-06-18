@@ -41,6 +41,8 @@ export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [focused, setFocused] = useState<string | null>(null)
   const [errors, setErrors] = useState<{ subject?: boolean; message?: boolean }>({});
+  const [honeypot, setHoneypot] = useState('')
+  const [loadedAt] = useState(() => Date.now())
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -74,7 +76,7 @@ export default function ContactPage() {
     await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, honeypot, elapsedMs: Date.now() - loadedAt }),
     })
 
     router.push('/contact/success')
@@ -131,6 +133,18 @@ export default function ContactPage() {
             <SectionEyebrow>Send Us a Message</SectionEyebrow>
 
             <form onSubmit={handleSubmit} noValidate>
+
+                {/* Honeypot — invisible to humans, most bots fill it automatically */}
+                <input
+                  type="text"
+                  name="company"
+                  value={honeypot}
+                  onChange={e => setHoneypot(e.target.value)}
+                  autoComplete="off"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  style={{ position: 'absolute', left: '-9999px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}
+                />
 
                 {/* Name + Email row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
