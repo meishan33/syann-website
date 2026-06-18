@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('crystals')
-    .select('id, name, slug, element, primary_element, color_family, meaning, active, price_tier, luxury_score, energy_tags, bead_image_url, bead_image_urls, stock_qty, cost_price')
+    .select('id, name, slug, primary_element, color_family, meaning, active, price_tier, luxury_score, energy_tags, bead_image_url, bead_image_urls, stock_qty, cost_price')
     .order('name')
     .limit(10000)
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { name, slug, element, primary_element, color_family, meaning, price_tier, luxury_score, energy_tags, bead_image_urls, active } = body
+  const { name, slug, primary_element, color_family, meaning, price_tier, luxury_score, energy_tags, bead_image_urls, active } = body
   if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
   const urls: string[] = Array.isArray(bead_image_urls) ? bead_image_urls.filter(Boolean) : []
@@ -37,7 +37,6 @@ export async function POST(req: NextRequest) {
     .insert({
       name,
       slug: slug || null,
-      element: element || null,
       primary_element: primary_element || null,
       color_family: color_family || null,
       meaning: meaning || null,
@@ -48,7 +47,7 @@ export async function POST(req: NextRequest) {
       bead_image_urls: urls.length ? urls : null,
       active: active ?? true,
     })
-    .select('id, name, slug, element, primary_element, color_family, meaning, active, price_tier, luxury_score, energy_tags, bead_image_url, bead_image_urls')
+    .select('id, name, slug, primary_element, color_family, meaning, active, price_tier, luxury_score, energy_tags, bead_image_url, bead_image_urls')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -61,7 +60,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json()
   const {
     id, active, bead_image_urls, stock_qty, cost_price,
-    name, slug, element, primary_element, color_family, meaning, price_tier, luxury_score, energy_tags,
+    name, slug, primary_element, color_family, meaning, price_tier, luxury_score, energy_tags,
   } = body
   const update: Record<string, unknown> = {}
   if (active !== undefined) update.active = active
@@ -74,7 +73,6 @@ export async function PATCH(req: NextRequest) {
   if (cost_price !== undefined) update.cost_price = cost_price !== null ? parseFloat(cost_price) : null
   if (name !== undefined) update.name = name
   if (slug !== undefined) update.slug = slug || null
-  if (element !== undefined) update.element = element || null
   if (primary_element !== undefined) update.primary_element = primary_element || null
   if (color_family !== undefined) update.color_family = color_family || null
   if (meaning !== undefined) update.meaning = meaning || null

@@ -31,7 +31,7 @@ type Reading = {
 }
 
 type Crystal = {
-  id: number; name: string; slug: string | null; element: string; primary_element: string | null
+  id: number; name: string; slug: string | null; primary_element: string | null
   color_family: string; meaning: string; active: boolean; price_tier: string
   luxury_score: number | null; energy_tags: string[] | null; bead_image_url: string | null
   bead_image_urls: string[] | null
@@ -42,7 +42,6 @@ const CRYSTAL_COLUMNS: { key: keyof Crystal | 'toggle'; label: string }[] = [
   { key: 'bead_image_url', label: 'Image' },
   { key: 'name',           label: 'Name' },
   { key: 'slug',           label: 'Slug' },
-  { key: 'element',        label: 'Element' },
   { key: 'primary_element',label: 'Primary Element' },
   { key: 'color_family',   label: 'Color Family' },
   { key: 'meaning',        label: 'Meaning' },
@@ -160,14 +159,14 @@ export default function AdminPage() {
   const [inquirySearchField, setInquirySearchField] = useState<'name' | 'email' | 'subject'>('name')
   const [expandedReading, setExpandedReading] = useState<string | null>(null)
   const [showAddCrystal, setShowAddCrystal] = useState(false)
-  const [newCrystal, setNewCrystal] = useState({ name: '', slug: '', element: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_urls: [] as string[], active: true })
+  const [newCrystal, setNewCrystal] = useState({ name: '', slug: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_urls: [] as string[], active: true })
   const [addCrystalError, setAddCrystalError] = useState<string | null>(null)
   const [addCrystalLoading, setAddCrystalLoading] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
 
   // Edit crystal (full details + images)
   const [editCrystalId, setEditCrystalId] = useState<number | null>(null)
-  const [editCrystalData, setEditCrystalData] = useState({ name: '', slug: '', element: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', active: true })
+  const [editCrystalData, setEditCrystalData] = useState({ name: '', slug: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', active: true })
   const [editCrystalImages, setEditCrystalImages] = useState<string[]>([])
   const [editPreviewIndex, setEditPreviewIndex] = useState(0)
   const [editCrystalImageUploading, setEditCrystalImageUploading] = useState(false)
@@ -186,7 +185,7 @@ export default function AdminPage() {
   const [editProductId, setEditProductId] = useState<string | null>(null)
   const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '' })
   const [visibleCols, setVisibleCols] = useState<Set<string>>(
-    new Set(['bead_image_url', 'name', 'element', 'color_family', 'price_tier', 'active', 'toggle'])
+    new Set(['bead_image_url', 'name', 'primary_element', 'color_family', 'price_tier', 'active', 'toggle'])
   )
 
   // Instagram generator state
@@ -208,6 +207,8 @@ export default function AdminPage() {
   const [calcSellingPrice, setCalcSellingPrice] = useState('188')
 
   const [showColPicker, setShowColPicker] = useState(false)
+  const [crystalSort, setCrystalSort] = useState<keyof Crystal | null>(null)
+  const [crystalSortAsc, setCrystalSortAsc] = useState(true)
   const [authStatus, setAuthStatus] = useState<'checking' | 'authorized' | 'denied'>('checking')
 
   useEffect(() => {
@@ -290,7 +291,7 @@ export default function AdminPage() {
     if (!r.ok) { const e = await r.json(); setAddCrystalError(e.error || 'Failed to add crystal.'); setAddCrystalLoading(false); return }
     await fetchCrystals()
     setShowAddCrystal(false)
-    setNewCrystal({ name: '', slug: '', element: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_urls: [], active: true })
+    setNewCrystal({ name: '', slug: '', primary_element: '', color_family: '', meaning: '', price_tier: '', luxury_score: '', energy_tags: '', bead_image_urls: [], active: true })
     setAddCrystalLoading(false)
   }
 
@@ -317,7 +318,7 @@ export default function AdminPage() {
   const openEditCrystal = (c: Crystal) => {
     setEditCrystalId(c.id)
     setEditCrystalData({
-      name: c.name, slug: c.slug || '', element: c.element || '', primary_element: c.primary_element || '',
+      name: c.name, slug: c.slug || '', primary_element: c.primary_element || '',
       color_family: c.color_family || '', meaning: c.meaning || '', price_tier: c.price_tier || '',
       luxury_score: c.luxury_score != null ? String(c.luxury_score) : '', energy_tags: c.energy_tags?.join(', ') || '',
       active: c.active,
@@ -755,12 +756,46 @@ export default function AdminPage() {
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                           <thead><tr style={{ background: '#F6F1EB' }}>
-                            {CRYSTAL_COLUMNS.filter(c => visibleCols.has(c.key)).map(col => (
-                              <th key={col.key} style={TH}>{col.label}</th>
-                            ))}
+                            {CRYSTAL_COLUMNS.filter(c => visibleCols.has(c.key)).map(col => {
+                              const sortable = col.key !== 'bead_image_url' && col.key !== 'toggle'
+                              return (
+                                <th key={col.key} style={{ ...TH, cursor: sortable ? 'pointer' : 'default', userSelect: 'none' }}
+                                  onClick={!sortable ? undefined : () => {
+                                    if (crystalSort === col.key) setCrystalSortAsc(a => !a)
+                                    else { setCrystalSort(col.key as keyof Crystal); setCrystalSortAsc(true) }
+                                  }}
+                                >
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                    {col.label}
+                                    {sortable && crystalSort === col.key && (
+                                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="3" strokeLinecap="round">
+                                        {crystalSortAsc ? <polyline points="18 15 12 9 6 15"/> : <polyline points="6 9 12 15 18 9"/>}
+                                      </svg>
+                                    )}
+                                  </span>
+                                </th>
+                              )
+                            })}
                           </tr></thead>
                           <tbody>
-                            {crystals.map(c => (
+                            {[...crystals].sort((a, b) => {
+                              if (!crystalSort) return 0
+                              let av: unknown = a[crystalSort]
+                              let bv: unknown = b[crystalSort]
+                              if (crystalSort === 'energy_tags') {
+                                av = (a.energy_tags || []).join(', ')
+                                bv = (b.energy_tags || []).join(', ')
+                              } else if (crystalSort === 'active') {
+                                av = a.active ? 1 : 0
+                                bv = b.active ? 1 : 0
+                              }
+                              if (av === null || av === undefined) av = ''
+                              if (bv === null || bv === undefined) bv = ''
+                              const result = typeof av === 'number' && typeof bv === 'number'
+                                ? av - bv
+                                : String(av).toLowerCase().localeCompare(String(bv).toLowerCase())
+                              return crystalSortAsc ? result : -result
+                            }).map(c => (
                               <tr key={c.id}>
                                 {CRYSTAL_COLUMNS.filter(col => visibleCols.has(col.key)).map(col => {
                                   if (col.key === 'bead_image_url') return (
@@ -1186,7 +1221,7 @@ export default function AdminPage() {
                                         <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#C0392B', marginLeft: 7, background: '#FEE2E2', padding: '2px 6px', borderRadius: 999 }}>LOW</span>
                                       )}
                                     </td>
-                                    <td style={{ ...TD, textTransform: 'capitalize', color: '#7A6355' }}>{c.element || '—'}</td>
+                                    <td style={{ ...TD, textTransform: 'capitalize', color: '#7A6355' }}>{c.primary_element || '—'}</td>
                                     <td style={{ ...TD, textAlign: 'right' }}>
                                       <input
                                         type="number" min="0"
@@ -1573,21 +1608,19 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {(['element', 'primary_element'] as const).map(key => (
-                <div key={key}>
-                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>
-                    {key === 'element' ? 'Element' : 'Primary Element'}
-                  </label>
-                  <select
-                    value={newCrystal[key]}
-                    onChange={e => setNewCrystal(prev => ({ ...prev, [key]: e.target.value }))}
-                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}
-                  >
-                    <option value="">— Select Element —</option>
-                    {['Wood', 'Fire', 'Earth', 'Metal', 'Water'].map(el => <option key={el} value={el}>{el}</option>)}
-                  </select>
-                </div>
-              ))}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>
+                  Primary Element
+                </label>
+                <select
+                  value={newCrystal.primary_element}
+                  onChange={e => setNewCrystal(prev => ({ ...prev, primary_element: e.target.value }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}
+                >
+                  <option value="">— Select Element —</option>
+                  {['wood', 'fire', 'earth', 'metal', 'water'].map(el => <option key={el} value={el}>{el.charAt(0).toUpperCase() + el.slice(1)}</option>)}
+                </select>
+              </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573' }}>Active</label>
@@ -1698,21 +1731,19 @@ export default function AdminPage() {
                 </div>
               ))}
 
-              {(['element', 'primary_element'] as const).map(key => (
-                <div key={key}>
-                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>
-                    {key === 'element' ? 'Element' : 'Primary Element'}
-                  </label>
-                  <select
-                    value={editCrystalData[key]}
-                    onChange={e => setEditCrystalData(prev => ({ ...prev, [key]: e.target.value }))}
-                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}
-                  >
-                    <option value="">— Select Element —</option>
-                    {['Wood', 'Fire', 'Earth', 'Metal', 'Water'].map(el => <option key={el} value={el}>{el}</option>)}
-                  </select>
-                </div>
-              ))}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>
+                  Primary Element
+                </label>
+                <select
+                  value={editCrystalData.primary_element}
+                  onChange={e => setEditCrystalData(prev => ({ ...prev, primary_element: e.target.value }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}
+                >
+                  <option value="">— Select Element —</option>
+                  {['wood', 'fire', 'earth', 'metal', 'water'].map(el => <option key={el} value={el}>{el.charAt(0).toUpperCase() + el.slice(1)}</option>)}
+                </select>
+              </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573' }}>Active</label>
