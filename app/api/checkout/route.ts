@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
-const PRICE_BASE_CENTS = 18800   // SGD 188.00 — update before going live
+const PRICE_BASE_CENTS = 5900   // SGD 59.00
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -15,6 +16,18 @@ export async function POST(req: NextRequest) {
   try {
     const { resultId, spacer, includeCharm, remark: rawRemark, email, userId, imageUrl, savedAddress } = await req.json()
     const remark = (rawRemark || '').slice(0, 300)
+
+    // Prevent buying the same bracelet design twice (e.g. user pays, goes back,
+    // pays again on a fresh Stripe session before the first one expires)
+    const { data: existingOrder } = await supabaseAdmin
+      .from('orders')
+      .select('id')
+      .eq('result_id', resultId)
+      .eq('payment_status', 'paid')
+      .maybeSingle()
+    if (existingOrder) {
+      return NextResponse.json({ error: 'This bracelet design has already been purchased.' }, { status: 409 })
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 

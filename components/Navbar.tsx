@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCart, cartCount } from '@/lib/cart'
 import CartDrawer from './CartDrawer'
+import MobileMenu from './MobileMenu'
 
 const NAV_LINKS = [
   { href: '/energy-quiz', label: 'Energy Quiz' },
@@ -21,6 +22,7 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [cartItems, setCartItems] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -84,6 +86,15 @@ export default function Navbar() {
 
       {/* RIGHT — ICONS */}
       <div className="navbar-icons">
+
+        {/* Hamburger — mobile only */}
+        <button onClick={() => setMenuOpen(true)} className="navbar-menu-btn navbar-icon-btn" aria-label="Open menu">
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A2E14" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </span>
+        </button>
 
         {/* Cart */}
         <button onClick={() => setCartOpen(true)} className="navbar-icon-btn" aria-label="Shopping cart" style={{ position: 'relative', marginRight: -14, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
@@ -158,6 +169,7 @@ export default function Navbar() {
     </header>
 
     <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+    <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} links={NAV_LINKS} />
     </>
   )
 }

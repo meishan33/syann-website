@@ -37,6 +37,10 @@
 
 
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--color-bg);
@@ -650,5 +654,48 @@ body {
   .statement-text {
     font-size: 14px;
     letter-spacing: 4px;
+  }
+}
+
+/* ABOUT PAGE — Our Values grid */
+.about-values-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .about-values-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* CONTACT PAGE — form + info layout, and name/email row */
+.contact-layout-grid {
+  display: grid;
+  grid-template-columns: 3fr 56px 2fr;
+  align-items: start;
+}
+
+.contact-name-email-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 720px) {
+  .contact-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .contact-layout-grid > div:nth-child(2) {
+    display: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .contact-name-email-row {
+    grid-template-columns: 1fr;
   }
 }

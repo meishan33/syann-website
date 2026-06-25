@@ -8,7 +8,16 @@ import { supabase } from '@/lib/supabase'
 import { useCurrency } from '@/context/CurrencyContext'
 import type { User } from '@supabase/supabase-js'
 
-type Tab = 'profile' | 'orders'
+type Tab = 'profile' | 'orders' | 'readings'
+
+type Reading = {
+  id: string
+  crystal_names: string[]
+  cached_image_url: string | null
+  calculated_weak_element: string | null
+  calculated_strong_element: string | null
+  created_at: string
+}
 
 type Order = {
   id: string
@@ -207,10 +216,13 @@ function AccountPageContent() {
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
   const { format } = useCurrency()
-  const [tab, setTab] = useState<Tab>(searchParams.get('tab') === 'orders' ? 'orders' : 'profile')
+  const initialTab = searchParams.get('tab')
+  const [tab, setTab] = useState<Tab>(initialTab === 'orders' || initialTab === 'readings' ? initialTab : 'profile')
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+  const [readings, setReadings] = useState<Reading[]>([])
+  const [readingsLoading, setReadingsLoading] = useState(false)
 
   type DeliveryAddress = {
     id: string; label: string | null; name: string | null; phone: string | null
@@ -295,8 +307,18 @@ function AccountPageContent() {
     setOrdersLoading(false)
   }
 
+  const fetchReadings = async () => {
+    setReadingsLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setReadingsLoading(false); return }
+    const res = await fetch('/api/readings', { headers: { Authorization: `Bearer ${session.access_token}` } })
+    if (res.ok) setReadings(await res.json())
+    setReadingsLoading(false)
+  }
+
   useEffect(() => {
     if (searchParams.get('tab') === 'orders') fetchOrders()
+    if (searchParams.get('tab') === 'readings') fetchReadings()
   }, [])
 
   const handleSignOut = async () => {
@@ -398,6 +420,16 @@ function AccountPageContent() {
               <span style={{ ...BODY, fontSize: 12, fontWeight: tab === 'orders' ? 600 : 400 }}>My Orders</span>
             </button>
 
+            {/* Recent Readings tab */}
+            <button onClick={() => { setTab('readings'); fetchReadings() }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, color: '#4A3A32', marginBottom: 2, width: '100%', background: tab === 'readings' ? '#F6F1EB' : 'transparent', border: 'none', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
+              onMouseLeave={e => (e.currentTarget.style.background = tab === 'readings' ? '#F6F1EB' : 'transparent')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style={{ ...BODY, fontSize: 12, fontWeight: tab === 'readings' ? 600 : 400 }}>Recent Readings</span>
+            </button>
+
             {/* External links */}
             {[
               { href: '/energy-quiz', label: 'New Crystal Reading', icon: <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/> },
@@ -444,6 +476,60 @@ function AccountPageContent() {
 
         {/* ── RIGHT CONTENT ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* ── RECENT READINGS TAB ── */}
+          {tab === 'readings' && (
+            <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '32px 36px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <Diamond />
+                <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>Recent Readings</p>
+              </div>
+              <p style={{ ...BODY, fontSize: 11, fontWeight: 300, color: '#9A8573', margin: '0 0 24px' }}>
+                Bracelet designs generated in the last 24 hours.
+              </p>
+              {readingsLoading ? (
+                <p style={{ ...BODY, fontSize: 11, letterSpacing: '0.28em', color: GOLD, textTransform: 'uppercase', textAlign: 'center', padding: '32px 0' }}>Loading…</p>
+              ) : readings.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                  <p style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: '#4A3A32', margin: '0 0 8px' }}>No Recent Readings</p>
+                  <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#9A8573', margin: '0 0 24px', lineHeight: 1.7 }}>Readings older than 24 hours no longer appear here.</p>
+                  <Link href="/energy-quiz" style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 24px', background: '#4A3A32', color: '#F6F1EB', borderRadius: 999, textDecoration: 'none', fontSize: 11, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase' }}>
+                    Discover Your Bracelet
+                  </Link>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {readings.map((reading) => (
+                    <Link key={reading.id} href={`/results/${reading.id}`}
+                      style={{ background: '#F9F5F0', border: '1px solid #E5DDD5', borderRadius: 12, padding: '20px 24px', display: 'flex', gap: 14, alignItems: 'flex-start', textDecoration: 'none' }}
+                    >
+                      {reading.cached_image_url && (
+                        <div style={{ position: 'relative', width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
+                          <Image src={reading.cached_image_url} alt="Crystal bracelet" fill sizes="60px" style={{ objectFit: 'contain' }} />
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                        <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>
+                          {new Date(reading.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: '#4A3A32', margin: 0 }}>
+                          {reading.crystal_names?.join(' · ') || 'Crystal Bracelet'}
+                        </p>
+                        {(reading.calculated_weak_element || reading.calculated_strong_element) && (
+                          <p style={{ ...BODY, fontSize: 10, color: GOLD, margin: 0 }}>
+                            Weak: {reading.calculated_weak_element || '—'} · Strong: {reading.calculated_strong_element || '—'}
+                          </p>
+                        )}
+                      </div>
+                      <span style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: GOLD, alignSelf: 'center', whiteSpace: 'nowrap' }}>
+                        View →
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── ORDERS TAB ── */}
           {tab === 'orders' && (

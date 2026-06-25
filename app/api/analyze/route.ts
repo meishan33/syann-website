@@ -38,6 +38,13 @@ export async function POST(req: NextRequest) {
 
     console.log("ANALYZE API HIT");
 
+    const token = req.headers.get('authorization')?.replace('Bearer ', '')
+    let userId: string | null = null
+    if (token) {
+      const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+      userId = user?.id ?? null
+    }
+
     const body = await req.json();
     const { fullName, birthDate, birthTime, intention, feeling, honeypot, elapsedMs } = body;
 
@@ -122,6 +129,7 @@ export async function POST(req: NextRequest) {
     const { data: savedResult, error: saveError } = await supabaseAdmin
       .from("energy_quiz_results")
       .insert([{
+        user_id: userId,
         user_name: fullName || null,
         birth_date: birthDate,
         birth_time: birthTime || null,

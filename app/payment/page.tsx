@@ -1,7 +1,9 @@
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import CheckoutButton from "./CheckoutButton";
+import PriceSummary from "./PriceSummary";
 
 type Props = {
   searchParams: Promise<{
@@ -15,7 +17,7 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
 
 // ── Pricing — update these before going live ──────────────────────────────────
-const PRICE_BASE = 188;   // SGD
+const PRICE_BASE = 59;   // SGD
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default async function PaymentPage({ searchParams }: Props) {
@@ -49,6 +51,13 @@ export default async function PaymentPage({ searchParams }: Props) {
   const weakElement: string | null = data?.calculated_weak_element ?? null;
   const strongElement: string | null = data?.calculated_strong_element ?? null;
   const analysisSummary: string | null = data?.analysis_summary ?? null;
+
+  const { data: existingOrder } = await supabaseAdmin
+    .from("orders")
+    .select("order_number")
+    .eq("result_id", resultId)
+    .eq("payment_status", "paid")
+    .maybeSingle();
 
   return (
     <main className="min-h-screen bg-[#F6F1EB] text-[#4A3A32]">
@@ -112,30 +121,46 @@ export default async function PaymentPage({ searchParams }: Props) {
 
           <div className="h-px bg-[#E5DDD5]" />
 
-          {/* ── Pricing ── */}
-          <div className="flex flex-col gap-2.5">
-            <div className="flex justify-between">
-              <span style={BODY} className="text-[12px] text-[#7A5B45]">Crystal Bracelet</span>
-              <span style={BODY} className="text-[12px] text-[#4A3A32]">S$ {PRICE_BASE}</span>
-            </div>
-            <div className="flex justify-between pt-3 border-t border-[#E5DDD5]">
-              <span style={SERIF} className="text-[15px] font-light text-[#4A3A32]">Total</span>
-              <span style={SERIF} className="text-[20px] font-light text-[#4A3A32]">S$ {PRICE_BASE}</span>
-            </div>
-          </div>
+          {existingOrder ? (
+            <>
+              {/* ── Already purchased ── */}
+              <div className="text-center py-2">
+                <p style={SERIF} className="text-xl font-light text-[#4A3A32] mb-2">
+                  Already Purchased ✦
+                </p>
+                <p style={BODY} className="text-[12px] text-[#7A5B45] leading-relaxed">
+                  This bracelet design was already ordered
+                  {existingOrder.order_number ? ` (Order #${existingOrder.order_number})` : ''}.
+                  <br />No need to pay for it again.
+                </p>
+              </div>
+              <Link
+                href="/orders"
+                style={BODY}
+                className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white no-underline transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57]"
+              >
+                View My Orders
+              </Link>
+            </>
+          ) : (
+            <>
+              {/* ── Pricing ── */}
+              <PriceSummary priceSGD={PRICE_BASE} />
 
-          <div className="h-px bg-[#E5DDD5]" />
+              <div className="h-px bg-[#E5DDD5]" />
 
-          {/* ── Checkout button ── */}
-          <CheckoutButton
-            resultId={resultId}
-            spacer={spacer}
-            remark={remark}
-            imageUrl={imageUrl}
-            weakElement={weakElement}
-            strongElement={strongElement}
-            analysisSummary={analysisSummary}
-          />
+              {/* ── Checkout button ── */}
+              <CheckoutButton
+                resultId={resultId}
+                spacer={spacer}
+                remark={remark}
+                imageUrl={imageUrl}
+                weakElement={weakElement}
+                strongElement={strongElement}
+                analysisSummary={analysisSummary}
+              />
+            </>
+          )}
 
           {/* ── Back link ── */}
           <p className="text-center -mt-3">

@@ -19,11 +19,16 @@ const LOCALE_MAP: Partial<Record<string, CurrencyCode>> = {
   NZ: 'AUD', GB: 'GBP', HK: 'HKD', JP: 'JPY',
 }
 
+export function currencyForCountry(countryCode: string): CurrencyCode {
+  const region = countryCode.toUpperCase()
+  if (EURO_ZONE.has(region)) return 'EUR'
+  return LOCALE_MAP[region] ?? 'SGD'
+}
+
 export function detectCurrency(): CurrencyCode {
   try {
     const region = navigator.language.split('-')[1]?.toUpperCase() ?? ''
-    if (EURO_ZONE.has(region)) return 'EUR'
-    return LOCALE_MAP[region] ?? 'SGD'
+    return currencyForCountry(region)
   } catch {
     return 'SGD'
   }

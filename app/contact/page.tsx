@@ -126,7 +126,7 @@ export default function ContactPage() {
 
       {/* ── FORM + CONTACT INFO ───────────────────────────────── */}
       <section style={{ background: '#FDFAF7', padding: 'clamp(48px, 6vw, 72px) clamp(24px, 6vw, 48px)' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '3fr 56px 2fr', alignItems: 'start' }}>
+        <div className="contact-layout-grid" style={{ maxWidth: 1000, margin: '0 auto' }}>
 
           {/* LEFT — Form */}
           <div>
@@ -147,7 +147,7 @@ export default function ContactPage() {
                 />
 
                 {/* Name + Email row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                <div className="contact-name-email-row">
                   <input
                     name="name" type="text" placeholder="Your Name"
                     value={form.name} onChange={handle}

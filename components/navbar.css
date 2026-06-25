@@ -118,6 +118,11 @@
   color: #4A2E14;
 }
 
+/* Hamburger — hidden on desktop, shown only in the mobile media query below */
+.navbar-menu-btn {
+  display: none;
+}
+
 /* MOBILE */
 
 @media (max-width: 1000px) {
@@ -134,6 +139,10 @@
 
   .navbar-links {
     display: none;
+  }
+
+  .navbar-menu-btn {
+    display: inline-flex;
   }
 
   .navbar-brand-icon {

@@ -203,7 +203,7 @@ export default function AdminPage() {
   const [calcCrystals, setCalcCrystals] = useState<[number | null, number | null, number | null]>([null, null, null])
   const [calcBeads, setCalcBeads] = useState<[number, number, number]>([6, 8, 4])
   const [calcOtherCost, setCalcOtherCost] = useState('5.00')
-  const [calcSellingPrice, setCalcSellingPrice] = useState('188')
+  const [calcSellingPrice, setCalcSellingPrice] = useState('59')
 
   const [showColPicker, setShowColPicker] = useState(false)
   const [crystalSort, setCrystalSort] = useState<keyof Crystal | null>(null)
