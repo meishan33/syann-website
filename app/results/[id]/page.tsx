@@ -97,13 +97,6 @@ export default async function ResultsPage({ params }: Props) {
 
       </header>
 
-      {/* RETRIEVAL NOTICE */}
-      <div className="mx-auto max-w-[640px] px-6 pb-10 text-center">
-        <p className="text-[12px] leading-relaxed text-[#9A8573]" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-          ✦ We'll keep a quick link to this design on this device — but if you switch devices, clear your browser data, or come back after a while, this exact bracelet may not be retrievable. We recommend completing your purchase now, or bookmarking this page.
-        </p>
-      </div>
-
 
       {/* TWO-COLUMN LAYOUT */}
       <section className="mx-auto max-w-[1280px] px-6 pb-24">
