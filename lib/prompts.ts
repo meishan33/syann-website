@@ -34,7 +34,7 @@ Composition & arrangement:
 - Bracelet centered and prominent in the frame — it must occupy the majority of the image with nothing cropped
 
 Crystal description:
-- The bracelet contains approximately 20 crystal beads total
+- The bracelet contains approximately 24 crystal beads total
 - All crystal beads are 8mm perfectly round spheres — no oval, faceted, or irregular shapes; explicitly state "perfectly round spherical beads"
 - Use the CRYSTAL COLOR REFERENCE for each selected crystal's exact color description — do not invent or deviate
 `.trim()

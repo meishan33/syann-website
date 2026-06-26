@@ -201,7 +201,7 @@ export default function AdminPage() {
   const [stockEdits, setStockEdits] = useState<Record<number, { stock_qty: string; cost_price: string }>>({})
   const [stockSaving, setStockSaving] = useState<Record<number, boolean>>({})
   const [calcCrystals, setCalcCrystals] = useState<[number | null, number | null, number | null]>([null, null, null])
-  const [calcBeads, setCalcBeads] = useState<[number, number, number]>([6, 8, 4])
+  const [calcBeads, setCalcBeads] = useState<[number, number, number]>([10, 8, 6])
   const [calcOtherCost, setCalcOtherCost] = useState('5.00')
   const [calcSellingPrice, setCalcSellingPrice] = useState('59')
 

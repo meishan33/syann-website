@@ -30,7 +30,7 @@ const FAQS = [
   },
   {
     q: 'How do I choose the right bracelet size?',
-    a: 'The default bracelet size is 16 cm (approximately 20 beads). If you need a different size, simply include your wrist measurement in the Remarks field when placing your order and we will adjust it for you.',
+    a: 'The default bracelet size is 16 cm (approximately 24 beads). If you need a different size, simply include your wrist measurement in the Remarks field when placing your order and we will adjust it for you.',
   },
   {
     q: 'How do I take care of my crystal bracelet?',

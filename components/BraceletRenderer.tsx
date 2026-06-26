@@ -1,8 +1,8 @@
-// Renders a 19-bead bracelet in a circular layout using real crystal bead images.
+// Renders a 24-bead bracelet in a circular layout using real crystal bead images.
 // imageMap accepts multiple URLs per crystal — beads cycle through them for visual variety.
 
 const RADIUS_PCT = 28   // circle radius as % of container width
-const BEAD_PCT   = 9.2  // bead diameter sized to fill the 19-bead ring with no gaps
+const BEAD_PCT   = 7.3  // bead diameter sized to fill the 24-bead ring with no gaps
 
 type Props = {
   sequence: string[]
