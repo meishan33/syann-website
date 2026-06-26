@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 import { CartItem, getCart, removeFromCart, updateQuantity, cartTotal, cartCount } from '@/lib/cart'
 import { useCurrency } from '@/context/CurrencyContext'
 
@@ -14,9 +14,8 @@ const GOLD = '#B08B57'
 type Props = { open: boolean; onClose: () => void }
 
 export default function CartDrawer({ open, onClose }: Props) {
+  const router = useRouter()
   const [items, setItems] = useState<CartItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const { format, currency } = useCurrency()
 
   useEffect(() => {
@@ -34,28 +33,9 @@ export default function CartDrawer({ open, onClose }: Props) {
   const total = cartTotal(items)
   const count = cartCount(items)
 
-  async function handleCheckout() {
-    setError(null)
-    setLoading(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/shop/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items,
-          email: session?.user?.email ?? null,
-          userId: session?.user?.id ?? null,
-          savedAddress: null,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')
-      window.location.href = data.url
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
-      setLoading(false)
-    }
+  function handleCheckout() {
+    onClose()
+    router.push('/shop/cart')
   }
 
   return (
@@ -155,10 +135,9 @@ export default function CartDrawer({ open, onClose }: Props) {
             </div>
             <button
               onClick={handleCheckout}
-              disabled={loading}
-              style={{ width: '100%', padding: '13px', borderRadius: 999, background: '#4A3A32', border: 'none', color: '#fff', fontSize: 10, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'background 0.25s', fontFamily: 'inherit' }}
+              style={{ width: '100%', padding: '13px', borderRadius: 999, background: '#4A3A32', border: 'none', color: '#fff', fontSize: 10, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background 0.25s', fontFamily: 'inherit' }}
             >
-              {loading ? 'Please wait…' : 'Proceed to Payment ✦'}
+              Proceed to Payment ✦
             </button>
             <Link
               href="/shop/cart"
@@ -167,7 +146,6 @@ export default function CartDrawer({ open, onClose }: Props) {
             >
               View Shopping Cart →
             </Link>
-            {error && <p style={{ fontSize: 10, color: '#E07070', textAlign: 'center', margin: 0 }}>{error}</p>}
           </div>
         )}
       </div>

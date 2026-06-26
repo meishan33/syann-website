@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
@@ -17,38 +17,19 @@ type Props = {
   strongElement?: string | null
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, weakElement, strongElement }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId }: Props) {
+  const router = useRouter()
   const [spacerColor, setSpacerColor] = useState<'silver' | 'gold' | 'exclude'>('silver')
   const [includeCharm, setIncludeCharm] = useState(true)
   const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  async function handlePurchase() {
-    setError(null)
+  function handlePurchase() {
     setLoading(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const email = session?.user?.email ?? null
-      const userId = session?.user?.id ?? null
-
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resultId, spacer: spacerColor, includeCharm, remark,
-          email, userId, imageUrl, weakElement, strongElement, analysisSummary,
-          savedAddress: null,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')
-      window.location.href = data.url
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
-      setLoading(false)
-    }
+    const params = new URLSearchParams({ result: resultId, spacer: spacerColor, includeCharm: String(includeCharm) })
+    if (remark) params.set('remark', remark)
+    router.push(`/payment?${params.toString()}`)
   }
 
   return (
@@ -226,9 +207,6 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
           >
             {loading ? 'Please wait…' : <><span>Purchase My Bracelet</span><span aria-hidden="true">✦</span></>}
           </button>
-          {error && (
-            <p className="text-center text-[11px] text-red-400" style={BODY}>{error}</p>
-          )}
         </div>
 
       </div>

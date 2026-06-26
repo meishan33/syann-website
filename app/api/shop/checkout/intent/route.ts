@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getShippingFeeCents, ALL_SHIPPING_COUNTRIES } from '@/lib/shipping'
+import { getShippingFeeCents } from '@/lib/shipping'
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -38,45 +38,27 @@ export async function POST(req: NextRequest) {
 
     const productMap = Object.fromEntries(products.map(p => [p.id, p]))
 
-    const lineItems = items.map(item => {
+    let baseAmountCents = 0
+    for (const item of items) {
       const product = productMap[item.productId]
-      if (!product) throw new Error(`Product ${item.productId} not found or inactive`)
-      return {
-        price_data: {
-          currency: 'sgd',
-          product_data: {
-            name: product.name,
-            ...(product.image_url ? { images: [product.image_url] } : {}),
-          },
-          unit_amount: Math.round(product.price * 100),
-        },
-        quantity: item.quantity,
-      }
-    })
-
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      if (!product) return NextResponse.json({ error: `Product ${item.productId} not found or inactive` }, { status: 400 })
+      baseAmountCents += Math.round(product.price * 100) * item.quantity
+    }
 
     const geoCountry = req.headers.get('x-vercel-ip-country')
     const shippingCountry = savedAddress?.country || geoCountry
     const shippingFeeCents = getShippingFeeCents(shippingCountry)
+    const amount = baseAmountCents + shippingFeeCents
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      ...(email ? { customer_email: email } : {}),
-      line_items: lineItems,
-      shipping_options: [{
-        shipping_rate_data: {
-          type: 'fixed_amount',
-          fixed_amount: { amount: shippingFeeCents, currency: 'sgd' },
-          display_name: shippingFeeCents === 0 ? 'Free Shipping' : 'Standard Shipping',
-        },
-      }],
-      mode: 'payment',
-      phone_number_collection: { enabled: true },
-      ...(!savedAddress ? { shipping_address_collection: { allowed_countries: ALL_SHIPPING_COUNTRIES } } : {}),
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'sgd',
+      ...(email ? { receipt_email: email } : {}),
+      automatic_payment_methods: { enabled: true },
       metadata: {
         order_type: 'shop',
         userId: userId || '',
+        baseAmountCents: String(baseAmountCents),
         items: JSON.stringify(items.map(i => ({
           productId: i.productId,
           name: productMap[i.productId]?.name ?? '',
@@ -85,14 +67,17 @@ export async function POST(req: NextRequest) {
         }))),
         savedAddress: savedAddress ? JSON.stringify(savedAddress) : '',
       },
-      success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/shop/cart`,
     })
 
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json({
+      clientSecret: paymentIntent.client_secret,
+      amountCents: amount,
+      baseAmountCents,
+      shippingFeeCents,
+    })
   } catch (err: unknown) {
-    console.error('Shop checkout error:', err)
-    const message = err instanceof Error ? err.message : 'Failed to create checkout session'
+    console.error('Shop intent error:', err)
+    const message = err instanceof Error ? err.message : 'Failed to create payment intent'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

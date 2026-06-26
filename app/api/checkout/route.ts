@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getShippingFeeCents, ALL_SHIPPING_COUNTRIES } from '@/lib/shipping'
 
 const PRICE_BASE_CENTS = 5900   // SGD 59.00
 
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
+    // Prefer the known destination (saved address) over IP-detected browsing location
+    const geoCountry = req.headers.get('x-vercel-ip-country')
+    const shippingCountry = savedAddress?.country || geoCountry
+    const shippingFeeCents = getShippingFeeCents(shippingCountry)
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       ...(email ? { customer_email: email } : {}),
@@ -52,10 +58,17 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
+      shipping_options: [{
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: shippingFeeCents, currency: 'sgd' },
+          display_name: shippingFeeCents === 0 ? 'Free Shipping' : 'Standard Shipping',
+        },
+      }],
       mode: 'payment',
       phone_number_collection: { enabled: true },
       // Only collect shipping if user didn't pick a saved address
-      ...(!savedAddress ? { shipping_address_collection: { allowed_countries: ['SG'] } } : {}),
+      ...(!savedAddress ? { shipping_address_collection: { allowed_countries: ALL_SHIPPING_COUNTRIES } } : {}),
       metadata: {
         resultId, spacer, includeCharm: String(includeCharm !== false),
         remark: remark || '', userId: userId || '',

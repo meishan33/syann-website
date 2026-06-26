@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { CartItem, getCart, removeFromCart, updateQuantity, cartTotal, cartCount } from '@/lib/cart'
 import { useCurrency } from '@/context/CurrencyContext'
+import EmbeddedPaymentForm from '@/components/EmbeddedPaymentForm'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
@@ -24,6 +25,13 @@ export default function CartPage() {
   const [addrPickerOpen, setAddrPickerOpen] = useState(false)
   const [savedAddresses, setSavedAddresses] = useState<DeliveryAddress[]>([])
   const [selectedAddrId, setSelectedAddrId] = useState<string | 'new'>('new')
+
+  // Embedded checkout state
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [amountCents, setAmountCents] = useState(0)
+  const [shippingFeeCents, setShippingFeeCents] = useState(0)
+  const [checkoutEmail, setCheckoutEmail] = useState<string | null>(null)
+  const [checkoutAddress, setCheckoutAddress] = useState<DeliveryAddress | null>(null)
 
   useEffect(() => {
     setItems(getCart())
@@ -69,24 +77,29 @@ export default function CartPage() {
   async function proceedToCheckout(email: string | null, userId: string | null, savedAddress: DeliveryAddress | null) {
     setLoading(true)
     try {
-      const res = await fetch('/api/shop/checkout', {
+      const addrPayload = savedAddress ? {
+        name: savedAddress.name, phone: savedAddress.phone,
+        line1: savedAddress.line1, line2: savedAddress.line2,
+        city: savedAddress.city, state: savedAddress.state,
+        postal_code: savedAddress.postal_code, country: savedAddress.country || 'MY',
+      } : null
+
+      const res = await fetch('/api/shop/checkout/intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items, email, userId,
-          savedAddress: savedAddress ? {
-            name: savedAddress.name, phone: savedAddress.phone,
-            line1: savedAddress.line1, line2: savedAddress.line2,
-            city: savedAddress.city, state: savedAddress.state,
-            postal_code: savedAddress.postal_code, country: savedAddress.country || 'MY',
-          } : null,
-        }),
+        body: JSON.stringify({ items, email, userId, savedAddress: addrPayload }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')
-      window.location.href = data.url
+      if (!res.ok) throw new Error(data.error || 'Failed to start checkout')
+
+      setClientSecret(data.clientSecret)
+      setAmountCents(data.amountCents)
+      setShippingFeeCents(data.shippingFeeCents)
+      setCheckoutEmail(email)
+      setCheckoutAddress(savedAddress)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
       setLoading(false)
     }
   }
@@ -160,32 +173,50 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Summary */}
+          {/* Summary / Checkout */}
           <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '24px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <span style={{ ...BODY, fontSize: 12, color: '#7A5B45' }}>Subtotal ({count} item{count !== 1 ? 's' : ''})</span>
-              <span style={{ ...SERIF, fontSize: 18, color: '#3D2B1F' }}>{format(total)}</span>
-            </div>
-            <div style={{ borderTop: '1px solid #E5DDD5', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <span style={{ ...SERIF, fontSize: 16, color: '#3D2B1F' }}>Total</span>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', display: 'block' }}>{format(total)}</span>
-                {currency !== 'SGD' && (
-                  <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>Billed in SGD at checkout</span>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={handleCheckout}
-              disabled={loading}
-              style={{ ...BODY, width: '100%', padding: '14px', borderRadius: 999, background: '#4A3A32', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'background 0.25s' }}
-            >
-              {loading ? 'Please wait…' : 'Proceed to Payment ✦'}
-            </button>
-            {error && <p style={{ ...BODY, fontSize: 11, color: '#E07070', textAlign: 'center', marginTop: 12 }}>{error}</p>}
-            <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Link href="/shop" style={{ ...BODY, fontSize: 11, color: '#9A8573', textDecoration: 'none' }}>← Continue Shopping</Link>
-            </div>
+            {clientSecret ? (
+              <EmbeddedPaymentForm
+                clientSecret={clientSecret}
+                initialAmountCents={amountCents}
+                initialShippingFeeCents={shippingFeeCents}
+                defaultEmail={checkoutEmail}
+                defaultAddress={checkoutAddress ? {
+                  name: checkoutAddress.name, phone: checkoutAddress.phone,
+                  line1: checkoutAddress.line1, line2: checkoutAddress.line2,
+                  city: checkoutAddress.city, state: checkoutAddress.state,
+                  postal_code: checkoutAddress.postal_code, country: checkoutAddress.country || 'MY',
+                } : null}
+                returnUrlPath="/payment/success"
+              />
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <span style={{ ...BODY, fontSize: 12, color: '#7A5B45' }}>Subtotal ({count} item{count !== 1 ? 's' : ''})</span>
+                  <span style={{ ...SERIF, fontSize: 18, color: '#3D2B1F' }}>{format(total)}</span>
+                </div>
+                <div style={{ borderTop: '1px solid #E5DDD5', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                  <span style={{ ...SERIF, fontSize: 16, color: '#3D2B1F' }}>Total</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', display: 'block' }}>{format(total)}</span>
+                    {currency !== 'SGD' && (
+                      <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>Billed in SGD at checkout</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  style={{ ...BODY, width: '100%', padding: '14px', borderRadius: 999, background: '#4A3A32', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, transition: 'background 0.25s' }}
+                >
+                  {loading ? 'Please wait…' : 'Proceed to Payment ✦'}
+                </button>
+                {error && <p style={{ ...BODY, fontSize: 11, color: '#E07070', textAlign: 'center', marginTop: 12 }}>{error}</p>}
+                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                  <Link href="/shop" style={{ ...BODY, fontSize: 11, color: '#9A8573', textDecoration: 'none' }}>← Continue Shopping</Link>
+                </div>
+              </>
+            )}
           </div>
 
         </section>

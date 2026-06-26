@@ -7,40 +7,51 @@ const GOLD = '#B08B57'
 const GOLD_FAINT = 'rgba(176,139,87,0.35)'
 
 type Props = {
-  searchParams: Promise<{ session_id?: string }>
+  searchParams: Promise<{ session_id?: string; payment_intent?: string; result?: string }>
 }
 
 export default async function PaymentSuccessPage({ searchParams }: Props) {
-  const { session_id } = await searchParams
+  const { session_id, payment_intent, result } = await searchParams
 
   let customerName: string | null = null
   let crystalNames: string[] = []
   let totalAmount: number | null = null
 
-  if (session_id && process.env.STRIPE_SECRET_KEY) {
+  if ((session_id || payment_intent) && process.env.STRIPE_SECRET_KEY) {
     try {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-04-22.dahlia' })
-      const session = await stripe.checkout.sessions.retrieve(session_id)
+      let resultId: string | null | undefined = result
 
-      if (session.payment_status === 'paid') {
-        customerName = session.customer_details?.name ?? null
-        totalAmount = session.amount_total ? session.amount_total / 100 : null
-
-        // Fetch crystal names from metadata resultId
-        const resultId = session.metadata?.resultId
-        if (resultId) {
-          const { createClient } = await import('@supabase/supabase-js')
-          const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SECRET_KEY!
-          )
-          const { data } = await supabase
-            .from('energy_quiz_results')
-            .select('crystal_names')
-            .eq('id', resultId)
-            .single()
-          crystalNames = data?.crystal_names ?? []
+      if (payment_intent) {
+        const intent = await stripe.paymentIntents.retrieve(payment_intent)
+        if (intent.status === 'succeeded') {
+          customerName = intent.shipping?.name ?? null
+          totalAmount = intent.amount ? intent.amount / 100 : null
+          resultId = resultId || intent.metadata?.resultId
         }
+      } else if (session_id) {
+        // Legacy Checkout Session flow — kept as a safety net for any sessions
+        // created just before this app switched to embedded PaymentIntent checkout.
+        const session = await stripe.checkout.sessions.retrieve(session_id)
+        if (session.payment_status === 'paid') {
+          customerName = session.customer_details?.name ?? null
+          totalAmount = session.amount_total ? session.amount_total / 100 : null
+          resultId = resultId || session.metadata?.resultId
+        }
+      }
+
+      if (resultId) {
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SECRET_KEY!
+        )
+        const { data } = await supabase
+          .from('energy_quiz_results')
+          .select('crystal_names')
+          .eq('id', resultId)
+          .single()
+        crystalNames = data?.crystal_names ?? []
       }
     } catch {
       // Non-fatal — still show success page

@@ -21,6 +21,119 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
   }
 
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent
+    const { order_type, resultId, spacer, remark, userId, items: itemsJson, savedAddress: savedAddressJson } = paymentIntent.metadata ?? {}
+
+    type ShippingAddr = { name?: string | null; phone?: string | null; line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null }
+
+    let savedAddress: ShippingAddr | null = null
+    try { if (savedAddressJson) savedAddress = JSON.parse(savedAddressJson) } catch {}
+
+    // Prefer the address actually collected via AddressElement at confirm time;
+    // fall back to a pre-picked saved address if the customer skipped re-entering one.
+    const collected = paymentIntent.shipping
+    const addr: ShippingAddr | null = collected
+      ? { name: collected.name, phone: collected.phone, line1: collected.address?.line1, line2: collected.address?.line2, city: collected.address?.city, state: collected.address?.state, postal_code: collected.address?.postal_code, country: collected.address?.country }
+      : savedAddress
+
+    // ── Shop order ──────────────────────────────────────────────────────────
+    if (order_type === 'shop') {
+      const { data: existingShop } = await supabaseAdmin
+        .from('shop_orders')
+        .select('id')
+        .eq('stripe_payment_intent_id', paymentIntent.id)
+        .maybeSingle()
+
+      if (existingShop) return NextResponse.json({ received: true })
+
+      const orderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data, () => null)
+
+      await supabaseAdmin.from('shop_orders').insert({
+        order_number: orderNumber,
+        customer_name: addr?.name || null,
+        customer_email: paymentIntent.receipt_email || null,
+        customer_phone: addr?.phone || null,
+        shipping_address: addr ?? null,
+        items: itemsJson ? JSON.parse(itemsJson) : [],
+        total_amount: (paymentIntent.amount ?? 0) / 100,
+        payment_status: 'paid',
+        fulfillment_status: 'unfulfilled',
+        stripe_payment_intent_id: paymentIntent.id,
+      })
+
+      return NextResponse.json({ received: true })
+    }
+
+    // ── Bracelet order ───────────────────────────────────────────────────────
+    const { data: result } = await supabaseAdmin
+      .from('energy_quiz_results')
+      .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary')
+      .eq('id', resultId)
+      .single()
+
+    const { data: existing } = await supabaseAdmin
+      .from('orders')
+      .select('id')
+      .eq('stripe_payment_intent_id', paymentIntent.id)
+      .maybeSingle()
+
+    if (existing) return NextResponse.json({ received: true })
+
+    const shippingAddress = addr
+      ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ')
+      : null
+
+    const { error: insertError } = await supabaseAdmin.from('orders').insert({
+      customer_name: addr?.name || result?.user_name || null,
+      customer_email: paymentIntent.receipt_email || null,
+      customer_phone: addr?.phone || null,
+      shipping_address: shippingAddress,
+      generated_image_url: result?.cached_image_url || null,
+      weak_element: result?.calculated_weak_element || null,
+      strong_element: result?.calculated_strong_element || null,
+      analysis_summary: result?.analysis_summary || null,
+      recommended_crystal_names: result?.crystal_names ?? [],
+      total_amount: (paymentIntent.amount ?? 0) / 100,
+      payment_status: 'paid',
+      fulfillment_status: 'processing',
+      stripe_payment_intent_id: paymentIntent.id,
+      result_id: resultId || null,
+      spacer_choice: spacer || null,
+      remark: remark || null,
+    })
+
+    if (insertError) {
+      console.error('Webhook order insert failed:', insertError.message)
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    // Auto-save new Stripe-collected address to delivery_addresses (only if user didn't pick a saved one)
+    if (userId && addr && !savedAddress) {
+      const { count } = await supabaseAdmin
+        .from('delivery_addresses')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+
+      if (count === 0) {
+        await supabaseAdmin.from('delivery_addresses').insert({
+          user_id: userId,
+          name: addr.name || null,
+          phone: addr.phone || null,
+          line1: addr.line1 || null,
+          line2: addr.line2 || null,
+          city: addr.city || null,
+          state: addr.state || null,
+          postal_code: addr.postal_code || null,
+          country: addr.country || 'MY',
+          is_default: true,
+        })
+      }
+    }
+
+    return NextResponse.json({ received: true })
+  }
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 

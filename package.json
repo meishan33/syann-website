@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^6.6.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@supabase/supabase-js": "^2.49.8",
     "html-to-image": "^1.11.13",
     "lunar-javascript": "^1.7.7",

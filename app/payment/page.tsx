@@ -3,25 +3,21 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import CheckoutButton from "./CheckoutButton";
-import PriceSummary from "./PriceSummary";
 
 type Props = {
   searchParams: Promise<{
     result?: string;
     spacer?: string;
     remark?: string;
+    includeCharm?: string;
   }>;
 };
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" };
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
 
-// ── Pricing — update these before going live ──────────────────────────────────
-const PRICE_BASE = 59;   // SGD
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default async function PaymentPage({ searchParams }: Props) {
-  const { result: resultId, spacer = 'silver', remark = '' } = await searchParams;
+  const { result: resultId, spacer = 'silver', remark = '', includeCharm = 'true' } = await searchParams;
 
   if (!resultId) {
     return (
@@ -42,15 +38,12 @@ export default async function PaymentPage({ searchParams }: Props) {
 
   const { data } = await supabase
     .from("energy_quiz_results")
-    .select("crystal_names, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary")
+    .select("crystal_names, cached_image_url")
     .eq("id", resultId)
     .single();
 
   const crystalNames: string[] = data?.crystal_names ?? [];
   const imageUrl: string | null = data?.cached_image_url ?? null;
-  const weakElement: string | null = data?.calculated_weak_element ?? null;
-  const strongElement: string | null = data?.calculated_strong_element ?? null;
-  const analysisSummary: string | null = data?.analysis_summary ?? null;
 
   const { data: existingOrder } = await supabaseAdmin
     .from("orders")
@@ -143,23 +136,12 @@ export default async function PaymentPage({ searchParams }: Props) {
               </Link>
             </>
           ) : (
-            <>
-              {/* ── Pricing ── */}
-              <PriceSummary priceSGD={PRICE_BASE} />
-
-              <div className="h-px bg-[#E5DDD5]" />
-
-              {/* ── Checkout button ── */}
-              <CheckoutButton
-                resultId={resultId}
-                spacer={spacer}
-                remark={remark}
-                imageUrl={imageUrl}
-                weakElement={weakElement}
-                strongElement={strongElement}
-                analysisSummary={analysisSummary}
-              />
-            </>
+            <CheckoutButton
+              resultId={resultId}
+              spacer={spacer}
+              remark={remark}
+              includeCharm={includeCharm === 'true'}
+            />
           )}
 
           {/* ── Back link ── */}
