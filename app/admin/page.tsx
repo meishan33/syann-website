@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import BeadPatternEditor, { isValidPattern, defaultPattern } from '@/components/admin/BeadPatternEditor'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 const DARK = '#4A3A32'
 
-type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock'
+type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock' | 'designs'
 
 type Order = {
   id: string; order_number: number | null; customer_name: string; customer_email: string; customer_phone: string | null
@@ -91,6 +92,10 @@ const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   {
     key: 'stock', label: 'Stock',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+  },
+  {
+    key: 'designs', label: 'Designs',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="4.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="17.8" cy="8.2" r="1.4" fill="currentColor" stroke="none"/><circle cx="17.8" cy="15.8" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="6.2" cy="15.8" r="1.4" fill="currentColor" stroke="none"/><circle cx="6.2" cy="8.2" r="1.4" fill="currentColor" stroke="none"/></svg>,
   },
 ]
 
@@ -205,6 +210,24 @@ export default function AdminPage() {
   const [calcOtherCost, setCalcOtherCost] = useState('5.00')
   const [calcSellingPrice, setCalcSellingPrice] = useState('59')
 
+  // Bracelet designs
+  type Design = { id: string; name: string; description: string | null; sequence: number[]; active: boolean }
+  const [designs, setDesigns] = useState<Design[]>([])
+  const [designsLoading, setDesignsLoading] = useState(false)
+  const [designActionLoading, setDesignActionLoading] = useState<string | null>(null)
+  const [showAddDesign, setShowAddDesign] = useState(false)
+  const [newDesignName, setNewDesignName] = useState('')
+  const [newDesignDescription, setNewDesignDescription] = useState('')
+  const [newDesignSequence, setNewDesignSequence] = useState<number[]>(defaultPattern())
+  const [addDesignError, setAddDesignError] = useState<string | null>(null)
+  const [addDesignLoading, setAddDesignLoading] = useState(false)
+  const [editDesignId, setEditDesignId] = useState<string | null>(null)
+  const [editDesignName, setEditDesignName] = useState('')
+  const [editDesignDescription, setEditDesignDescription] = useState('')
+  const [editDesignSequence, setEditDesignSequence] = useState<number[]>(defaultPattern())
+  const [editDesignError, setEditDesignError] = useState<string | null>(null)
+  const [editDesignSaving, setEditDesignSaving] = useState(false)
+
   const [showColPicker, setShowColPicker] = useState(false)
   const [crystalSort, setCrystalSort] = useState<keyof Crystal | null>(null)
   const [crystalSortAsc, setCrystalSortAsc] = useState(true)
@@ -224,7 +247,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!token) return
-    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings(), fetchShopProducts()])
+    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings(), fetchShopProducts(), fetchDesigns()])
       .finally(() => setLoading(false))
   }, [token])
 
@@ -240,6 +263,12 @@ export default function AdminPage() {
     const r = await fetch('/api/shop/products', { headers: headers() })
     if (r.ok) setShopProducts(await r.json())
     setShopLoading(false)
+  }
+  const fetchDesigns = async () => {
+    setDesignsLoading(true)
+    const r = await fetch('/api/admin/bracelet-designs', { headers: headers() })
+    if (r.ok) setDesigns(await r.json())
+    setDesignsLoading(false)
   }
 
   const updateFulfillment = async (id: string, fulfillment_status: string) => {
@@ -264,6 +293,57 @@ export default function AdminPage() {
     setActionLoading(id)
     await fetch('/api/admin/inquiry', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, is_replied }) })
     await fetchInquiries(); setActionLoading(null)
+  }
+
+  const toggleDesignActive = async (id: string, active: boolean) => {
+    setDesignActionLoading(id)
+    await fetch('/api/admin/bracelet-designs', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, active }) })
+    await fetchDesigns(); setDesignActionLoading(null)
+  }
+
+  const deleteDesign = async (id: string) => {
+    if (!confirm('Delete this design? This cannot be undone.')) return
+    setDesignActionLoading(id)
+    await fetch('/api/admin/bracelet-designs', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id }) })
+    await fetchDesigns(); setDesignActionLoading(null)
+  }
+
+  const addDesign = async () => {
+    if (!newDesignName.trim()) { setAddDesignError('Design name is required.'); return }
+    if (!isValidPattern(newDesignSequence)) { setAddDesignError('Bead counts must be exactly 10 primary / 8 secondary / 6 accent.'); return }
+    setAddDesignLoading(true); setAddDesignError(null)
+    const r = await fetch('/api/admin/bracelet-designs', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ name: newDesignName, description: newDesignDescription || null, sequence: newDesignSequence, active: true }),
+    })
+    if (!r.ok) { const e = await r.json(); setAddDesignError(e.error || 'Failed to add design.'); setAddDesignLoading(false); return }
+    await fetchDesigns()
+    setShowAddDesign(false)
+    setNewDesignName(''); setNewDesignDescription(''); setNewDesignSequence(defaultPattern())
+    setAddDesignLoading(false)
+  }
+
+  const openEditDesign = (d: Design) => {
+    setEditDesignId(d.id)
+    setEditDesignName(d.name)
+    setEditDesignDescription(d.description || '')
+    setEditDesignSequence(d.sequence)
+    setEditDesignError(null)
+  }
+
+  const saveEditDesign = async () => {
+    if (editDesignId === null) return
+    if (!editDesignName.trim()) { setEditDesignError('Design name is required.'); return }
+    if (!isValidPattern(editDesignSequence)) { setEditDesignError('Bead counts must be exactly 10 primary / 8 secondary / 6 accent.'); return }
+    setEditDesignSaving(true); setEditDesignError(null)
+    const r = await fetch('/api/admin/bracelet-designs', {
+      method: 'PATCH', headers: headers(),
+      body: JSON.stringify({ id: editDesignId, name: editDesignName, description: editDesignDescription || null, sequence: editDesignSequence }),
+    })
+    if (!r.ok) { const e = await r.json(); setEditDesignError(e.error || 'Save failed.'); setEditDesignSaving(false); return }
+    await fetchDesigns()
+    setEditDesignId(null)
+    setEditDesignSaving(false)
   }
 
   const saveStock = async (id: number) => {
@@ -1569,6 +1649,65 @@ export default function AdminPage() {
                   </div>
                 )
               })()}
+
+              {/* ── DESIGNS ── */}
+              {tab === 'designs' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{designs.length} design{designs.length !== 1 ? 's' : ''}</p>
+                    <button
+                      onClick={() => { setShowAddDesign(true); setAddDesignError(null); setNewDesignName(''); setNewDesignDescription(''); setNewDesignSequence(defaultPattern()) }}
+                      style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    >
+                      + Add Design
+                    </button>
+                  </div>
+
+                  {designsLoading ? (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
+                  ) : designs.length === 0 ? (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No designs yet. Add your first one.</p>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+                      {designs.map(d => {
+                        const counts = [0, 0, 0]
+                        for (const v of d.sequence) counts[v]++
+                        return (
+                          <div key={d.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '18px 18px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', opacity: d.active ? 1 : 0.55 }}>
+                            <svg width="120" height="120" viewBox="0 0 120 120">
+                              <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(140,100,60,0.15)" strokeWidth="1" strokeDasharray="3 2.5" />
+                              {d.sequence.map((type, i) => {
+                                const angle = (i / d.sequence.length) * 2 * Math.PI - Math.PI / 2
+                                const x = 60 + 46 * Math.cos(angle)
+                                const y = 60 + 46 * Math.sin(angle)
+                                return <circle key={i} cx={x} cy={y} r={6.5} fill={['#C4A460', '#9E7DA8', '#6A9BAE'][type]} stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
+                              })}
+                            </svg>
+                            <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: DARK, margin: '10px 0 2px' }}>{d.name}</p>
+                            <p style={{ ...BODY, fontSize: 10, color: '#B0A090', margin: '0 0 8px' }}>{counts[0]}P · {counts[1]}S · {counts[2]}A</p>
+                            {d.description && <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: '0 0 10px', lineHeight: 1.5 }}>{d.description}</p>}
+                            <Badge label={d.active ? 'Active' : 'Inactive'} color={d.active ? '#7CB98A' : '#9A8573'} />
+                            <div style={{ display: 'flex', gap: 6, marginTop: 12, width: '100%' }}>
+                              <button onClick={() => openEditDesign(d)}
+                                style={{ ...BODY, flex: 1, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '7px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 6, cursor: 'pointer', color: DARK }}>
+                                Edit
+                              </button>
+                              <button disabled={designActionLoading === d.id} onClick={() => toggleDesignActive(d.id, !d.active)}
+                                style={{ ...BODY, flex: 1, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '7px', background: 'transparent', border: `1px solid ${d.active ? '#C0392B' : '#7CB98A'}`, color: d.active ? '#C0392B' : '#7CB98A', borderRadius: 6, cursor: 'pointer' }}>
+                                {designActionLoading === d.id ? '…' : d.active ? 'Hide' : 'Show'}
+                              </button>
+                              <button disabled={designActionLoading === d.id} onClick={() => deleteDesign(d.id)}
+                                style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '7px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 6, cursor: 'pointer', color: '#DC2626' }}>
+                                Del
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1942,6 +2081,88 @@ export default function AdminPage() {
                 setEditProductId(null); fetchShopProducts()
               }} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                 Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD DESIGN MODAL ── */}
+      {showAddDesign && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAddDesign(false) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Add Design</h2>
+              <button onClick={() => setShowAddDesign(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <BeadPatternEditor value={newDesignSequence} onChange={setNewDesignSequence} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Design Name *</label>
+                <input value={newDesignName} onChange={e => setNewDesignName(e.target.value)} placeholder="e.g. Spiral"
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Description</label>
+                <textarea value={newDesignDescription} onChange={e => setNewDesignDescription(e.target.value)} rows={2} placeholder="Short description shown on the public designs page"
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+
+            {addDesignError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '14px 0 0' }}>{addDesignError}</p>}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAddDesign(false)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={addDesign} disabled={addDesignLoading} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: addDesignLoading ? 'not-allowed' : 'pointer', opacity: addDesignLoading ? 0.7 : 1 }}>
+                {addDesignLoading ? 'Saving…' : 'Add Design'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EDIT DESIGN MODAL ── */}
+      {editDesignId !== null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setEditDesignId(null) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Edit Design</h2>
+              <button onClick={() => setEditDesignId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <BeadPatternEditor value={editDesignSequence} onChange={setEditDesignSequence} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Design Name *</label>
+                <input value={editDesignName} onChange={e => setEditDesignName(e.target.value)}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Description</label>
+                <textarea value={editDesignDescription} onChange={e => setEditDesignDescription(e.target.value)} rows={2}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+
+            {editDesignError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '14px 0 0' }}>{editDesignError}</p>}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditDesignId(null)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={saveEditDesign} disabled={editDesignSaving} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: editDesignSaving ? 'not-allowed' : 'pointer', opacity: editDesignSaving ? 0.7 : 1 }}>
+                {editDesignSaving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </div>

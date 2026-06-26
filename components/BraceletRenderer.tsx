@@ -1,8 +1,7 @@
-// Renders a 24-bead bracelet in a circular layout using real crystal bead images.
+// Renders a bracelet in a circular layout using real crystal bead images.
 // imageMap accepts multiple URLs per crystal — beads cycle through them for visual variety.
 
 const RADIUS_PCT = 28   // circle radius as % of container width
-const BEAD_PCT   = 7.3  // bead diameter sized to fill the 24-bead ring with no gaps
 
 type Props = {
   sequence: string[]
@@ -11,6 +10,13 @@ type Props = {
 }
 
 export default function BraceletRenderer({ sequence, imageMap, className }: Props) {
+  // Bead diameter sized to fill the ring with no gaps, regardless of bead count
+  // (chord length between adjacent bead centers on the circle). Rounded to a
+  // short fixed precision so the server-rendered and client-hydrated percentage
+  // strings always match exactly (long floats can get re-serialized slightly
+  // differently by the browser, causing a harmless but noisy hydration warning).
+  const BEAD_PCT = sequence.length > 0 ? Number((2 * RADIUS_PCT * Math.sin(Math.PI / sequence.length)).toFixed(4)) : 0
+
   return (
     <div
       className={className}
@@ -42,8 +48,8 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
       {/* Beads */}
       {sequence.map((crystal, i) => {
         const angle = (i / sequence.length) * 2 * Math.PI - Math.PI / 2
-        const cx = 50 + RADIUS_PCT * Math.cos(angle)
-        const cy = 50 + RADIUS_PCT * Math.sin(angle)
+        const cx = Number((50 + RADIUS_PCT * Math.cos(angle)).toFixed(4))
+        const cy = Number((50 + RADIUS_PCT * Math.sin(angle)).toFixed(4))
         const urls = imageMap[crystal] ?? []
         const url = urls.length ? urls[i % urls.length] : null
 

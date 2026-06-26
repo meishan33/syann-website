@@ -1,6 +1,4 @@
-'use client'
-
-import { LAYOUTS } from '@/lib/design-engine'
+import { getActiveDesigns } from '@/lib/design-engine'
 
 const RADIUS = 110
 const BEAD_R = 15
@@ -12,24 +10,7 @@ const CY     = SIZE / 2
 const COLORS = ['#C4A460', '#9E7DA8', '#6A9BAE']
 const LABELS = ['Primary (10 beads)', 'Secondary (8 beads)', 'Accent (6 beads)']
 
-type B = 0 | 1 | 2
-
-const DESIGN_META: { name: string; description: string }[] = [
-  { name: 'Banded',    description: 'Three continuous arcs — each crystal type has its own section of the ring.' },
-  { name: 'Symmetric', description: 'Primary anchors the top and bottom; secondary and accent fill both sides.' },
-  { name: 'Cardinal',  description: 'Accent anchors four compass points; primary and secondary cluster between them.' },
-  { name: 'Crown',     description: 'Accent beads form a crown at the top; primary and secondary fill the rest in groups.' },
-  { name: 'Pinwheel',  description: 'Two repeating PPPPP-SSSS-AAA groups rotate around the bracelet.' },
-  { name: 'Heartbeat', description: 'Accent beads act as separators between four rhythmic crystal sections.' },
-  { name: 'Crescent',  description: 'Primary fills one full half; secondary and accent form a crescent on the other.' },
-]
-
-const DESIGNS: { name: string; description: string; seq: B[] }[] = DESIGN_META.map((meta, i) => ({
-  ...meta,
-  seq: LAYOUTS[i] as B[],
-}))
-
-function MiniBracelet({ seq }: { seq: B[] }) {
+function MiniBracelet({ seq }: { seq: number[] }) {
   const n = seq.length
   return (
     <svg
@@ -63,7 +44,9 @@ function MiniBracelet({ seq }: { seq: B[] }) {
   )
 }
 
-export default function BraceletDesignsPage() {
+export default async function BraceletDesignsPage() {
+  const designs = await getActiveDesigns()
+
   return (
     <main style={{ background: '#F6F1EB', minHeight: '100vh', padding: '52px 24px 72px', fontFamily: "'Montserrat', sans-serif" }}>
       <div style={{ maxWidth: 1120, margin: '0 auto' }}>
@@ -94,9 +77,9 @@ export default function BraceletDesignsPage() {
 
         {/* Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 28 }}>
-          {DESIGNS.map((design) => (
+          {designs.map((design) => (
             <div
-              key={design.name}
+              key={design.id}
               style={{
                 background: '#FDFAF7',
                 borderRadius: 24,
@@ -106,13 +89,15 @@ export default function BraceletDesignsPage() {
                 boxShadow: '0 4px 20px -8px rgba(101,70,46,0.12)',
               }}
             >
-              <MiniBracelet seq={design.seq} />
+              <MiniBracelet seq={design.sequence} />
               <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 400, color: '#3D2B1F', margin: '18px 0 8px' }}>
                 {design.name}
               </h3>
-              <p style={{ fontSize: 12, color: '#9A8573', lineHeight: 1.75, margin: 0 }}>
-                {design.description}
-              </p>
+              {design.description && (
+                <p style={{ fontSize: 12, color: '#9A8573', lineHeight: 1.75, margin: 0 }}>
+                  {design.description}
+                </p>
+              )}
             </div>
           ))}
         </div>

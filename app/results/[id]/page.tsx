@@ -40,10 +40,11 @@ export default async function ResultsPage({ params }: Props) {
   }
 
   const [c1, c2, c3] = crystalNames
-  // Deterministic layout variant (0-6) from first hex char of result ID
-  const variant = parseInt(id.replace(/-/g, '')[0], 16) % 7
+  // Deterministic layout variant from first hex char of result ID —
+  // generateBeadSequence takes it mod however many designs are currently active.
+  const variant = parseInt(id.replace(/-/g, '')[0], 16)
   const beadSequence = c1 && c2 && c3
-    ? generateBeadSequence([c1, c2, c3], variant)
+    ? await generateBeadSequence([c1, c2, c3], variant)
     : []
 
   /* ── Error state ── */
