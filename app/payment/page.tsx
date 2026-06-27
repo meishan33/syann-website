@@ -38,12 +38,15 @@ export default async function PaymentPage({ searchParams }: Props) {
 
   const { data } = await supabase
     .from("energy_quiz_results")
-    .select("crystal_names, cached_image_url")
+    .select("crystal_names, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary")
     .eq("id", resultId)
     .single();
 
   const crystalNames: string[] = data?.crystal_names ?? [];
   const imageUrl: string | null = data?.cached_image_url ?? null;
+  const weakElement: string | null = data?.calculated_weak_element ?? null;
+  const strongElement: string | null = data?.calculated_strong_element ?? null;
+  const analysisSummary: string | null = data?.analysis_summary ?? null;
 
   const { data: existingOrder } = await supabaseAdmin
     .from("orders")
@@ -66,94 +69,132 @@ export default async function PaymentPage({ searchParams }: Props) {
         <div className="mx-auto mt-6 h-px w-20 bg-[#D9C4A8]" />
       </header>
 
-      {/* ORDER CARD */}
-      <section className="mx-auto max-w-xl px-6 pb-24">
-        <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-6 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-8 flex flex-col gap-6">
+      {/* TWO-COLUMN LAYOUT */}
+      <section className="mx-auto max-w-5xl px-6 pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
 
-          {/* ── Product row ── */}
-          <div className="flex gap-5 items-center">
-            {imageUrl ? (
-              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-[#E5DDD5] bg-[#F8F4EF]">
-                <Image src={imageUrl} alt="Your crystal bracelet" fill sizes="80px" className="object-contain" />
-              </div>
-            ) : (
-              <div className="h-20 w-20 shrink-0 rounded-2xl bg-[#EFE7DD] flex items-center justify-center">
-                <span className="text-2xl text-[#B08B57] opacity-40">✦</span>
-              </div>
-            )}
-            <div className="flex flex-col gap-1">
-              <p style={BODY} className="text-[10px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
-                SYANN.CO
-              </p>
-              <p style={SERIF} className="text-xl font-light text-[#4A3A32] leading-snug">
-                Your Crystal Bracelet
-              </p>
-              {crystalNames.length > 0 && (
-                <p style={BODY} className="text-[11px] text-[#9A8573] leading-snug">
-                  {crystalNames.join(' · ')}
+          {/* ── LEFT: Bracelet Details ── */}
+          <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-6 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-8 flex flex-col gap-6">
+
+            {/* Product row */}
+            <div className="flex gap-5 items-center">
+              {imageUrl ? (
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-[#E5DDD5] bg-[#F8F4EF]">
+                  <Image src={imageUrl} alt="Your crystal bracelet" fill sizes="80px" className="object-contain" />
+                </div>
+              ) : (
+                <div className="h-20 w-20 shrink-0 rounded-2xl bg-[#EFE7DD] flex items-center justify-center">
+                  <span className="text-2xl text-[#B08B57] opacity-40">✦</span>
+                </div>
+              )}
+              <div className="flex flex-col gap-1">
+                <p style={BODY} className="text-[10px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
+                  SYANN.CO
                 </p>
+                <p style={SERIF} className="text-xl font-light text-[#4A3A32] leading-snug">
+                  Your Crystal Bracelet
+                </p>
+                {crystalNames.length > 0 && (
+                  <p style={BODY} className="text-[11px] text-[#9A8573] leading-snug">
+                    {crystalNames.join(' · ')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="h-px bg-[#E5DDD5]" />
+
+            {/* Order details */}
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between">
+                <span style={BODY} className="text-[12px] text-[#7A5B45]">Spacer Colour</span>
+                <span style={BODY} className="text-[12px] font-medium text-[#4A3A32] capitalize">{spacer}</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={BODY} className="text-[12px] text-[#7A5B45]">Logo Charm</span>
+                <span style={BODY} className="text-[12px] font-medium text-[#4A3A32]">
+                  {includeCharm === 'true' ? 'Included' : 'Excluded'}
+                </span>
+              </div>
+              {remark && (
+                <div className="flex justify-between gap-6">
+                  <span style={BODY} className="text-[12px] text-[#7A5B45] shrink-0">Remarks</span>
+                  <span style={BODY} className="text-[12px] font-medium text-[#4A3A32] text-right">{remark}</span>
+                </div>
               )}
             </div>
-          </div>
 
-          <div className="h-px bg-[#E5DDD5]" />
+            {(weakElement || strongElement || analysisSummary) && (
+              <>
+                <div className="h-px bg-[#E5DDD5]" />
 
-          {/* ── Order details ── */}
-          <div className="flex flex-col gap-3">
-            <div className="flex justify-between">
-              <span style={BODY} className="text-[12px] text-[#7A5B45]">Spacer Colour</span>
-              <span style={BODY} className="text-[12px] font-medium text-[#4A3A32] capitalize">{spacer}</span>
-            </div>
-            {remark && (
-              <div className="flex justify-between gap-6">
-                <span style={BODY} className="text-[12px] text-[#7A5B45] shrink-0">Remarks</span>
-                <span style={BODY} className="text-[12px] font-medium text-[#4A3A32] text-right">{remark}</span>
-              </div>
+                {/* Analysis details */}
+                <div className="flex flex-col gap-3">
+                  <p style={BODY} className="text-[10px] font-medium uppercase tracking-[0.28em] text-[#B08B57]">
+                    Your Elemental Analysis
+                  </p>
+                  {(weakElement || strongElement) && (
+                    <p style={BODY} className="text-[12px] text-[#7A5B45]">
+                      Weak: <span className="font-medium text-[#4A3A32] capitalize">{weakElement || '—'}</span>
+                      {' '}· Strong: <span className="font-medium text-[#4A3A32] capitalize">{strongElement || '—'}</span>
+                    </p>
+                  )}
+                  {analysisSummary && (
+                    <p style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45]">
+                      {analysisSummary.split('\n\n')[0]}
+                    </p>
+                  )}
+                </div>
+              </>
             )}
+
           </div>
 
-          <div className="h-px bg-[#E5DDD5]" />
+          {/* ── RIGHT: Shipping & Payment ── */}
+          <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-6 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-8 flex flex-col gap-6">
 
-          {existingOrder ? (
-            <>
-              {/* ── Already purchased ── */}
-              <div className="text-center py-2">
-                <p style={SERIF} className="text-xl font-light text-[#4A3A32] mb-2">
-                  Already Purchased ✦
-                </p>
-                <p style={BODY} className="text-[12px] text-[#7A5B45] leading-relaxed">
-                  This bracelet design was already ordered
-                  {existingOrder.order_number ? ` (Order #${existingOrder.order_number})` : ''}.
-                  <br />No need to pay for it again.
-                </p>
-              </div>
+            {existingOrder ? (
+              <>
+                {/* Already purchased */}
+                <div className="text-center py-2">
+                  <p style={SERIF} className="text-xl font-light text-[#4A3A32] mb-2">
+                    Already Purchased ✦
+                  </p>
+                  <p style={BODY} className="text-[12px] text-[#7A5B45] leading-relaxed">
+                    This bracelet design was already ordered
+                    {existingOrder.order_number ? ` (Order #${existingOrder.order_number})` : ''}.
+                    <br />No need to pay for it again.
+                  </p>
+                </div>
+                <Link
+                  href="/orders"
+                  style={BODY}
+                  className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white no-underline transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57]"
+                >
+                  View My Orders
+                </Link>
+              </>
+            ) : (
+              <CheckoutButton
+                resultId={resultId}
+                spacer={spacer}
+                remark={remark}
+                includeCharm={includeCharm === 'true'}
+              />
+            )}
+
+            {/* Back link */}
+            <p className="text-center -mt-3">
               <Link
-                href="/orders"
+                href={`/results/${resultId}`}
                 style={BODY}
-                className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white no-underline transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57]"
+                className="text-[11px] text-[#9A8573] no-underline transition-opacity hover:opacity-70"
               >
-                View My Orders
+                ← Back to your bracelet
               </Link>
-            </>
-          ) : (
-            <CheckoutButton
-              resultId={resultId}
-              spacer={spacer}
-              remark={remark}
-              includeCharm={includeCharm === 'true'}
-            />
-          )}
+            </p>
 
-          {/* ── Back link ── */}
-          <p className="text-center -mt-3">
-            <Link
-              href={`/results/${resultId}`}
-              style={BODY}
-              className="text-[11px] text-[#9A8573] no-underline transition-opacity hover:opacity-70"
-            >
-              ← Back to your bracelet
-            </Link>
-          </p>
+          </div>
 
         </div>
       </section>
