@@ -1,3 +1,5 @@
+import { TOTAL_BEADS } from './bracelet-config'
+
 // ─── Crystal color reference ────────────────────────────────────────────────
 // Used verbatim inside the image prompt so DALL-E renders each bead correctly.
 // Add new crystals here when they are added to the catalog.
@@ -34,7 +36,7 @@ Composition & arrangement:
 - Bracelet centered and prominent in the frame — it must occupy the majority of the image with nothing cropped
 
 Crystal description:
-- The bracelet contains approximately 24 crystal beads total
+- The bracelet contains approximately ${TOTAL_BEADS} crystal beads total
 - All crystal beads are 8mm perfectly round spheres — no oval, faceted, or irregular shapes; explicitly state "perfectly round spherical beads"
 - Use the CRYSTAL COLOR REFERENCE for each selected crystal's exact color description — do not invent or deviate
 `.trim()

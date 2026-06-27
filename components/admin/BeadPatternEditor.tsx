@@ -1,5 +1,7 @@
 'use client'
 
+import { BEAD_COUNTS, TOTAL_BEADS } from '@/lib/bracelet-config'
+
 const SIZE = 240
 const CX = SIZE / 2
 const CY = SIZE / 2
@@ -8,8 +10,7 @@ const BEAD_R = 13
 
 const COLORS = ['#C4A460', '#9E7DA8', '#6A9BAE']
 const TYPE_LABELS = ['Primary', 'Secondary', 'Accent']
-const REQUIRED = [10, 8, 6]
-const TOTAL_BEADS = REQUIRED.reduce((a, b) => a + b, 0)
+const REQUIRED = BEAD_COUNTS
 
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 

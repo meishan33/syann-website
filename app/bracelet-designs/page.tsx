@@ -1,4 +1,5 @@
 import { getActiveDesigns } from '@/lib/design-engine'
+import { BEAD_COUNTS, TOTAL_BEADS } from '@/lib/bracelet-config'
 
 const RADIUS = 110
 const BEAD_R = 15
@@ -8,7 +9,7 @@ const CY     = SIZE / 2
 
 // Placeholder colors — Primary / Secondary / Accent
 const COLORS = ['#C4A460', '#9E7DA8', '#6A9BAE']
-const LABELS = ['Primary (10 beads)', 'Secondary (8 beads)', 'Accent (6 beads)']
+const LABELS = [`Primary (${BEAD_COUNTS[0]} beads)`, `Secondary (${BEAD_COUNTS[1]} beads)`, `Accent (${BEAD_COUNTS[2]} beads)`]
 
 function MiniBracelet({ seq }: { seq: number[] }) {
   const n = seq.length
@@ -60,7 +61,7 @@ export default async function BraceletDesignsPage() {
             Placement Designs
           </h1>
           <p style={{ fontSize: 12.5, color: '#9A8573', margin: '0 0 28px', lineHeight: 1.8, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
-            Each design places the 24 beads differently around the ring.<br />
+            Each design places the {TOTAL_BEADS} beads differently around the ring.<br />
             One is chosen per reading based on the result ID.
           </p>
 

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BeadPatternEditor, { isValidPattern, defaultPattern } from '@/components/admin/BeadPatternEditor'
+import { BEAD_COUNTS } from '@/lib/bracelet-config'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
@@ -206,7 +207,7 @@ export default function AdminPage() {
   const [stockEdits, setStockEdits] = useState<Record<number, { stock_qty: string; cost_price: string }>>({})
   const [stockSaving, setStockSaving] = useState<Record<number, boolean>>({})
   const [calcCrystals, setCalcCrystals] = useState<[number | null, number | null, number | null]>([null, null, null])
-  const [calcBeads, setCalcBeads] = useState<[number, number, number]>([10, 8, 6])
+  const [calcBeads, setCalcBeads] = useState<[number, number, number]>([...BEAD_COUNTS])
   const [calcOtherCost, setCalcOtherCost] = useState('5.00')
   const [calcSellingPrice, setCalcSellingPrice] = useState('59')
 

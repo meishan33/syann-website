@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { BEAD_COUNTS, TOTAL_BEADS } from '@/lib/bracelet-config'
 
-const TOTAL_BEADS = 24
-const REQUIRED_COUNTS = { 0: 10, 1: 8, 2: 6 }
+const REQUIRED_COUNTS = { 0: BEAD_COUNTS[0], 1: BEAD_COUNTS[1], 2: BEAD_COUNTS[2] }
 
 async function isAdmin(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
