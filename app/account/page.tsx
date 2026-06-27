@@ -101,6 +101,11 @@ function SignInPanel() {
           setMode('login')
           return
         }
+        await fetch('/api/auth/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        }).catch(() => {})
         window.location.reload()
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })

@@ -21,8 +21,11 @@ export async function POST(req: NextRequest) {
     // never trust a client-supplied base amount.
     const intent = await stripe.paymentIntents.retrieve(paymentIntentId)
     const baseAmountCents = parseInt(intent.metadata?.baseAmountCents || '0', 10)
+    // Preserve any already-applied discount — recomputing amount from scratch
+    // here would otherwise silently wipe it out.
+    const discountCents = parseInt(intent.metadata?.discountCents || '0', 10)
     const shippingFeeCents = getShippingFeeCents(country)
-    const amount = baseAmountCents + shippingFeeCents
+    const amount = Math.max(50, baseAmountCents + shippingFeeCents - discountCents)
 
     const updated = await stripe.paymentIntents.update(paymentIntentId, { amount })
 
@@ -30,6 +33,7 @@ export async function POST(req: NextRequest) {
       amountCents: updated.amount,
       baseAmountCents,
       shippingFeeCents,
+      discountCents,
     })
   } catch (err: unknown) {
     console.error('Update shipping error:', err)

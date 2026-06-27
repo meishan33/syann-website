@@ -11,7 +11,7 @@ const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 const DARK = '#4A3A32'
 
-type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock' | 'designs' | 'settings'
+type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock' | 'designs' | 'discount-codes' | 'settings'
 
 type Order = {
   id: string; order_number: number | null; customer_name: string; customer_email: string; customer_phone: string | null
@@ -97,6 +97,10 @@ const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   {
     key: 'shop', label: 'Shop',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  },
+  {
+    key: 'discount-codes', label: 'Discount Codes',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 009.59 3.24H4a1 1 0 00-1 1v5.59a2 2 0 00.59 1.41l9.58 9.58a2 2 0 002.82 0l4.6-4.6a2 2 0 000-2.82z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/></svg>,
   },
   {
     key: 'settings', label: 'Settings',
@@ -248,6 +252,21 @@ export default function AdminPage() {
   const [editDesignError, setEditDesignError] = useState<string | null>(null)
   const [editDesignSaving, setEditDesignSaving] = useState(false)
 
+  // Discount codes
+  type DiscountCode = { id: string; code: string; discount_type: 'fixed' | 'percent'; discount_value: number; active: boolean; max_redemptions_per_customer: number }
+  const EMPTY_DISCOUNT_FORM = { code: '', discount_type: 'fixed' as 'fixed' | 'percent', discount_value: '', max_redemptions_per_customer: '1' }
+  const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([])
+  const [discountCodesLoading, setDiscountCodesLoading] = useState(false)
+  const [discountActionLoading, setDiscountActionLoading] = useState<string | null>(null)
+  const [showAddDiscountCode, setShowAddDiscountCode] = useState(false)
+  const [newDiscountCode, setNewDiscountCode] = useState(EMPTY_DISCOUNT_FORM)
+  const [addDiscountCodeError, setAddDiscountCodeError] = useState<string | null>(null)
+  const [addDiscountCodeLoading, setAddDiscountCodeLoading] = useState(false)
+  const [editDiscountCodeId, setEditDiscountCodeId] = useState<string | null>(null)
+  const [editDiscountCodeForm, setEditDiscountCodeForm] = useState(EMPTY_DISCOUNT_FORM)
+  const [editDiscountCodeError, setEditDiscountCodeError] = useState<string | null>(null)
+  const [editDiscountCodeSaving, setEditDiscountCodeSaving] = useState(false)
+
   const [showColPicker, setShowColPicker] = useState(false)
   const [crystalSort, setCrystalSort] = useState<keyof Crystal | null>(null)
   const [crystalSortAsc, setCrystalSortAsc] = useState(true)
@@ -267,7 +286,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!token) return
-    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings(), fetchShopProducts(), fetchDesigns(), fetchSettings()])
+    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings(), fetchShopProducts(), fetchDesigns(), fetchSettings(), fetchDiscountCodes()])
       .finally(() => setLoading(false))
   }, [token])
 
@@ -389,6 +408,70 @@ export default function AdminPage() {
     await fetchDesigns()
     setEditDesignId(null)
     setEditDesignSaving(false)
+  }
+
+  const fetchDiscountCodes = async () => {
+    setDiscountCodesLoading(true)
+    const r = await fetch('/api/admin/discount-codes', { headers: headers() })
+    if (r.ok) setDiscountCodes(await r.json())
+    setDiscountCodesLoading(false)
+  }
+
+  const toggleDiscountCodeActive = async (id: string, active: boolean) => {
+    setDiscountActionLoading(id)
+    await fetch('/api/admin/discount-codes', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, active }) })
+    await fetchDiscountCodes(); setDiscountActionLoading(null)
+  }
+
+  const deleteDiscountCode = async (id: string) => {
+    if (!confirm('Delete this discount code? This cannot be undone.')) return
+    setDiscountActionLoading(id)
+    await fetch('/api/admin/discount-codes', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id }) })
+    await fetchDiscountCodes(); setDiscountActionLoading(null)
+  }
+
+  const addDiscountCode = async () => {
+    if (!newDiscountCode.code.trim()) { setAddDiscountCodeError('Code is required.'); return }
+    const value = parseFloat(newDiscountCode.discount_value)
+    if (isNaN(value) || value <= 0) { setAddDiscountCodeError('Discount value must be a positive number.'); return }
+    setAddDiscountCodeLoading(true); setAddDiscountCodeError(null)
+    const r = await fetch('/api/admin/discount-codes', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({
+        code: newDiscountCode.code, discount_type: newDiscountCode.discount_type, discount_value: value,
+        max_redemptions_per_customer: parseInt(newDiscountCode.max_redemptions_per_customer, 10) || 1,
+      }),
+    })
+    if (!r.ok) { const e = await r.json(); setAddDiscountCodeError(e.error || 'Failed to add code.'); setAddDiscountCodeLoading(false); return }
+    await fetchDiscountCodes()
+    setShowAddDiscountCode(false)
+    setNewDiscountCode(EMPTY_DISCOUNT_FORM)
+    setAddDiscountCodeLoading(false)
+  }
+
+  const openEditDiscountCode = (d: DiscountCode) => {
+    setEditDiscountCodeId(d.id)
+    setEditDiscountCodeForm({ code: d.code, discount_type: d.discount_type, discount_value: String(d.discount_value), max_redemptions_per_customer: String(d.max_redemptions_per_customer) })
+    setEditDiscountCodeError(null)
+  }
+
+  const saveEditDiscountCode = async () => {
+    if (editDiscountCodeId === null) return
+    if (!editDiscountCodeForm.code.trim()) { setEditDiscountCodeError('Code is required.'); return }
+    const value = parseFloat(editDiscountCodeForm.discount_value)
+    if (isNaN(value) || value <= 0) { setEditDiscountCodeError('Discount value must be a positive number.'); return }
+    setEditDiscountCodeSaving(true); setEditDiscountCodeError(null)
+    const r = await fetch('/api/admin/discount-codes', {
+      method: 'PATCH', headers: headers(),
+      body: JSON.stringify({
+        id: editDiscountCodeId, code: editDiscountCodeForm.code, discount_type: editDiscountCodeForm.discount_type,
+        discount_value: value, max_redemptions_per_customer: parseInt(editDiscountCodeForm.max_redemptions_per_customer, 10) || 1,
+      }),
+    })
+    if (!r.ok) { const e = await r.json(); setEditDiscountCodeError(e.error || 'Save failed.'); setEditDiscountCodeSaving(false); return }
+    await fetchDiscountCodes()
+    setEditDiscountCodeId(null)
+    setEditDiscountCodeSaving(false)
   }
 
   const saveStock = async (id: number) => {
@@ -1857,6 +1940,56 @@ export default function AdminPage() {
                   )}
                 </div>
               )}
+
+              {/* ── DISCOUNT CODES ── */}
+              {tab === 'discount-codes' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{discountCodes.length} code{discountCodes.length !== 1 ? 's' : ''}</p>
+                    <button
+                      onClick={() => { setShowAddDiscountCode(true); setAddDiscountCodeError(null); setNewDiscountCode(EMPTY_DISCOUNT_FORM) }}
+                      style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    >
+                      + Add Code
+                    </button>
+                  </div>
+
+                  {discountCodesLoading ? (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
+                  ) : discountCodes.length === 0 ? (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No discount codes yet. Add your first one.</p>
+                  ) : (
+                    <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                      {discountCodes.map(d => (
+                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', borderBottom: '1px solid #F0E8DF', opacity: d.active ? 1 : 0.55 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                            <p style={{ ...SERIF, fontSize: 17, fontWeight: 400, letterSpacing: '0.06em', color: DARK, margin: 0 }}>{d.code}</p>
+                            <p style={{ ...BODY, fontSize: 12, color: '#7A5B45', margin: 0 }}>
+                              {d.discount_type === 'fixed' ? `S$${Number(d.discount_value).toFixed(2)} off` : `${d.discount_value}% off`}
+                            </p>
+                            <p style={{ ...BODY, fontSize: 11, color: '#B0A090', margin: 0 }}>Max {d.max_redemptions_per_customer}/customer</p>
+                            <Badge label={d.active ? 'Active' : 'Inactive'} color={d.active ? '#7CB98A' : '#9A8573'} />
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                            <button onClick={() => openEditDiscountCode(d)}
+                              style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '7px 12px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 6, cursor: 'pointer', color: DARK }}>
+                              Edit
+                            </button>
+                            <button disabled={discountActionLoading === d.id} onClick={() => toggleDiscountCodeActive(d.id, !d.active)}
+                              style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '7px 12px', background: 'transparent', border: `1px solid ${d.active ? '#C0392B' : '#7CB98A'}`, color: d.active ? '#C0392B' : '#7CB98A', borderRadius: 6, cursor: 'pointer' }}>
+                              {discountActionLoading === d.id ? '…' : d.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button disabled={discountActionLoading === d.id} onClick={() => deleteDiscountCode(d.id)}
+                              style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '7px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 6, cursor: 'pointer', color: '#DC2626' }}>
+                              Del
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -2312,6 +2445,114 @@ export default function AdminPage() {
               </button>
               <button onClick={saveEditDesign} disabled={editDesignSaving} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: editDesignSaving ? 'not-allowed' : 'pointer', opacity: editDesignSaving ? 0.7 : 1 }}>
                 {editDesignSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD DISCOUNT CODE MODAL ── */}
+      {showAddDiscountCode && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAddDiscountCode(false) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 400, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Add Discount Code</h2>
+              <button onClick={() => setShowAddDiscountCode(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Code *</label>
+                <input value={newDiscountCode.code} onChange={e => setNewDiscountCode(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="e.g. WELCOME5"
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Type</label>
+                  <select value={newDiscountCode.discount_type} onChange={e => setNewDiscountCode(f => ({ ...f, discount_type: e.target.value as 'fixed' | 'percent' }))}
+                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }}>
+                    <option value="fixed">Fixed (S$)</option>
+                    <option value="percent">Percent (%)</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Value *</label>
+                  <input type="number" min="0" step="0.01" value={newDiscountCode.discount_value} onChange={e => setNewDiscountCode(f => ({ ...f, discount_value: e.target.value }))} placeholder={newDiscountCode.discount_type === 'fixed' ? '5.00' : '10'}
+                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Max Redemptions / Customer</label>
+                <input type="number" min="1" step="1" value={newDiscountCode.max_redemptions_per_customer} onChange={e => setNewDiscountCode(f => ({ ...f, max_redemptions_per_customer: e.target.value }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+
+            {addDiscountCodeError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '14px 0 0' }}>{addDiscountCodeError}</p>}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAddDiscountCode(false)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={addDiscountCode} disabled={addDiscountCodeLoading} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: addDiscountCodeLoading ? 'not-allowed' : 'pointer', opacity: addDiscountCodeLoading ? 0.7 : 1 }}>
+                {addDiscountCodeLoading ? 'Saving…' : 'Add Code'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EDIT DISCOUNT CODE MODAL ── */}
+      {editDiscountCodeId !== null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setEditDiscountCodeId(null) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 400, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Edit Discount Code</h2>
+              <button onClick={() => setEditDiscountCodeId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Code *</label>
+                <input value={editDiscountCodeForm.code} onChange={e => setEditDiscountCodeForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Type</label>
+                  <select value={editDiscountCodeForm.discount_type} onChange={e => setEditDiscountCodeForm(f => ({ ...f, discount_type: e.target.value as 'fixed' | 'percent' }))}
+                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }}>
+                    <option value="fixed">Fixed (S$)</option>
+                    <option value="percent">Percent (%)</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Value *</label>
+                  <input type="number" min="0" step="0.01" value={editDiscountCodeForm.discount_value} onChange={e => setEditDiscountCodeForm(f => ({ ...f, discount_value: e.target.value }))}
+                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Max Redemptions / Customer</label>
+                <input type="number" min="1" step="1" value={editDiscountCodeForm.max_redemptions_per_customer} onChange={e => setEditDiscountCodeForm(f => ({ ...f, max_redemptions_per_customer: e.target.value }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+
+            {editDiscountCodeError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '14px 0 0' }}>{editDiscountCodeError}</p>}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditDiscountCodeId(null)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={saveEditDiscountCode} disabled={editDiscountCodeSaving} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: editDiscountCodeSaving ? 'not-allowed' : 'pointer', opacity: editDiscountCodeSaving ? 0.7 : 1 }}>
+                {editDiscountCodeSaving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </div>

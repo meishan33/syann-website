@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { sendEmail, inquiryAcknowledgementEmail } from '@/lib/email'
+import { sendEmail, inquiryAcknowledgementEmail, newInquiryAdminEmail, notifyAdmins } from '@/lib/email'
 
 // Simple in-memory rate limiter: max 3 contact submissions per IP per 10 minutes
 const ipHits = new Map<string, { count: number; resetAt: number }>()
@@ -68,6 +68,9 @@ export async function POST(req: NextRequest) {
       const { subject: emailSubject, html } = inquiryAcknowledgementEmail({ name: safeName, subject: safeSubject })
       await sendEmail({ to: safeEmail, subject: emailSubject, html })
     }
+
+    const { subject: adminSubject, html: adminHtml } = newInquiryAdminEmail({ name: safeName, email: safeEmail, subject: safeSubject, message: message.slice(0, 3000) })
+    await notifyAdmins({ subject: adminSubject, html: adminHtml })
 
     return NextResponse.json({ ok: true })
   } catch (err) {

@@ -1,8 +1,10 @@
 import { Resend } from 'resend'
+import { supabaseAdmin } from './supabase-admin'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const FROM = 'SYANN.CO <hello@syann.co>'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://syann.co'
 
 // Email clients strip <style> blocks and don't load the site's @import'd Google
 // Fonts, so these templates use inline styles + web-safe fallbacks only
@@ -10,6 +12,13 @@ const FROM = 'SYANN.CO <hello@syann.co>'
 const GOLD = '#B08B57'
 const DARK = '#4A3A32'
 const CREAM = '#F6F1EB'
+
+const CTA_BLOCK = `
+<div style="margin-top:24px;padding-top:20px;border-top:1px solid #F0E8DF;text-align:center;">
+  <a href="${SITE_URL}/energy-quiz" style="display:inline-block;font-size:12px;font-weight:600;letter-spacing:0.04em;color:${GOLD};text-decoration:none;">
+    Analyze Your Energy &amp; Discover Your Bracelet Now &gt;&gt;
+  </a>
+</div>`
 
 function wrapper(bodyHtml: string): string {
   return `
@@ -27,6 +36,19 @@ function wrapper(bodyHtml: string): string {
     </div>
   </div>
 </div>`.trim()
+}
+
+export async function getAdminEmails(): Promise<string[]> {
+  const { data: profiles } = await supabaseAdmin.from('profiles').select('id').eq('is_admin', true)
+  if (!profiles?.length) return []
+  const adminIds = new Set(profiles.map(p => p.id))
+  const { data } = await supabaseAdmin.auth.admin.listUsers()
+  return (data?.users ?? []).filter(u => adminIds.has(u.id) && u.email).map(u => u.email!)
+}
+
+export async function notifyAdmins({ subject, html }: { subject: string; html: string }) {
+  const adminEmails = await getAdminEmails()
+  await Promise.all(adminEmails.map(to => sendEmail({ to, subject, html })))
 }
 
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
@@ -70,6 +92,28 @@ export function orderConfirmationEmail({
     <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#9A8573;">Shipping To</p>
     <p style="margin:0;font-size:12px;color:${DARK};">${shippingAddress}</p>
     ` : ''}
+    ${CTA_BLOCK}
+  `)
+  return { subject, html }
+}
+
+export function welcomeEmail({ name, code, discountLabel }: { name: string | null; code: string | null; discountLabel: string | null }) {
+  const subject = `Welcome to SYANN.CO${code ? ` — here's ${discountLabel} off` : ''}`
+  const html = wrapper(`
+    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:${GOLD};">Welcome</p>
+    <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:${DARK};">
+      Glad You're Here${name ? `, ${name.split(' ')[0]}` : ''}
+    </h1>
+    <p style="margin:0 0 ${code ? 20 : 0}px;font-size:13px;line-height:1.7;color:#7A5B45;">
+      Thank you for creating an account with SYANN.CO. We can't wait for you to discover crystals aligned with your energy.
+    </p>
+    ${code ? `
+    <div style="background:${CREAM};border-radius:10px;padding:20px;text-align:center;">
+      <p style="margin:0 0 6px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#9A8573;">Enjoy ${discountLabel} Off Your First Order</p>
+      <p style="margin:0;font-size:22px;font-family:Georgia,serif;letter-spacing:0.08em;color:${DARK};">${code}</p>
+    </div>
+    ` : ''}
+    ${CTA_BLOCK}
   `)
   return { subject, html }
 }
@@ -88,6 +132,53 @@ export function inquiryAcknowledgementEmail({ name, subject: inquirySubject }: {
       <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#9A8573;">Subject</p>
       <p style="margin:0;font-size:13px;color:${DARK};">${inquirySubject}</p>
     </div>
+    ${CTA_BLOCK}
+  `)
+  return { subject, html }
+}
+
+export function newOrderAdminEmail({
+  orderType, orderNumber, customerName, customerEmail, items, totalAmount,
+}: {
+  orderType: 'bracelet' | 'shop'
+  orderNumber: number | string | null
+  customerName: string | null
+  customerEmail: string | null
+  items: string
+  totalAmount: number
+}) {
+  const subject = `New ${orderType === 'bracelet' ? 'Bracelet' : 'Shop'} Order${orderNumber ? ` — #${orderNumber}` : ''} · SYANN.CO`
+  const html = wrapper(`
+    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:${GOLD};">New Order</p>
+    <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:${DARK};">
+      ${orderType === 'bracelet' ? 'Bracelet' : 'Shop'} Order Received
+    </h1>
+    <div style="background:${CREAM};border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+      ${orderNumber ? `<p style="margin:0 0 8px;font-size:12px;color:#7A5B45;">Order <strong style="color:${DARK};">#${orderNumber}</strong></p>` : ''}
+      <p style="margin:0 0 8px;font-size:12px;color:#7A5B45;">${customerName || 'Unknown customer'} — ${customerEmail || 'no email'}</p>
+      <p style="margin:0 0 8px;font-size:12px;color:#7A5B45;">${items}</p>
+      <p style="margin:0;font-size:16px;font-family:Georgia,serif;color:${DARK};">S$${totalAmount.toFixed(2)}</p>
+    </div>
+    <a href="${SITE_URL}/admin" style="display:inline-block;padding:10px 20px;background:${DARK};color:#fff;text-decoration:none;border-radius:999px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">View in Admin</a>
+  `)
+  return { subject, html }
+}
+
+export function newInquiryAdminEmail({ name, email, subject: inquirySubject, message }: { name: string | null; email: string | null; subject: string; message: string }) {
+  const subject = `New Inquiry: ${inquirySubject} · SYANN.CO`
+  const html = wrapper(`
+    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:${GOLD};">New Inquiry</p>
+    <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:${DARK};">
+      ${name || 'Someone'} contacted you
+    </h1>
+    <div style="background:${CREAM};border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+      <p style="margin:0 0 8px;font-size:12px;color:#7A5B45;">${name || 'Unknown'} — ${email || 'no email'}</p>
+      <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#9A8573;">Subject</p>
+      <p style="margin:0 0 12px;font-size:13px;color:${DARK};">${inquirySubject}</p>
+      <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#9A8573;">Message</p>
+      <p style="margin:0;font-size:13px;color:${DARK};white-space:pre-wrap;">${message}</p>
+    </div>
+    <a href="${SITE_URL}/admin" style="display:inline-block;padding:10px 20px;background:${DARK};color:#fff;text-decoration:none;border-radius:999px;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">View in Admin</a>
   `)
   return { subject, html }
 }
@@ -103,6 +194,7 @@ export function orderStatusUpdateEmail({ orderNumber, status }: { orderNumber: n
     <p style="margin:0;font-size:13px;line-height:1.7;color:#7A5B45;">
       ${orderNumber ? `Order <strong style="color:${DARK};">#${orderNumber}</strong> ` : 'Your order '}has been updated to <strong style="color:${DARK};">${statusLabel}</strong>.
     </p>
+    ${CTA_BLOCK}
   `)
   return { subject, html }
 }

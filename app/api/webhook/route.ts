@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { sendEmail, orderConfirmationEmail } from '@/lib/email'
+import { sendEmail, orderConfirmationEmail, newOrderAdminEmail, notifyAdmins } from '@/lib/email'
+
+// Discount redemption is recorded here (payment succeeded), not at apply-time,
+// so an abandoned checkout never burns a customer's one-time use of a code.
+async function recordDiscountRedemption(paymentIntent: Stripe.PaymentIntent) {
+  const discountCode = paymentIntent.metadata?.discountCode
+  const email = paymentIntent.receipt_email
+  if (!discountCode || !email) return
+
+  const { data: discountRow } = await supabaseAdmin.from('discount_codes').select('id').eq('code', discountCode).maybeSingle()
+  if (!discountRow) return
+
+  await supabaseAdmin.from('discount_code_redemptions').insert({
+    code_id: discountRow.id,
+    email: email.toLowerCase(),
+    user_id: paymentIntent.metadata?.userId || null,
+    stripe_payment_intent_id: paymentIntent.id,
+  })
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -65,16 +83,24 @@ export async function POST(req: NextRequest) {
         stripe_payment_intent_id: paymentIntent.id,
       })
 
+      const itemsSummary = parsedItems.map(i => `${i.name} × ${i.quantity}`).join(', ')
+
       if (paymentIntent.receipt_email) {
         const { subject, html } = orderConfirmationEmail({
           orderNumber,
           customerName: addr?.name || null,
-          items: parsedItems.map(i => `${i.name} × ${i.quantity}`).join(', '),
+          items: itemsSummary,
           totalAmount,
           shippingAddress: addr ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ') : null,
         })
         await sendEmail({ to: paymentIntent.receipt_email, subject, html })
       }
+
+      const { subject: adminSubject, html: adminHtml } = newOrderAdminEmail({
+        orderType: 'shop', orderNumber, customerName: addr?.name || null, customerEmail: paymentIntent.receipt_email || null, items: itemsSummary, totalAmount,
+      })
+      await notifyAdmins({ subject: adminSubject, html: adminHtml })
+      await recordDiscountRedemption(paymentIntent)
 
       return NextResponse.json({ received: true })
     }
@@ -123,16 +149,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
+    const braceletItems = (result?.crystal_names ?? []).join(' · ')
+
     if (paymentIntent.receipt_email) {
       const { subject, html } = orderConfirmationEmail({
         orderNumber: insertedOrder?.order_number ?? null,
         customerName: addr?.name || result?.user_name || null,
-        items: (result?.crystal_names ?? []).join(' · '),
+        items: braceletItems,
         totalAmount,
         shippingAddress,
       })
       await sendEmail({ to: paymentIntent.receipt_email, subject, html })
     }
+
+    const { subject: adminSubject, html: adminHtml } = newOrderAdminEmail({
+      orderType: 'bracelet', orderNumber: insertedOrder?.order_number ?? null, customerName: addr?.name || result?.user_name || null, customerEmail: paymentIntent.receipt_email || null, items: braceletItems, totalAmount,
+    })
+    await notifyAdmins({ subject: adminSubject, html: adminHtml })
+    await recordDiscountRedemption(paymentIntent)
 
     // Auto-save new Stripe-collected address to delivery_addresses (only if user didn't pick a saved one)
     if (userId && addr && !savedAddress) {
