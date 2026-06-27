@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useCurrency } from '@/context/CurrencyContext'
@@ -509,8 +508,11 @@ function AccountPageContent() {
                       style={{ background: '#F9F5F0', border: '1px solid #E5DDD5', borderRadius: 12, padding: '20px 24px', display: 'flex', gap: 14, alignItems: 'flex-start', textDecoration: 'none' }}
                     >
                       {reading.cached_image_url && (
-                        <div style={{ position: 'relative', width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
-                          <Image src={reading.cached_image_url} alt="Crystal bracelet" fill sizes="60px" style={{ objectFit: 'contain' }} />
+                        <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
+                          {/* Plain <img>, not next/image — these small bracelet photos kept hitting
+                              mobile-Safari-only quirks with Next's optimizer (content-disposition,
+                              format negotiation); bypassing it entirely is more robust at this size. */}
+                          <img src={reading.cached_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </div>
                       )}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
@@ -566,8 +568,8 @@ function AccountPageContent() {
                       >
                         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: 1, flexWrap: 'wrap', textAlign: 'left' }}>
                           {order.generated_image_url && (
-                            <div style={{ position: 'relative', width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
-                              <Image src={order.generated_image_url} alt="Crystal bracelet" fill sizes="60px" style={{ objectFit: 'contain' }} />
+                            <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
+                              <img src={order.generated_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>
                           )}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
