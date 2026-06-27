@@ -1,5 +1,4 @@
 import EnergyQuizForm from '@/components/EnergyQuizForm'
-import ContinueReadingBanner from '@/components/ContinueReadingBanner'
 
 const SELLING_POINTS = [
   {
@@ -82,8 +81,6 @@ const BRACELETS = [
 export default function Home() {
   return (
     <main className="home">
-
-      <ContinueReadingBanner />
 
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section className="home-hero">

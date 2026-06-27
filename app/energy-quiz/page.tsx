@@ -1,4 +1,5 @@
 import EnergyQuizForm from '@/components/EnergyQuizForm'
+import ContinueReadingBanner from '@/components/ContinueReadingBanner'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
@@ -7,6 +8,8 @@ const GOLD = '#B08B57'
 export default function EnergyQuizPage() {
   return (
     <main>
+
+      <ContinueReadingBanner />
 
       {/* ── BANNER ───────────────────────────────────────────── */}
       <section style={{ position: 'relative', height: 280, overflow: 'hidden' }}>
