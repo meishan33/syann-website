@@ -40,8 +40,11 @@ export default function BraceletCapture({ sequence, imageMap, resultId, alreadyS
           body: JSON.stringify({ imageDataUrl: dataUrl }),
         })
         setCaptured(true)
-      } catch {
-        // silent — display is unaffected if save fails
+      } catch (err) {
+        // Display is unaffected if save fails — the caller always has a live
+        // fallback render — but log it so silent capture failures (e.g. canvas
+        // tainting from cross-origin bead images) are actually diagnosable.
+        console.error('Bracelet image capture/save failed:', err)
       }
     })
   }, [sequence, resultId, captured])

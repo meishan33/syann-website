@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import CheckoutButton from "./CheckoutButton";
+import BraceletCapture from "@/components/BraceletCapture";
+import { generateBeadSequence } from "@/lib/design-engine";
 
 type Props = {
   searchParams: Promise<{
@@ -54,6 +56,27 @@ export default async function PaymentPage({ searchParams }: Props) {
     ? analysisBulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
     : [];
 
+  // cached_image_url is just a client-side screenshot capture of the live
+  // bead renderer (see BraceletCapture) — it can fail to save (e.g. a mobile
+  // browser quirk during the capture-and-upload step), so fall back to
+  // rendering the same live bracelet here instead of a blank placeholder,
+  // which also gives it a second chance to capture and save.
+  const [c1, c2, c3] = crystalNames;
+  let beadSequence: string[] = [];
+  let imageMap: Record<string, string[]> = {};
+  if (!imageUrl && c1 && c2 && c3) {
+    const { data: crystalDetails } = await supabaseAdmin
+      .from("crystals")
+      .select("name, bead_image_url, bead_image_urls")
+      .in("name", crystalNames);
+    for (const c of crystalDetails ?? []) {
+      if (c.bead_image_urls?.length) imageMap[c.name] = c.bead_image_urls;
+      else if (c.bead_image_url) imageMap[c.name] = [c.bead_image_url];
+    }
+    const variant = parseInt(resultId.replace(/-/g, "")[0], 16);
+    beadSequence = await generateBeadSequence([c1, c2, c3], variant);
+  }
+
   const { data: existingOrder } = await supabaseAdmin
     .from("orders")
     .select("order_number")
@@ -87,6 +110,10 @@ export default async function PaymentPage({ searchParams }: Props) {
               {imageUrl ? (
                 <div className="relative h-36 w-36 shrink-0 overflow-hidden rounded-2xl border border-[#E5DDD5] bg-[#F8F4EF]">
                   <Image src={imageUrl} alt="Your crystal bracelet" fill sizes="144px" className="object-contain" />
+                </div>
+              ) : beadSequence.length > 0 ? (
+                <div className="h-36 w-36 shrink-0 overflow-hidden rounded-2xl border border-[#E5DDD5]">
+                  <BraceletCapture sequence={beadSequence} imageMap={imageMap} resultId={resultId} alreadySaved={false} />
                 </div>
               ) : (
                 <div className="h-36 w-36 shrink-0 rounded-2xl bg-[#EFE7DD] flex items-center justify-center">
