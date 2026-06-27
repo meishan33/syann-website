@@ -18,5 +18,16 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  if (!data?.length) return NextResponse.json(data)
+
+  // Already-purchased designs show up in My Orders instead — drop them here
+  // so the same bracelet isn't listed twice.
+  const { data: purchased } = await supabaseAdmin
+    .from('orders')
+    .select('result_id')
+    .in('result_id', data.map(r => r.id))
+    .eq('payment_status', 'paid')
+
+  const purchasedIds = new Set((purchased ?? []).map(o => o.result_id))
+  return NextResponse.json(data.filter(r => !purchasedIds.has(r.id)))
 }
