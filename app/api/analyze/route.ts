@@ -170,9 +170,15 @@ export async function POST(req: NextRequest) {
           }
           const pngBuffer = await generateBraceletImage(beadSequence, imageMap);
           const fileName = `bracelet-${savedResult.id}.png`;
+          // Pass a Blob, not the raw Buffer — Vercel's serverless runtime was
+          // silently corrupting raw Buffer bodies in transit (binary bytes
+          // were getting mangled as if coerced through a UTF-8 string at some
+          // point), even though the exact same code worked fine locally. A
+          // Blob takes a more standardized path through the underlying fetch.
+          const pngBlob = new Blob([new Uint8Array(pngBuffer)], { type: "image/png" });
           const { error: uploadError } = await supabaseAdmin.storage
             .from("generated-bracelets")
-            .upload(fileName, pngBuffer, { contentType: "image/png", upsert: true });
+            .upload(fileName, pngBlob, { contentType: "image/png", upsert: true });
           if (!uploadError) {
             const { data: { publicUrl } } = supabaseAdmin.storage
               .from("generated-bracelets")
