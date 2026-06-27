@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import PurchasePanel from "./PurchasePanel";
-import BraceletCapture from "@/components/BraceletCapture";
+import BraceletRenderer from "@/components/BraceletRenderer";
 import { generateBeadSequence } from "@/lib/design-engine";
 
 type Props = {
@@ -110,12 +110,13 @@ export default async function ResultsPage({ params }: Props) {
             <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
 
               <div className="w-full lg:flex-1">
-                <BraceletCapture
-                  sequence={beadSequence}
-                  imageMap={imageMap}
-                  resultId={id}
-                  alreadySaved={!!(data.cached_image_url)}
-                />
+                {data.cached_image_url ? (
+                  <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: 1 }}>
+                    <Image src={data.cached_image_url} alt="Your crystal bracelet" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-contain" />
+                  </div>
+                ) : (
+                  <BraceletRenderer sequence={beadSequence} imageMap={imageMap} />
+                )}
               </div>
 
               <div className="mt-3 px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>

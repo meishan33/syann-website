@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import CheckoutButton from "./CheckoutButton";
-import BraceletCapture from "@/components/BraceletCapture";
+import BraceletRenderer from "@/components/BraceletRenderer";
 import { generateBeadSequence } from "@/lib/design-engine";
 
 type Props = {
@@ -56,11 +56,10 @@ export default async function PaymentPage({ searchParams }: Props) {
     ? analysisBulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
     : [];
 
-  // cached_image_url is just a client-side screenshot capture of the live
-  // bead renderer (see BraceletCapture) — it can fail to save (e.g. a mobile
-  // browser quirk during the capture-and-upload step), so fall back to
-  // rendering the same live bracelet here instead of a blank placeholder,
-  // which also gives it a second chance to capture and save.
+  // cached_image_url is generated server-side right when the quiz analysis
+  // completes (see lib/bracelet-image.ts) — it should normally already be
+  // set by the time anyone reaches this page. Fall back to the live renderer
+  // for older results from before that existed, or the rare generation failure.
   const [c1, c2, c3] = crystalNames;
   let beadSequence: string[] = [];
   let imageMap: Record<string, string[]> = {};
@@ -113,7 +112,7 @@ export default async function PaymentPage({ searchParams }: Props) {
                 </div>
               ) : beadSequence.length > 0 ? (
                 <div className="h-36 w-36 shrink-0 overflow-hidden rounded-2xl border border-[#E5DDD5]">
-                  <BraceletCapture sequence={beadSequence} imageMap={imageMap} resultId={resultId} alreadySaved={false} />
+                  <BraceletRenderer sequence={beadSequence} imageMap={imageMap} />
                 </div>
               ) : (
                 <div className="h-36 w-36 shrink-0 rounded-2xl bg-[#EFE7DD] flex items-center justify-center">

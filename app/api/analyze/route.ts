@@ -5,6 +5,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { openai } from "@/lib/openai";
 import { analyzeFiveElements } from "@/lib/five-elements";
 import { buildSystemPrompt, buildUserMessage } from "@/lib/prompts";
+import { generateBeadSequence } from "@/lib/design-engine";
+import { generateBraceletImage } from "@/lib/bracelet-image";
 
 type AIRecommendation = {
   selectedCrystals: string[];
@@ -150,6 +152,43 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("Saved successfully:", savedResult.id);
+
+    // ── Generate bracelet photo server-side ────────────────────────────────
+    // Never lets a failure here break the analyze response — the results/
+    // payment pages already fall back to a live render if cached_image_url
+    // is missing.
+    try {
+      const [c1, c2, c3] = recommendation.selectedCrystals;
+      if (c1 && c2 && c3) {
+        const variant = parseInt(savedResult.id.replace(/-/g, "")[0], 16);
+        const beadSequence = await generateBeadSequence([c1, c2, c3], variant);
+        if (beadSequence.length > 0) {
+          const imageMap: Record<string, string[]> = {};
+          for (const c of allCrystals ?? []) {
+            if (c.bead_image_urls?.length) imageMap[c.name] = c.bead_image_urls;
+            else if (c.bead_image_url) imageMap[c.name] = [c.bead_image_url];
+          }
+          const pngBuffer = await generateBraceletImage(beadSequence, imageMap);
+          const fileName = `bracelet-${savedResult.id}.png`;
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from("generated-bracelets")
+            .upload(fileName, pngBuffer, { contentType: "image/png", upsert: true });
+          if (!uploadError) {
+            const { data: { publicUrl } } = supabaseAdmin.storage
+              .from("generated-bracelets")
+              .getPublicUrl(fileName);
+            await supabaseAdmin
+              .from("energy_quiz_results")
+              .update({ cached_image_url: publicUrl })
+              .eq("id", savedResult.id);
+          } else {
+            console.error("Bracelet image upload failed:", uploadError.message);
+          }
+        }
+      }
+    } catch (imgErr) {
+      console.error("Bracelet image generation failed:", imgErr);
+    }
 
     return NextResponse.json({
       id: savedResult.id,
