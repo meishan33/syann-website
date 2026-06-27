@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { saveLastReading } from '@/lib/last-reading'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
@@ -389,8 +388,6 @@ export default function EnergyQuizForm() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'We could not complete your analysis. Please try again.')
       if (!data?.id) throw new Error('Your analysis is missing a reference id.')
-
-      saveLastReading(data.id)
 
       const prev = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
       localStorage.setItem(LS_KEY, String(prev + 1))
