@@ -222,6 +222,8 @@ function AccountPageContent() {
   const { format } = useCurrency()
   const initialTab = searchParams.get('tab')
   const [tab, setTab] = useState<Tab>(initialTab === 'orders' || initialTab === 'readings' ? initialTab : 'profile')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const TAB_LABELS: Record<Tab, string> = { profile: 'My Profile', orders: 'My Orders', readings: 'Recent Readings' }
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
@@ -386,7 +388,7 @@ function AccountPageContent() {
 
 
       {/* ── MAIN LAYOUT ──────────────────────────────────────── */}
-      <section style={{ maxWidth: 1080, margin: '0 auto', padding: '28px 24px 72px', display: 'grid', gridTemplateColumns: '220px 1fr', gap: 28, alignItems: 'start' }}>
+      <section className="account-layout" style={{ maxWidth: 1080, margin: '0 auto', padding: '28px 24px 72px', display: 'grid', gridTemplateColumns: '220px 1fr', gap: 28, alignItems: 'start' }}>
 
         {/* ── LEFT SIDEBAR ── */}
         <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, overflow: 'hidden', position: 'sticky', top: 88 }}>
@@ -402,10 +404,23 @@ function AccountPageContent() {
             </div>
           </div>
 
+          {/* Mobile-only collapse toggle */}
+          <button
+            className="account-sidebar-toggle"
+            onClick={() => setSidebarOpen(o => !o)}
+            style={{ alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 20px', background: 'none', border: 'none', borderBottom: '1px solid #EDE8DF', cursor: 'pointer' }}
+          >
+            <span style={{ ...BODY, fontSize: 12, fontWeight: 600, color: '#4A3A32' }}>{TAB_LABELS[tab]}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: sidebarOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          <div className={`account-sidebar-body${sidebarOpen ? '' : ' collapsed'}`}>
           {/* Nav items */}
           <nav style={{ padding: '10px 8px' }}>
             {/* Profile tab */}
-            <button onClick={() => setTab('profile')}
+            <button onClick={() => { setTab('profile'); setSidebarOpen(false) }}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, textDecoration: 'none', color: '#4A3A32', marginBottom: 2, width: '100%', background: tab === 'profile' ? '#F6F1EB' : 'transparent', border: 'none', cursor: 'pointer' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
               onMouseLeave={e => (e.currentTarget.style.background = tab === 'profile' ? '#F6F1EB' : 'transparent')}
@@ -415,7 +430,7 @@ function AccountPageContent() {
             </button>
 
             {/* Orders tab */}
-            <button onClick={() => { setTab('orders'); fetchOrders() }}
+            <button onClick={() => { setTab('orders'); fetchOrders(); setSidebarOpen(false) }}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, color: '#4A3A32', marginBottom: 2, width: '100%', background: tab === 'orders' ? '#F6F1EB' : 'transparent', border: 'none', cursor: 'pointer' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
               onMouseLeave={e => (e.currentTarget.style.background = tab === 'orders' ? '#F6F1EB' : 'transparent')}
@@ -425,7 +440,7 @@ function AccountPageContent() {
             </button>
 
             {/* Recent Readings tab */}
-            <button onClick={() => { setTab('readings'); fetchReadings() }}
+            <button onClick={() => { setTab('readings'); fetchReadings(); setSidebarOpen(false) }}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, color: '#4A3A32', marginBottom: 2, width: '100%', background: tab === 'readings' ? '#F6F1EB' : 'transparent', border: 'none', cursor: 'pointer' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
               onMouseLeave={e => (e.currentTarget.style.background = tab === 'readings' ? '#F6F1EB' : 'transparent')}
@@ -475,6 +490,7 @@ function AccountPageContent() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               <span style={{ ...BODY, fontSize: 12, fontWeight: 400 }}>{signingOut ? 'Signing out…' : 'Sign Out'}</span>
             </button>
+          </div>
           </div>
         </div>
 

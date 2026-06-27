@@ -699,3 +699,21 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Account page sidebar — fixed two-column grid caused horizontal overflow on
+   mobile, so it collapses to a single column with a tap-to-expand menu below. */
+.account-sidebar-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .account-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .account-sidebar-toggle {
+    display: flex;
+  }
+  .account-sidebar-body.collapsed {
+    display: none;
+  }
+}
