@@ -157,6 +157,8 @@ export async function POST(req: NextRequest) {
     // Never lets a failure here break the analyze response — the results/
     // payment pages already fall back to a live render if cached_image_url
     // is missing.
+    let diagnosticHex: string | null = null;
+    let diagnosticLength: number | null = null;
     try {
       const [c1, c2, c3] = recommendation.selectedCrystals;
       if (c1 && c2 && c3) {
@@ -169,6 +171,8 @@ export async function POST(req: NextRequest) {
             else if (c.bead_image_url) imageMap[c.name] = [c.bead_image_url];
           }
           const pngBuffer = await generateBraceletImage(beadSequence, imageMap);
+          diagnosticHex = pngBuffer.subarray(0, 8).toString("hex");
+          diagnosticLength = pngBuffer.length;
           const fileName = `bracelet-${savedResult.id}.png`;
           // Pass a Blob, not the raw Buffer — Vercel's serverless runtime was
           // silently corrupting raw Buffer bodies in transit (binary bytes
@@ -198,6 +202,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       id: savedResult.id,
+      _diagnosticHex: diagnosticHex,
+      _diagnosticLength: diagnosticLength,
       weakElement: analysis.weakElement,
       strongElement: analysis.strongElement,
       recommendedCrystals,
