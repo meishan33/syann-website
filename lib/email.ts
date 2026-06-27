@@ -54,6 +54,22 @@ export async function notifyAdmins({ subject, html }: { subject: string; html: s
   await Promise.all(adminEmails.map(to => sendEmail({ to, subject, html })))
 }
 
+// Spam filters flag single-part HTML-only emails more readily than properly
+// multipart messages — derive a plain-text alternative from the HTML rather
+// than hand-writing one per template.
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<a\s+[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h1|h2|h3)>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&nbsp;/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   if (!process.env.RESEND_API_KEY) {
     console.error('Email not sent — RESEND_API_KEY is not set:', subject, 'to', to)
@@ -61,7 +77,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   }
   try {
     if (!resend) resend = new Resend(process.env.RESEND_API_KEY)
-    await resend.emails.send({ from: FROM, to, subject, html })
+    await resend.emails.send({ from: FROM, to, subject, html, text: htmlToText(html) })
   } catch (err) {
     // Email failures must never break the order/webhook/contact flow that
     // triggered them — the underlying database write has already succeeded.
