@@ -9,6 +9,10 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const CURRENT_YEAR = new Date().getFullYear()
+const YEAR_OPTIONS = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i)
+
 const INTENTIONS = [
   'Love & Relationships',
   'Wealth & Abundance',
@@ -262,6 +266,16 @@ export default function EnergyQuizForm() {
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0])
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showDailyLimit, setShowDailyLimit] = useState(false)
+
+  // Native <input type="date"/"time"> render with inconsistent, browser-enforced
+  // heights on iOS Safari that CSS can't override — replaced with plain <select>
+  // dropdowns that compose back into the same 'YYYY-MM-DD' / 'HH:MM' strings.
+  const [dateDay, setDateDay] = useState('')
+  const [dateMonth, setDateMonth] = useState('')
+  const [dateYear, setDateYear] = useState('')
+  const [timeHour, setTimeHour] = useState('')
+  const [timeMinute, setTimeMinute] = useState('')
+  const [timePeriod, setTimePeriod] = useState<'AM' | 'PM'>('AM')
   const [honeypot, setHoneypot] = useState('')
   const [loadedAt] = useState(() => Date.now())
 
@@ -283,6 +297,61 @@ export default function EnergyQuizForm() {
 
     })
   }, [])
+
+  // Keep the day/month/year and hour/minute/period dropdowns in sync whenever
+  // formData.birthDate/birthTime is set externally (e.g. auto-filled above).
+  useEffect(() => {
+    if (!formData.birthDate) return
+    const [y, m, d] = formData.birthDate.split('-')
+    setDateYear(y); setDateMonth(m); setDateDay(d)
+  }, [formData.birthDate])
+
+  useEffect(() => {
+    if (!formData.birthTime) return
+    const [hStr, mStr] = formData.birthTime.split(':')
+    const h24 = parseInt(hStr, 10)
+    const period = h24 >= 12 ? 'PM' : 'AM'
+    let h12 = h24 % 12
+    if (h12 === 0) h12 = 12
+    setTimeHour(String(h12).padStart(2, '0'))
+    setTimeMinute(mStr)
+    setTimePeriod(period)
+  }, [formData.birthTime])
+
+  function daysInMonth(year: string, month: string): number {
+    if (!year || !month) return 31
+    return new Date(parseInt(year, 10), parseInt(month, 10), 0).getDate()
+  }
+
+  function updateDatePart(part: 'day' | 'month' | 'year', value: string) {
+    const day = part === 'day' ? value : dateDay
+    const month = part === 'month' ? value : dateMonth
+    const year = part === 'year' ? value : dateYear
+    if (part === 'day') setDateDay(value)
+    if (part === 'month') setDateMonth(value)
+    if (part === 'year') setDateYear(value)
+    if (day && month && year) {
+      const maxDay = daysInMonth(year, month)
+      const safeDay = parseInt(day, 10) > maxDay ? String(maxDay).padStart(2, '0') : day
+      if (safeDay !== day) setDateDay(safeDay)
+      setFormData(prev => ({ ...prev, birthDate: `${year}-${month}-${safeDay}` }))
+      setBirthDateError(false)
+    }
+  }
+
+  function updateTimePart(part: 'hour' | 'minute' | 'period', value: string) {
+    const hour = part === 'hour' ? value : timeHour
+    const minute = part === 'minute' ? value : timeMinute
+    const period = part === 'period' ? (value as 'AM' | 'PM') : timePeriod
+    if (part === 'hour') setTimeHour(value)
+    if (part === 'minute') setTimeMinute(value)
+    if (part === 'period') setTimePeriod(value as 'AM' | 'PM')
+    if (hour && minute) {
+      let h24 = parseInt(hour, 10) % 12
+      if (period === 'PM') h24 += 12
+      setFormData(prev => ({ ...prev, birthTime: `${String(h24).padStart(2, '0')}:${minute}` }))
+    }
+  }
 
   useEffect(() => {
     if (!loading) return
@@ -445,25 +514,55 @@ export default function EnergyQuizForm() {
           </div>
 
           <div className="home-quiz-field">
-            <label htmlFor="birthDate">
+            <label htmlFor="birthDateDay">
               Birth Date
               <span style={{ color: '#C0392B', fontWeight: 500 }}>*</span>
             </label>
-            <input
-              id="birthDate"
-              name="birthDate"
-              type="date"
-              value={formData.birthDate}
-              onChange={e => {
-                setFormData(prev => ({ ...prev, birthDate: e.target.value }))
-                setBirthDateError(false)
-              }}
-              disabled={loading}
-              style={{
-                borderColor: birthDateError ? '#C0392B' : undefined,
-                boxShadow: birthDateError ? '0 0 0 3px rgba(192,57,43,0.1)' : undefined,
-              }}
-            />
+            <div className="home-quiz-date-row">
+              <select
+                id="birthDateDay"
+                value={dateDay}
+                onChange={e => updateDatePart('day', e.target.value)}
+                disabled={loading}
+                style={{
+                  borderColor: birthDateError ? '#C0392B' : undefined,
+                  boxShadow: birthDateError ? '0 0 0 3px rgba(192,57,43,0.1)' : undefined,
+                }}
+              >
+                <option value="">Day</option>
+                {Array.from({ length: daysInMonth(dateYear, dateMonth) }, (_, i) => i + 1).map(d => (
+                  <option key={d} value={String(d).padStart(2, '0')}>{d}</option>
+                ))}
+              </select>
+              <select
+                value={dateMonth}
+                onChange={e => updateDatePart('month', e.target.value)}
+                disabled={loading}
+                style={{
+                  borderColor: birthDateError ? '#C0392B' : undefined,
+                  boxShadow: birthDateError ? '0 0 0 3px rgba(192,57,43,0.1)' : undefined,
+                }}
+              >
+                <option value="">Month</option>
+                {MONTHS.map((m, i) => (
+                  <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
+                ))}
+              </select>
+              <select
+                value={dateYear}
+                onChange={e => updateDatePart('year', e.target.value)}
+                disabled={loading}
+                style={{
+                  borderColor: birthDateError ? '#C0392B' : undefined,
+                  boxShadow: birthDateError ? '0 0 0 3px rgba(192,57,43,0.1)' : undefined,
+                }}
+              >
+                <option value="">Year</option>
+                {YEAR_OPTIONS.map(y => (
+                  <option key={y} value={String(y)}>{y}</option>
+                ))}
+              </select>
+            </div>
             {birthDateError && (
               <span style={{ fontSize: 11, color: '#C0392B', letterSpacing: '0.04em', marginTop: -4 }}>
                 Please enter your birth date to continue.
@@ -472,18 +571,41 @@ export default function EnergyQuizForm() {
           </div>
 
           <div className="home-quiz-field">
-            <label htmlFor="birthTime">
+            <label htmlFor="birthTimeHour">
               Birth Time
               <span className="home-quiz-field-hint">Optional to increase accuracy</span>
             </label>
-            <input
-              id="birthTime"
-              name="birthTime"
-              type="time"
-              value={formData.birthTime}
-              onChange={handleChange}
-              disabled={loading}
-            />
+            <div className="home-quiz-date-row">
+              <select
+                id="birthTimeHour"
+                value={timeHour}
+                onChange={e => updateTimePart('hour', e.target.value)}
+                disabled={loading}
+              >
+                <option value="">Hour</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                  <option key={h} value={String(h).padStart(2, '0')}>{h}</option>
+                ))}
+              </select>
+              <select
+                value={timeMinute}
+                onChange={e => updateTimePart('minute', e.target.value)}
+                disabled={loading}
+              >
+                <option value="">Min</option>
+                {Array.from({ length: 60 }, (_, i) => i).map(m => (
+                  <option key={m} value={String(m).padStart(2, '0')}>{String(m).padStart(2, '0')}</option>
+                ))}
+              </select>
+              <select
+                value={timePeriod}
+                onChange={e => updateTimePart('period', e.target.value)}
+                disabled={loading}
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
           </div>
 
           <div className="home-quiz-field home-quiz-field-wide">

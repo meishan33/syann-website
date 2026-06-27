@@ -213,6 +213,7 @@ function PaymentFormInner({ clientSecret, initialAmountCents, initialShippingFee
           options={{
             mode: 'shipping',
             fields: { phone: 'always' },
+            validation: { phone: { required: 'always' } },
             ...(defaultAddress ? {
               defaultValues: {
                 name: defaultAddress.name || '',

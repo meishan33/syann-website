@@ -461,20 +461,21 @@
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Native date/time pickers don't respect padding/line-height the way text
-   inputs do, so they end up a different height on mobile — force them all
-   to match explicitly instead of relying on padding alone. */
-.home-quiz-field input:not([type="date"]):not([type="time"]),
+.home-quiz-field input,
 .home-quiz-field select {
   height: 54px;
   padding: 0 18px;
 }
 
-.home-quiz-field input[type="date"],
-.home-quiz-field input[type="time"] {
-  height: 54px;
-  padding: 0 18px;
-  line-height: 54px;
+.home-quiz-date-row {
+  display: flex;
+  gap: 8px;
+}
+
+.home-quiz-date-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
 }
 
 .home-quiz-field input:focus,
