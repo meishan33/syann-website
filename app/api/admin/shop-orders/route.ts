@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { supabase } from '@/lib/supabase'
 import { sendEmail, orderStatusUpdateEmail } from '@/lib/email'
 
 async function isAdmin(req: NextRequest) {
@@ -18,8 +17,8 @@ export async function GET(req: NextRequest) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from('orders')
-    .select('id, order_number, customer_name, customer_email, customer_phone, recommended_crystal_names, total_amount, payment_status, fulfillment_status, created_at, shipping_address, spacer_choice, remark, weak_element, strong_element, analysis_summary, generated_image_url')
+    .from('shop_orders')
+    .select('id, order_number, customer_name, customer_email, customer_phone, shipping_address, items, total_amount, payment_status, fulfillment_status, created_at')
     .order('created_at', { ascending: false })
     .limit(10000)
 
@@ -34,7 +33,7 @@ export async function PATCH(req: NextRequest) {
 
   const { id, fulfillment_status } = await req.json()
   const { data: updated, error } = await supabaseAdmin
-    .from('orders')
+    .from('shop_orders')
     .update({ fulfillment_status })
     .eq('id', id)
     .select('order_number, customer_email')

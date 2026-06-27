@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const metadata = {
   title: "SYANN",
@@ -21,11 +22,14 @@ export default async function RootLayout({
   const headerList = await headers();
   const geoCountry = headerList.get("x-vercel-ip-country");
 
+  const { data: settings } = await supabaseAdmin.from("site_settings").select("shop_enabled").eq("id", 1).maybeSingle();
+  const shopEnabled = settings?.shop_enabled ?? false;
+
   return (
     <html lang="en">
       <body>
         <CurrencyProvider initialCountry={geoCountry}>
-          <Navbar />
+          <Navbar shopEnabled={shopEnabled} />
           {children}
           <Footer />
         </CurrencyProvider>

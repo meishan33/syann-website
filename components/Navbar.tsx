@@ -8,15 +8,14 @@ import { getCart, cartCount } from '@/lib/cart'
 import CartDrawer from './CartDrawer'
 import MobileMenu from './MobileMenu'
 
-const NAV_LINKS = [
+const BASE_NAV_LINKS = [
   { href: '/energy-quiz', label: 'Energy Quiz' },
-  { href: '/shop',        label: 'Shop' },
   { href: '/about',       label: 'About' },
   { href: '/faq',         label: 'FAQ' },
   { href: '/contact',     label: 'Contact' },
 ]
 
-export default function Navbar() {
+export default function Navbar({ shopEnabled }: { shopEnabled: boolean }) {
   const router = useRouter()
   const [loggedIn, setLoggedIn] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -25,12 +24,17 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  const navLinks = shopEnabled
+    ? [BASE_NAV_LINKS[0], { href: '/shop', label: 'Shop' }, ...BASE_NAV_LINKS.slice(1)]
+    : BASE_NAV_LINKS
+
   useEffect(() => {
+    if (!shopEnabled) return
     setCartItems(cartCount(getCart()))
     const onCartUpdate = () => setCartItems(cartCount(getCart()))
     window.addEventListener('cart-updated', onCartUpdate)
     return () => window.removeEventListener('cart-updated', onCartUpdate)
-  }, [])
+  }, [shopEnabled])
 
   useEffect(() => {
     supabase.auth.refreshSession().then(({ data: { session } }) => {
@@ -77,7 +81,7 @@ export default function Navbar() {
 
       {/* CENTER — NAV LINKS */}
       <nav className="navbar-links" aria-label="Primary">
-        {NAV_LINKS.map((link) => (
+        {navLinks.map((link) => (
           <Link key={link.href} href={link.href} className="navbar-link">
             {link.label}
           </Link>
@@ -96,19 +100,20 @@ export default function Navbar() {
           </span>
         </button>
 
-        {/* Cart */}
-        <button onClick={() => setCartOpen(true)} className="navbar-icon-btn" aria-label="Shopping cart" style={{ position: 'relative', marginRight: -14, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A2E14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
-            </svg>
-          </span>
-          {cartItems > 0 && (
-            <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 999, background: '#B08B57', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', fontFamily: "'Montserrat', sans-serif" }}>
-              {cartItems > 99 ? '99+' : cartItems}
+        {shopEnabled && (
+          <button onClick={() => setCartOpen(true)} className="navbar-icon-btn" aria-label="Shopping cart" style={{ position: 'relative', marginRight: -14, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A2E14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+              </svg>
             </span>
-          )}
-        </button>
+            {cartItems > 0 && (
+              <span style={{ position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 999, background: '#B08B57', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', fontFamily: "'Montserrat', sans-serif" }}>
+                {cartItems > 99 ? '99+' : cartItems}
+              </span>
+            )}
+          </button>
+        )}
 
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           {loggedIn ? (
@@ -168,8 +173,8 @@ export default function Navbar() {
     </div>
     </header>
 
-    <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-    <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} links={NAV_LINKS} />
+    {shopEnabled && <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />}
+    <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} links={navLinks} />
     </>
   )
 }

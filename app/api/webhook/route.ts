@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendEmail, orderConfirmationEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -48,6 +49,8 @@ export async function POST(req: NextRequest) {
       if (existingShop) return NextResponse.json({ received: true })
 
       const orderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data, () => null)
+      const parsedItems: { name: string; quantity: number }[] = itemsJson ? JSON.parse(itemsJson) : []
+      const totalAmount = (paymentIntent.amount ?? 0) / 100
 
       await supabaseAdmin.from('shop_orders').insert({
         order_number: orderNumber,
@@ -55,12 +58,23 @@ export async function POST(req: NextRequest) {
         customer_email: paymentIntent.receipt_email || null,
         customer_phone: addr?.phone || null,
         shipping_address: addr ?? null,
-        items: itemsJson ? JSON.parse(itemsJson) : [],
-        total_amount: (paymentIntent.amount ?? 0) / 100,
+        items: parsedItems,
+        total_amount: totalAmount,
         payment_status: 'paid',
         fulfillment_status: 'unfulfilled',
         stripe_payment_intent_id: paymentIntent.id,
       })
+
+      if (paymentIntent.receipt_email) {
+        const { subject, html } = orderConfirmationEmail({
+          orderNumber,
+          customerName: addr?.name || null,
+          items: parsedItems.map(i => `${i.name} × ${i.quantity}`).join(', '),
+          totalAmount,
+          shippingAddress: addr ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ') : null,
+        })
+        await sendEmail({ to: paymentIntent.receipt_email, subject, html })
+      }
 
       return NextResponse.json({ received: true })
     }
@@ -83,8 +97,9 @@ export async function POST(req: NextRequest) {
     const shippingAddress = addr
       ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ')
       : null
+    const totalAmount = (paymentIntent.amount ?? 0) / 100
 
-    const { error: insertError } = await supabaseAdmin.from('orders').insert({
+    const { data: insertedOrder, error: insertError } = await supabaseAdmin.from('orders').insert({
       customer_name: addr?.name || result?.user_name || null,
       customer_email: paymentIntent.receipt_email || null,
       customer_phone: addr?.phone || null,
@@ -94,18 +109,29 @@ export async function POST(req: NextRequest) {
       strong_element: result?.calculated_strong_element || null,
       analysis_summary: result?.analysis_summary || null,
       recommended_crystal_names: result?.crystal_names ?? [],
-      total_amount: (paymentIntent.amount ?? 0) / 100,
+      total_amount: totalAmount,
       payment_status: 'paid',
       fulfillment_status: 'processing',
       stripe_payment_intent_id: paymentIntent.id,
       result_id: resultId || null,
       spacer_choice: spacer || null,
       remark: remark || null,
-    })
+    }).select('order_number').single()
 
     if (insertError) {
       console.error('Webhook order insert failed:', insertError.message)
       return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    if (paymentIntent.receipt_email) {
+      const { subject, html } = orderConfirmationEmail({
+        orderNumber: insertedOrder?.order_number ?? null,
+        customerName: addr?.name || result?.user_name || null,
+        items: (result?.crystal_names ?? []).join(' · '),
+        totalAmount,
+        shippingAddress,
+      })
+      await sendEmail({ to: paymentIntent.receipt_email, subject, html })
     }
 
     // Auto-save new Stripe-collected address to delivery_addresses (only if user didn't pick a saved one)

@@ -11,7 +11,7 @@ const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 const DARK = '#4A3A32'
 
-type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock' | 'designs'
+type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock' | 'designs' | 'settings'
 
 type Order = {
   id: string; order_number: number | null; customer_name: string; customer_email: string; customer_phone: string | null
@@ -83,10 +83,6 @@ const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>,
   },
   {
-    key: 'shop', label: 'Shop',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  },
-  {
     key: 'instagram', label: 'Instagram',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
   },
@@ -97,6 +93,14 @@ const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   {
     key: 'designs', label: 'Designs',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="4.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="17.8" cy="8.2" r="1.4" fill="currentColor" stroke="none"/><circle cx="17.8" cy="15.8" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="6.2" cy="15.8" r="1.4" fill="currentColor" stroke="none"/><circle cx="6.2" cy="8.2" r="1.4" fill="currentColor" stroke="none"/></svg>,
+  },
+  {
+    key: 'shop', label: 'Shop',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  },
+  {
+    key: 'settings', label: 'Settings',
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
   },
 ]
 
@@ -138,6 +142,8 @@ export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('orders')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [shopEnabled, setShopEnabled] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
 
   const [orders, setOrders] = useState<Order[]>([])
   const [users, setUsers] = useState<User[]>([])
@@ -189,6 +195,19 @@ export default function AdminPage() {
   const [productImageUploading, setProductImageUploading] = useState(false)
   const [editProductId, setEditProductId] = useState<string | null>(null)
   const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '' })
+
+  // Shop orders
+  type ShopOrderItem = { productId: string; name: string; price: number; quantity: number }
+  type ShopOrder = {
+    id: string; order_number: number | null; customer_name: string | null; customer_email: string | null
+    customer_phone: string | null; shipping_address: Record<string, string | null> | null
+    items: ShopOrderItem[]; total_amount: number; payment_status: string; fulfillment_status: string; created_at: string
+  }
+  const [shopTabView, setShopTabView] = useState<'products' | 'orders'>('products')
+  const [shopOrders, setShopOrders] = useState<ShopOrder[]>([])
+  const [shopOrdersLoading, setShopOrdersLoading] = useState(false)
+  const [expandedShopOrder, setExpandedShopOrder] = useState<string | null>(null)
+
   const [visibleCols, setVisibleCols] = useState<Set<string>>(
     new Set(['bead_image_url', 'name', 'primary_element', 'color_family', 'meaning', 'price_tier', 'energy_tags', 'active'])
   )
@@ -248,11 +267,24 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!token) return
-    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings(), fetchShopProducts(), fetchDesigns()])
+    Promise.all([fetchOrders(), fetchUsers(), fetchCrystals(), fetchInquiries(), fetchReadings(), fetchShopProducts(), fetchDesigns(), fetchSettings()])
       .finally(() => setLoading(false))
   }, [token])
 
   const headers = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` })
+
+  const fetchSettings = async () => {
+    const r = await fetch('/api/admin/settings', { headers: headers() })
+    if (r.ok) setShopEnabled((await r.json()).shop_enabled === true)
+  }
+
+  const toggleShopEnabled = async () => {
+    const next = !shopEnabled
+    setSettingsSaving(true)
+    const r = await fetch('/api/admin/settings', { method: 'PATCH', headers: headers(), body: JSON.stringify({ shop_enabled: next }) })
+    if (r.ok) setShopEnabled(next)
+    setSettingsSaving(false)
+  }
 
   const fetchOrders   = async () => { const r = await fetch('/api/admin/orders',   { headers: headers() }); if (r.ok) setOrders(await r.json()) }
   const fetchUsers    = async () => { const r = await fetch('/api/admin/users',    { headers: headers() }); if (r.ok) setUsers(await r.json()) }
@@ -270,6 +302,18 @@ export default function AdminPage() {
     const r = await fetch('/api/admin/bracelet-designs', { headers: headers() })
     if (r.ok) setDesigns(await r.json())
     setDesignsLoading(false)
+  }
+  const fetchShopOrders = async () => {
+    setShopOrdersLoading(true)
+    const r = await fetch('/api/admin/shop-orders', { headers: headers() })
+    if (r.ok) setShopOrders(await r.json())
+    setShopOrdersLoading(false)
+  }
+
+  const updateShopFulfillment = async (id: string, fulfillment_status: string) => {
+    setActionLoading(id)
+    await fetch('/api/admin/shop-orders', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, fulfillment_status }) })
+    await fetchShopOrders(); setActionLoading(null)
   }
 
   const updateFulfillment = async (id: string, fulfillment_status: string) => {
@@ -470,7 +514,7 @@ export default function AdminPage() {
 
         {/* Nav items */}
         <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {NAV_ITEMS.map(({ key, label, icon }) => {
+          {NAV_ITEMS.filter(({ key }) => key !== 'shop' || shopEnabled).map(({ key, label, icon }) => {
             const active = tab === key
             return (
               <button
@@ -1192,17 +1236,88 @@ export default function AdminPage() {
               {tab === 'shop' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {/* Toolbar */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopProducts.length} product{shopProducts.length !== 1 ? 's' : ''}</p>
-                    <button
-                      onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '' }) }}
-                      style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                    >
-                      + Add Product
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                    <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 4 }}>
+                      {(['products', 'orders'] as const).map(v => (
+                        <button key={v} onClick={() => { setShopTabView(v); if (v === 'orders') fetchShopOrders() }}
+                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 16px', background: shopTabView === v ? DARK : 'transparent', color: shopTabView === v ? '#F6F1EB' : '#9A8573', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                    {shopTabView === 'products' ? (
+                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopProducts.length} product{shopProducts.length !== 1 ? 's' : ''}</p>
+                    ) : (
+                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopOrders.length} order{shopOrders.length !== 1 ? 's' : ''}</p>
+                    )}
+                    {shopTabView === 'products' && (
+                      <button
+                        onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '' }) }}
+                        style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                      >
+                        + Add Product
+                      </button>
+                    )}
                   </div>
 
-                  {shopLoading ? (
+                  {shopTabView === 'orders' ? (
+                    shopOrdersLoading ? (
+                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
+                    ) : shopOrders.length === 0 ? (
+                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No shop orders yet.</p>
+                    ) : (
+                      <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                        {shopOrders.map(o => {
+                          const isOpen = expandedShopOrder === o.id
+                          const addr = o.shipping_address
+                          return (
+                            <div key={o.id} style={{ borderBottom: '1px solid #F0E8DF' }}>
+                              <button
+                                onClick={() => setExpandedShopOrder(isOpen ? null : o.id)}
+                                style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, textAlign: 'left' }}
+                              >
+                                <div>
+                                  <p style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em', margin: '0 0 4px' }}>
+                                    {o.order_number ? `#${o.order_number}` : '—'} · {new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </p>
+                                  <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: DARK, margin: '0 0 2px' }}>{o.customer_name || '—'} · <span style={{ color: '#9A8573', fontWeight: 300 }}>{o.customer_email || '—'}</span></p>
+                                  <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0 }}>{o.items?.map(i => `${i.name} ×${i.quantity}`).join(', ') || '—'}</p>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                                  <p style={{ ...SERIF, fontSize: 16, color: DARK, margin: 0 }}>S${Number(o.total_amount).toFixed(2)}</p>
+                                  <Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} />
+                                  <Badge label={o.fulfillment_status} color={o.fulfillment_status === 'fulfilled' ? '#7CB98A' : o.fulfillment_status === 'unfulfilled' ? GOLD : '#9A8573'} />
+                                </div>
+                              </button>
+                              {isOpen && (
+                                <div style={{ padding: '0 20px 18px', display: 'flex', flexWrap: 'wrap', gap: '12px 32px', alignItems: 'flex-end' }}>
+                                  <div>
+                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Phone</p>
+                                    <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_phone || '—'}</p>
+                                  </div>
+                                  <div>
+                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Shipping Address</p>
+                                    <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>
+                                      {addr ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ') : '—'}
+                                    </p>
+                                  </div>
+                                  <div style={{ marginLeft: 'auto' }}>
+                                    <select value={o.fulfillment_status} disabled={actionLoading === o.id} onChange={e => updateShopFulfillment(o.id, e.target.value)}
+                                      style={{ ...BODY, fontSize: 11, padding: '6px 10px', border: '1px solid #E5DDD5', background: '#fff', color: DARK, cursor: 'pointer', borderRadius: 6 }}>
+                                      <option value="unfulfilled">Unfulfilled</option>
+                                      <option value="processing">Processing</option>
+                                      <option value="fulfilled">Fulfilled</option>
+                                      <option value="cancelled">Cancelled</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  ) : shopLoading ? (
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
                   ) : shopProducts.length === 0 ? (
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No products yet. Add your first one.</p>
@@ -1263,6 +1378,39 @@ export default function AdminPage() {
                   <pre style={{ ...BODY, fontSize: 12, lineHeight: 1.8, color: '#4A3A32', background: '#F6F1EB', padding: '20px 24px', borderRadius: 8, overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>
                     {AI_SYSTEM_PROMPT}
                   </pre>
+                </div>
+              )}
+
+              {/* ── SETTINGS ── */}
+              {tab === 'settings' && (
+                <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '28px 32px', maxWidth: 560 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill={GOLD}><polygon points="4,0 8,4 4,8 0,4"/></svg>
+                    <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>Site Visibility</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0' }}>
+                    <div>
+                      <p style={{ ...SERIF, fontSize: 17, fontWeight: 300, color: DARK, margin: '0 0 4px' }}>Shop & Cart</p>
+                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0, lineHeight: 1.6, maxWidth: 360 }}>
+                        Show the Shop page, navbar link, and cart icon to customers. When off, /shop redirects to the homepage.
+                      </p>
+                    </div>
+                    <button
+                      onClick={toggleShopEnabled}
+                      disabled={settingsSaving}
+                      aria-label="Toggle Shop & Cart visibility"
+                      style={{
+                        position: 'relative', width: 48, height: 28, borderRadius: 999, border: 'none', flexShrink: 0,
+                        background: shopEnabled ? GOLD : '#E5DDD5', cursor: settingsSaving ? 'not-allowed' : 'pointer',
+                        opacity: settingsSaving ? 0.6 : 1, transition: 'background 0.2s ease',
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute', top: 3, left: shopEnabled ? 23 : 3, width: 22, height: 22, borderRadius: '50%',
+                        background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.25)', transition: 'left 0.2s ease',
+                      }} />
+                    </button>
+                  </div>
                 </div>
               )}
 

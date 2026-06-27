@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendEmail, inquiryAcknowledgementEmail } from '@/lib/email'
 
 // Simple in-memory rate limiter: max 3 contact submissions per IP per 10 minutes
 const ipHits = new Map<string, { count: number; resetAt: number }>()
@@ -45,18 +46,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Name must be under 100 characters.' }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const safeName = name?.slice(0, 100) || null
+    const safeEmail = email?.slice(0, 254) || null
+    const safeSubject = subject.slice(0, 200)
+
+    const { error } = await supabaseAdmin
       .from('contact_submissions')
       .insert({
-        name: name?.slice(0, 100) || null,
-        email: email?.slice(0, 254) || null,
-        subject: subject.slice(0, 200),
+        name: safeName,
+        email: safeEmail,
+        subject: safeSubject,
         message: message.slice(0, 3000),
       })
 
     if (error) {
       console.error('Supabase insert error:', error)
       return NextResponse.json({ error: 'Failed to save submission.' }, { status: 500 })
+    }
+
+    if (safeEmail) {
+      const { subject: emailSubject, html } = inquiryAcknowledgementEmail({ name: safeName, subject: safeSubject })
+      await sendEmail({ to: safeEmail, subject: emailSubject, html })
     }
 
     return NextResponse.json({ ok: true })
