@@ -38,7 +38,7 @@ export default async function PaymentPage({ searchParams }: Props) {
 
   const { data } = await supabase
     .from("energy_quiz_results")
-    .select("crystal_names, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary")
+    .select("crystal_names, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, user_name")
     .eq("id", resultId)
     .single();
 
@@ -47,6 +47,12 @@ export default async function PaymentPage({ searchParams }: Props) {
   const weakElement: string | null = data?.calculated_weak_element ?? null;
   const strongElement: string | null = data?.calculated_strong_element ?? null;
   const analysisSummary: string | null = data?.analysis_summary ?? null;
+  const userName: string | null = data?.user_name ?? null;
+
+  const [analysisParagraph, analysisBulletBlock] = analysisSummary ? analysisSummary.split('\n\n') : [null, null];
+  const analysisBullets = analysisBulletBlock
+    ? analysisBulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
+    : [];
 
   const { data: existingOrder } = await supabaseAdmin
     .from("orders")
@@ -79,20 +85,20 @@ export default async function PaymentPage({ searchParams }: Props) {
             {/* Product row */}
             <div className="flex gap-5 items-center">
               {imageUrl ? (
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-[#E5DDD5] bg-[#F8F4EF]">
-                  <Image src={imageUrl} alt="Your crystal bracelet" fill sizes="80px" className="object-contain" />
+                <div className="relative h-36 w-36 shrink-0 overflow-hidden rounded-2xl border border-[#E5DDD5] bg-[#F8F4EF]">
+                  <Image src={imageUrl} alt="Your crystal bracelet" fill sizes="144px" className="object-contain" />
                 </div>
               ) : (
-                <div className="h-20 w-20 shrink-0 rounded-2xl bg-[#EFE7DD] flex items-center justify-center">
-                  <span className="text-2xl text-[#B08B57] opacity-40">✦</span>
+                <div className="h-36 w-36 shrink-0 rounded-2xl bg-[#EFE7DD] flex items-center justify-center">
+                  <span className="text-3xl text-[#B08B57] opacity-40">✦</span>
                 </div>
               )}
               <div className="flex flex-col gap-1">
                 <p style={BODY} className="text-[10px] font-medium uppercase tracking-[0.32em] text-[#B08B57]">
                   SYANN.CO
                 </p>
-                <p style={SERIF} className="text-xl font-light text-[#4A3A32] leading-snug">
-                  Your Crystal Bracelet
+                <p style={SERIF} className="text-xl font-light text-[#4A3A32] leading-snug capitalize">
+                  {weakElement ? `Your ${weakElement} Harmony Bracelet` : 'Your Crystal Bracelet'}
                 </p>
                 {crystalNames.length > 0 && (
                   <p style={BODY} className="text-[11px] text-[#9A8573] leading-snug">
@@ -139,10 +145,31 @@ export default async function PaymentPage({ searchParams }: Props) {
                       {' '}· Strong: <span className="font-medium text-[#4A3A32] capitalize">{strongElement || '—'}</span>
                     </p>
                   )}
-                  {analysisSummary && (
+                  {analysisParagraph && (
                     <p style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45]">
-                      {analysisSummary.split('\n\n')[0]}
+                      {userName && analysisParagraph.startsWith(userName)
+                        ? <>Dear <span className="font-semibold text-[#4A3A32]">{userName}</span>{analysisParagraph.slice(userName.length)}</>
+                        : analysisParagraph}
                     </p>
+                  )}
+                  {analysisBullets.length > 0 && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      {analysisBullets.map((point, i) => {
+                        const match = crystalNames.find(n => point.startsWith(n));
+                        return (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className="mt-[5px] shrink-0 text-[#B08B57]">
+                              <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
+                            </span>
+                            <p style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45] m-0">
+                              {match
+                                ? <><span className="font-semibold text-[#4A3A32]">{match}</span>{point.slice(match.length)}</>
+                                : point}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </>

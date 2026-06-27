@@ -1,7 +1,10 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase-admin'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Constructed lazily inside sendEmail() rather than at module scope — Resend's
+// constructor throws synchronously if the key is missing/empty, which would
+// otherwise crash the build step for every route that imports this module.
+let resend: Resend | null = null
 
 const FROM = 'SYANN.CO <hello@syann.co>'
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://syann.co'
@@ -57,6 +60,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     return
   }
   try {
+    if (!resend) resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({ from: FROM, to, subject, html })
   } catch (err) {
     // Email failures must never break the order/webhook/contact flow that
