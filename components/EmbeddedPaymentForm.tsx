@@ -32,7 +32,7 @@ type Props = {
   returnUrlPath: string
 }
 
-const LABEL: React.CSSProperties = { ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }
+const LABEL: React.CSSProperties = { ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }
 const INPUT: React.CSSProperties = { ...BODY, width: '100%', padding: '13px 16px', border: '1px solid #E5DDD5', background: '#FDFAF7', fontSize: 13, color: '#4A3A32', outline: 'none', borderRadius: 8, boxSizing: 'border-box' }
 
 export default function EmbeddedPaymentForm(props: Props) {
@@ -41,7 +41,29 @@ export default function EmbeddedPaymentForm(props: Props) {
       stripe={getStripe()}
       options={{
         clientSecret: props.clientSecret,
-        appearance: { theme: 'stripe', variables: { colorPrimary: GOLD, fontFamily: "'Montserrat', sans-serif", borderRadius: '8px' } },
+        // Stripe Elements render inside a sandboxed iframe, so the page's own
+        // @import'd font isn't visible to it — it has to be passed explicitly.
+        fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap' }],
+        appearance: {
+          theme: 'stripe',
+          variables: {
+            colorPrimary: GOLD,
+            colorText: '#4A3A32',
+            colorTextSecondary: '#9A8573',
+            colorBackground: '#FDFAF7',
+            colorDanger: '#C0392B',
+            fontFamily: "'Montserrat', sans-serif",
+            fontSizeBase: '13px',
+            spacingUnit: '3px',
+            borderRadius: '8px',
+          },
+          rules: {
+            '.Label': { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9A8573', marginBottom: '4px' },
+            '.Input': { padding: '10px 12px', border: '1px solid #E5DDD5', boxShadow: 'none' },
+            '.Input:focus': { border: '1px solid #B08B57', boxShadow: '0 0 0 1px rgba(176,139,87,0.2)' },
+            '.Tab': { padding: '8px 12px', border: '1px solid #E5DDD5' },
+          },
+        },
       }}
     >
       <PaymentFormInner {...props} />
@@ -117,7 +139,7 @@ function PaymentFormInner({ clientSecret, initialAmountCents, initialShippingFee
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {!defaultEmail && (
         <div>
           <label style={LABEL}>Email Address</label>
