@@ -7,13 +7,18 @@ const RADIUS_PCT = 28
 const GOLD = 'rgba(74,46,20,0.22)'
 const TAGLINE_COLOR = 'rgba(74,46,20,0.16)'
 
+// Source crystal bead photos are uploaded at full camera resolution (some are
+// 1.5MB+) — embedding several of those as base64 inside one SVG bloats it
+// enough to overwhelm the rasterizer in the serverless environment. Each bead
+// only ever displays at a few hundred px in the final composition, so resize
+// down before embedding regardless of the source size.
 async function toBase64DataUri(url: string): Promise<string | null> {
   try {
     const res = await fetch(url)
     if (!res.ok) return null
-    const contentType = res.headers.get('content-type') || 'image/png'
     const buf = Buffer.from(await res.arrayBuffer())
-    return `data:${contentType};base64,${buf.toString('base64')}`
+    const resized = await sharp(buf).resize(300, 300, { fit: 'cover' }).png().toBuffer()
+    return `data:image/png;base64,${resized.toString('base64')}`
   } catch {
     return null
   }
@@ -70,5 +75,14 @@ export async function generateBraceletImage(
   <text x="50" y="53" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="1.5" font-weight="bold" letter-spacing="0.6" fill="${TAGLINE_COLOR}">${escapeXml('CRYSTALS · ENERGY · YOU')}</text>
 </svg>`.trim()
 
-  return sharp(Buffer.from(svg)).png().toBuffer()
+  const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer()
+
+  // Verify the output actually decodes before handing it back — a corrupted
+  // render must never reach the caller's upload/save step.
+  const outputMeta = await sharp(pngBuffer).metadata()
+  if (!outputMeta.width || !outputMeta.height) {
+    throw new Error('Generated bracelet image failed to validate (no decodable dimensions)')
+  }
+
+  return pngBuffer
 }
