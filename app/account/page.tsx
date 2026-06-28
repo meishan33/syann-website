@@ -652,6 +652,12 @@ function AccountPageContent() {
                               </div>
                               <div />
                             </>}
+                            {order.spacer_choice && (
+                              <div>
+                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Spacer</p>
+                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0, textTransform: 'capitalize' }}>{order.spacer_choice}</p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Element analysis */}

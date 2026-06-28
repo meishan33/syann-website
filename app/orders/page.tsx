@@ -24,6 +24,7 @@ type Order = {
   generated_image_url: string | null
   weak_element: string | null
   strong_element: string | null
+  spacer_choice: string | null
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -116,6 +117,11 @@ export default function OrdersPage() {
                     {(order.weak_element || order.strong_element) && (
                       <p style={{ ...BODY, fontSize: 11, color: '#B08B57', margin: 0, letterSpacing: '0.04em' }}>
                         Weak: {order.weak_element || '—'} · Strong: {order.strong_element || '—'}
+                      </p>
+                    )}
+                    {order.spacer_choice && (
+                      <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0, letterSpacing: '0.04em', textTransform: 'capitalize' }}>
+                        Spacer: {order.spacer_choice}
                       </p>
                     )}
                   </div>
