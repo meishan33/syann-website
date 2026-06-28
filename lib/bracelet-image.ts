@@ -1,4 +1,6 @@
 import sharp from 'sharp'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 // Mirrors components/BraceletRenderer.tsx's layout math exactly, so the
 // server-generated photo and the live fallback render look the same.
@@ -6,6 +8,14 @@ const SIZE = 1024
 const RADIUS_PCT = 28
 const GOLD = 'rgba(74,46,20,0.22)'
 const TAGLINE_COLOR = 'rgba(74,46,20,0.16)'
+
+// Vercel's serverless environment has no system fonts installed at all, so
+// sharp's SVG rasterizer silently renders <text> as nothing (no error, just
+// blank) unless the font is embedded directly in the SVG. Read once at
+// module load and base64-embed via @font-face below, so text rendering never
+// depends on whatever fonts (if any) happen to exist in the runtime.
+const serifFontBase64 = readFileSync(join(process.cwd(), 'lib/fonts/CormorantGaramond-Regular.ttf')).toString('base64')
+const sansFontBase64 = readFileSync(join(process.cwd(), 'lib/fonts/Montserrat-SemiBold.ttf')).toString('base64')
 
 // Source crystal bead photos are uploaded at full camera resolution (some are
 // 1.5MB+) — embedding several of those as base64 inside one SVG bloats it
@@ -68,11 +78,17 @@ export async function generateBraceletImage(
 
   const svg = `
 <svg width="${SIZE}" height="${SIZE}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @font-face { font-family: 'BraceletSerif'; src: url(data:font/ttf;base64,${serifFontBase64}) format('truetype'); }
+      @font-face { font-family: 'BraceletSans'; src: url(data:font/ttf;base64,${sansFontBase64}) format('truetype'); }
+    </style>
+  </defs>
   <rect width="100" height="100" rx="4" fill="#F5F0EB" />
   <circle cx="50" cy="50" r="${RADIUS_PCT}" fill="none" stroke="rgba(140,100,60,0.18)" stroke-width="0.15" stroke-dasharray="0.6 0.5" />
   ${beadParts.join('\n')}
-  <text x="50" y="49.5" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="4" letter-spacing="2" fill="${GOLD}">${escapeXml('SYANN.CO')}</text>
-  <text x="50" y="53" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="1.5" font-weight="bold" letter-spacing="0.6" fill="${TAGLINE_COLOR}">${escapeXml('CRYSTALS · ENERGY · YOU')}</text>
+  <text x="50" y="49.5" text-anchor="middle" font-family="BraceletSerif" font-size="4" letter-spacing="2" fill="${GOLD}">${escapeXml('SYANN.CO')}</text>
+  <text x="50" y="53" text-anchor="middle" font-family="BraceletSans" font-size="1.5" letter-spacing="0.6" fill="${TAGLINE_COLOR}">${escapeXml('CRYSTALS · ENERGY · YOU')}</text>
 </svg>`.trim()
 
   const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer()
