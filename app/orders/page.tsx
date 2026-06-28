@@ -25,6 +25,12 @@ type Order = {
   weak_element: string | null
   strong_element: string | null
   spacer_choice: string | null
+  logo_charm: boolean | null
+  shipping_address: string | null
+  customer_phone: string | null
+  remark: string | null
+  analysis_summary: string | null
+  current_feelings: string | null
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -119,11 +125,11 @@ export default function OrdersPage() {
                         Weak: {order.weak_element || '—'} · Strong: {order.strong_element || '—'}
                       </p>
                     )}
-                    {order.spacer_choice && (
-                      <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0, letterSpacing: '0.04em', textTransform: 'capitalize' }}>
-                        Spacer: {order.spacer_choice}
-                      </p>
-                    )}
+                    <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0, letterSpacing: '0.04em' }}>
+                      {order.spacer_choice && <span style={{ textTransform: 'capitalize' }}>Spacer: {order.spacer_choice}</span>}
+                      {order.spacer_choice && ' · '}
+                      Logo Charm: {order.logo_charm === false ? 'Excluded' : 'Included'}
+                    </p>
                   </div>
                   </div>
 
@@ -144,6 +150,59 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Delivery + remarks */}
+                {(order.shipping_address || order.customer_phone || order.remark) && (
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EDE8DF', display: 'flex', flexWrap: 'wrap', gap: '10px 32px' }}>
+                    {order.shipping_address && (
+                      <div>
+                        <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Delivery Address</p>
+                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{order.shipping_address}</p>
+                      </div>
+                    )}
+                    {order.customer_phone && (
+                      <div>
+                        <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Phone</p>
+                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{order.customer_phone}</p>
+                      </div>
+                    )}
+                    {order.remark && (
+                      <div>
+                        <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Remarks</p>
+                        <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{order.remark}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Elemental analysis */}
+                {order.analysis_summary && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #EDE8DF' }}>
+                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>Your Elemental Analysis</p>
+                    {order.analysis_summary.split('\n\n').map((block, i) => {
+                      const lines = block.split('\n').filter(Boolean)
+                      const isBulletBlock = lines.length > 0 && lines.every(l => l.trim().startsWith('•'))
+                      if (isBulletBlock) {
+                        return (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
+                            {lines.map((l, j) => (
+                              <p key={j} style={{ ...BODY, fontSize: 12, lineHeight: 1.7, color: '#7A6355', margin: 0 }}>{l.replace(/^•\s*/, '• ')}</p>
+                            ))}
+                          </div>
+                        )
+                      }
+                      return <p key={i} style={{ ...BODY, fontSize: 12, lineHeight: 1.7, color: '#7A6355', margin: 0 }}>{block}</p>
+                    })}
+                  </div>
+                )}
+
+                {/* How they were feeling */}
+                {order.current_feelings && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #EDE8DF' }}>
+                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>How You Were Feeling</p>
+                    <p style={{ ...BODY, fontSize: 12, lineHeight: 1.7, color: '#7A6355', margin: 0 }}>{order.current_feelings}</p>
+                  </div>
+                )}
 
                 {/* Order ID */}
                 <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EDE8DF' }}>

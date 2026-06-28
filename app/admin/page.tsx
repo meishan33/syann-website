@@ -19,7 +19,7 @@ type Order = {
   payment_status: string; fulfillment_status: string; created_at: string
   shipping_address: string | null; spacer_choice: string | null; remark: string | null
   weak_element: string | null; strong_element: string | null; analysis_summary: string | null
-  generated_image_url: string | null
+  generated_image_url: string | null; logo_charm: boolean | null; current_feelings: string | null
 }
 type User = {
   id: string; email: string; name: string | null
@@ -835,10 +835,20 @@ export default function AdminPage() {
                                             <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Spacer</p>
                                             <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0, textTransform: 'capitalize' }}>{o.spacer_choice || '—'}</p>
                                           </div>
+                                          <div>
+                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Logo Charm</p>
+                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.logo_charm === false ? 'Excluded' : 'Included'}</p>
+                                          </div>
                                           {o.remark && (
                                             <div>
                                               <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Remark</p>
                                               <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.remark}</p>
+                                            </div>
+                                          )}
+                                          {o.current_feelings && (
+                                            <div style={{ width: '100%' }}>
+                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>How They Were Feeling</p>
+                                              <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.current_feelings}</p>
                                             </div>
                                           )}
                                           {(o.weak_element || o.strong_element) && (

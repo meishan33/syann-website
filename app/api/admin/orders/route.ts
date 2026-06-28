@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('orders')
-    .select('id, order_number, customer_name, customer_email, customer_phone, recommended_crystal_names, total_amount, payment_status, fulfillment_status, created_at, shipping_address, spacer_choice, remark, weak_element, strong_element, analysis_summary, generated_image_url')
+    .select('id, order_number, customer_name, customer_email, customer_phone, recommended_crystal_names, total_amount, payment_status, fulfillment_status, created_at, shipping_address, spacer_choice, remark, logo_charm, weak_element, strong_element, analysis_summary, generated_image_url, current_feelings')
     .order('created_at', { ascending: false })
     .limit(10000)
 

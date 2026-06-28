@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('orders')
-    .select('id, order_number, customer_name, recommended_crystal_names, total_amount, payment_status, fulfillment_status, created_at, generated_image_url, weak_element, strong_element, analysis_summary, shipping_address, spacer_choice, remark, customer_phone')
+    .select('id, order_number, customer_name, recommended_crystal_names, total_amount, payment_status, fulfillment_status, created_at, generated_image_url, weak_element, strong_element, analysis_summary, shipping_address, spacer_choice, remark, customer_phone, logo_charm, current_feelings')
     .eq('customer_email', user.email)
     .order('created_at', { ascending: false })
 

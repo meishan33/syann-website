@@ -35,6 +35,8 @@ type Order = {
   spacer_choice: string | null
   remark: string | null
   customer_phone: string | null
+  logo_charm: boolean | null
+  current_feelings: string | null
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -658,6 +660,10 @@ function AccountPageContent() {
                                 <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0, textTransform: 'capitalize' }}>{order.spacer_choice}</p>
                               </div>
                             )}
+                            <div>
+                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Logo Charm</p>
+                              <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.logo_charm === false ? 'Excluded' : 'Included'}</p>
+                            </div>
                           </div>
 
                           {/* Element analysis */}
@@ -665,6 +671,13 @@ function AccountPageContent() {
                             <div style={{ background: '#F6F1EB', borderRadius: 10, padding: '14px 16px' }}>
                               <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 6px' }}>Elemental Analysis</p>
                               <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.8 }}>{order.analysis_summary}</p>
+                            </div>
+                          )}
+
+                          {order.current_feelings && (
+                            <div style={{ background: '#F6F1EB', borderRadius: 10, padding: '14px 16px' }}>
+                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 6px' }}>How You Were Feeling</p>
+                              <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.8 }}>{order.current_feelings}</p>
                             </div>
                           )}
 

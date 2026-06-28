@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object as Stripe.PaymentIntent
-    const { order_type, resultId, spacer, remark, userId, items: itemsJson, savedAddress: savedAddressJson } = paymentIntent.metadata ?? {}
+    const { order_type, resultId, spacer, remark, includeCharm, userId, items: itemsJson, savedAddress: savedAddressJson } = paymentIntent.metadata ?? {}
 
     type ShippingAddr = { name?: string | null; phone?: string | null; line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null }
 
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     // ── Bracelet order ───────────────────────────────────────────────────────
     const { data: result } = await supabaseAdmin
       .from('energy_quiz_results')
-      .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary')
+      .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, current_feelings')
       .eq('id', resultId)
       .single()
 
@@ -142,6 +142,8 @@ export async function POST(req: NextRequest) {
       result_id: resultId || null,
       spacer_choice: spacer || null,
       remark: remark || null,
+      logo_charm: includeCharm !== 'false',
+      current_feelings: result?.current_feelings || null,
     }).select('order_number').single()
 
     if (insertError) {
@@ -245,7 +247,7 @@ export async function POST(req: NextRequest) {
     // Look up crystal names from the quiz result
     const { data: result } = await supabaseAdmin
       .from('energy_quiz_results')
-      .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary')
+      .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, current_feelings')
       .eq('id', resultId)
       .single()
 
@@ -293,6 +295,7 @@ export async function POST(req: NextRequest) {
       result_id: resultId || null,
       spacer_choice: spacer || null,
       remark: remark || null,
+      current_feelings: result?.current_feelings || null,
     })
 
     if (insertError) {
