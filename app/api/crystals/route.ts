@@ -9,7 +9,7 @@ export async function GET() {
         id,
         name,
         slug,
-        element,
+        element:primary_element,
         meaning,
         bead_image_url,
         luxury_score
