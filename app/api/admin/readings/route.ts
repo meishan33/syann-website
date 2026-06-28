@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('energy_quiz_results')
-    .select('id, user_name, birth_date, main_goal, calculated_weak_element, calculated_strong_element, crystal_names, cached_image_url, analysis_summary, suggested_spacer, created_at')
+    .select('id, user_name, birth_date, main_goal, calculated_weak_element, calculated_strong_element, crystal_names, cached_image_url, analysis_summary, created_at')
     .order('created_at', { ascending: false })
     .limit(10000)
 

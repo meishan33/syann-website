@@ -29,7 +29,7 @@ type Reading = {
   id: string; user_name: string; birth_date: string; main_goal: string
   calculated_weak_element: string; calculated_strong_element: string
   crystal_names: string[]; cached_image_url: string | null
-  analysis_summary: string; suggested_spacer: string | null; created_at: string
+  analysis_summary: string; created_at: string
 }
 
 type Crystal = {
@@ -1297,7 +1297,6 @@ export default function AdminPage() {
                                 ['Weak Element', r.calculated_weak_element],
                                 ['Strong Element', r.calculated_strong_element],
                                 ['Goal', r.main_goal],
-                                ['Spacer', r.suggested_spacer || '—'],
                               ].map(([label, value]) => (
                                 <div key={label}>
                                   <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>{label}</p>
