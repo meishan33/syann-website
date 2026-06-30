@@ -76,7 +76,32 @@ export default function CartPage() {
     setError(null)
     setLoading(true)
     try {
-      // If a bracelet is selected, route to the bracelet payment page
+      const { data: { session } } = await supabase.auth.getSession()
+      const email = session?.user?.email ?? null
+      const userId = session?.user?.id ?? null
+
+      // Combined bracelet + shop checkout
+      if (selectedBracelet && selectedShopItems.length > 0) {
+        let savedAddress = null
+        if (session?.access_token) {
+          const res = await fetch('/api/addresses', { headers: { Authorization: `Bearer ${session.access_token}` } })
+          if (res.ok) {
+            const addrs: DeliveryAddress[] = await res.json()
+            if (addrs.length > 0) {
+              setSavedAddresses(addrs)
+              const def = addrs.find(a => a.is_default)
+              setSelectedAddrId(def?.id ?? addrs[0].id)
+              setLoading(false)
+              setAddrPickerOpen(true)
+              return
+            }
+          }
+        }
+        await proceedToCombinedCheckout(email, userId, savedAddress)
+        return
+      }
+
+      // Bracelet-only: route to payment page
       if (selectedBracelet) {
         const params = new URLSearchParams({
           result: selectedBracelet.resultId!,
@@ -89,10 +114,6 @@ export default function CartPage() {
       }
 
       // Shop-only checkout
-      const { data: { session } } = await supabase.auth.getSession()
-      const email = session?.user?.email ?? null
-      const userId = session?.user?.id ?? null
-
       if (session?.access_token) {
         const res = await fetch('/api/addresses', { headers: { Authorization: `Bearer ${session.access_token}` } })
         if (res.ok) {
@@ -146,13 +167,55 @@ export default function CartPage() {
     }
   }
 
+  async function proceedToCombinedCheckout(email: string | null, userId: string | null, savedAddress: DeliveryAddress | null) {
+    setLoading(true)
+    if (!selectedBracelet) return
+    try {
+      const addrPayload = savedAddress ? {
+        name: savedAddress.name, phone: savedAddress.phone,
+        line1: savedAddress.line1, line2: savedAddress.line2,
+        city: savedAddress.city, state: savedAddress.state,
+        postal_code: savedAddress.postal_code, country: savedAddress.country || 'MY',
+      } : null
+
+      const res = await fetch('/api/checkout/combined/intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resultId: selectedBracelet.resultId,
+          spacer: selectedBracelet.spacer ?? 'silver',
+          includeCharm: selectedBracelet.includeCharm !== false,
+          remark: selectedBracelet.remark ?? '',
+          shopItems: selectedShopItems,
+          email, userId, savedAddress: addrPayload,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to start checkout')
+
+      setClientSecret(data.clientSecret)
+      setAmountCents(data.amountCents)
+      setShippingFeeCents(data.shippingFeeCents)
+      setCheckoutEmail(email)
+      setCheckoutAddress(savedAddress)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function confirmAddress() {
     setAddrPickerOpen(false)
     const { data: { session } } = await supabase.auth.getSession()
     const email = session?.user?.email ?? null
     const userId = session?.user?.id ?? null
     const addr = selectedAddrId !== 'new' ? (savedAddresses.find(a => a.id === selectedAddrId) ?? null) : null
-    await proceedToShopCheckout(email, userId, addr)
+    if (selectedBracelet && selectedShopItems.length > 0) {
+      await proceedToCombinedCheckout(email, userId, addr)
+    } else {
+      await proceedToShopCheckout(email, userId, addr)
+    }
   }
 
   const { format, currency } = useCurrency()
@@ -290,12 +353,6 @@ export default function CartPage() {
                     )}
                   </div>
                 </div>
-
-                {selectedBracelet && selectedShopItems.length > 0 && (
-                  <p style={{ ...BODY, fontSize: 11, color: '#9A8573', textAlign: 'center', marginBottom: 14, lineHeight: 1.6 }}>
-                    Your bracelet will be checked out first. Shop items can be purchased separately after.
-                  </p>
-                )}
 
                 <button
                   onClick={handleCheckout}

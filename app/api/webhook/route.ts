@@ -105,6 +105,86 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    // ── Combined bracelet + shop order ───────────────────────────────────────
+    if (order_type === 'combined') {
+      const { data: existingCombined } = await supabaseAdmin
+        .from('orders').select('id').eq('stripe_payment_intent_id', paymentIntent.id).maybeSingle()
+      if (existingCombined) return NextResponse.json({ received: true })
+
+      const { data: result } = await supabaseAdmin
+        .from('energy_quiz_results')
+        .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, current_feelings')
+        .eq('id', resultId).single()
+
+      const shippingAddress = addr
+        ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ')
+        : null
+      const totalAmount = (paymentIntent.amount ?? 0) / 100
+
+      const { data: insertedOrder } = await supabaseAdmin.from('orders').insert({
+        customer_name: addr?.name || result?.user_name || null,
+        customer_email: paymentIntent.receipt_email || null,
+        customer_phone: addr?.phone || null,
+        shipping_address: shippingAddress,
+        generated_image_url: result?.cached_image_url || null,
+        weak_element: result?.calculated_weak_element || null,
+        strong_element: result?.calculated_strong_element || null,
+        analysis_summary: result?.analysis_summary || null,
+        current_feelings: result?.current_feelings || null,
+        recommended_crystal_names: result?.crystal_names ?? [],
+        total_amount: totalAmount,
+        payment_status: 'paid',
+        fulfillment_status: 'processing',
+        stripe_payment_intent_id: paymentIntent.id,
+        result_id: resultId || null,
+        spacer_choice: spacer || null,
+        remark: remark || null,
+        logo_charm: includeCharm !== 'false',
+      }).select('order_number').single()
+
+      const parsedItems: { name: string; quantity: number; price: number }[] = itemsJson ? JSON.parse(itemsJson) : []
+      if (parsedItems.length > 0) {
+        const shopOrderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data, () => null)
+        await supabaseAdmin.from('shop_orders').insert({
+          order_number: shopOrderNumber,
+          customer_name: addr?.name || null,
+          customer_email: paymentIntent.receipt_email || null,
+          customer_phone: addr?.phone || null,
+          shipping_address: addr ?? null,
+          items: parsedItems,
+          total_amount: parsedItems.reduce((s, i) => s + i.price * i.quantity, 0),
+          payment_status: 'paid',
+          fulfillment_status: 'unfulfilled',
+          stripe_payment_intent_id: paymentIntent.id + '_shop',
+        })
+      }
+
+      if (paymentIntent.receipt_email) {
+        const braceletLine = `Custom Crystal Bracelet (${result?.crystal_names?.join(', ') || 'Crystal'})`
+        const shopLines = parsedItems.map(i => `${i.name} × ${i.quantity}`).join(', ')
+        const { subject, html } = orderConfirmationEmail({
+          orderNumber: insertedOrder?.order_number ?? null,
+          customerName: addr?.name || result?.user_name || null,
+          items: [braceletLine, shopLines].filter(Boolean).join(' + '),
+          totalAmount,
+          shippingAddress,
+        })
+        await sendEmail({ to: paymentIntent.receipt_email, subject, html })
+      }
+
+      const { subject: adminSubject, html: adminHtml } = newOrderAdminEmail({
+        orderType: 'bracelet',
+        orderNumber: insertedOrder?.order_number ?? null,
+        customerName: addr?.name || null,
+        customerEmail: paymentIntent.receipt_email || null,
+        items: `Bracelet + ${parsedItems.length} shop item(s)`,
+        totalAmount,
+      })
+      await notifyAdmins({ subject: adminSubject, html: adminHtml })
+
+      return NextResponse.json({ received: true })
+    }
+
     // ── Bracelet order ───────────────────────────────────────────────────────
     const { data: result } = await supabaseAdmin
       .from('energy_quiz_results')
