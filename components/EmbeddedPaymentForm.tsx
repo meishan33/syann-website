@@ -61,7 +61,11 @@ export default function EmbeddedPaymentForm(props: Props) {
             '.Label': { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9A8573', marginBottom: '4px' },
             '.Input': { padding: '10px 12px', border: '1px solid #E5DDD5', boxShadow: 'none' },
             '.Input:focus': { border: '1px solid #B08B57', boxShadow: '0 0 0 1px rgba(176,139,87,0.2)' },
-            '.Tab': { padding: '8px 12px', border: '1px solid #E5DDD5' },
+            '.Tab': { padding: '8px 12px', border: '1.5px solid #E5DDD5', background: '#FDFAF7' },
+            '.Tab--selected': { border: '2px solid #4A3A32', background: '#FBF5EC', boxShadow: '0 2px 8px rgba(74,58,50,0.12)' },
+            '.Tab--selected:focus': { border: '2px solid #4A3A32', boxShadow: '0 2px 8px rgba(74,58,50,0.12)' },
+            '.TabLabel--selected': { color: '#4A3A32', fontWeight: '600' },
+            '.TabIcon--selected': { fill: '#4A3A32' },
           },
         },
       }}
