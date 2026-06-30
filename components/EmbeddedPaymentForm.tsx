@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Elements,
   AddressElement,
@@ -87,6 +87,14 @@ function PaymentFormInner({ clientSecret, initialAmountCents, initialShippingFee
   const [amountCents, setAmountCents] = useState(initialAmountCents)
   const [shippingFeeCents, setShippingFeeCents] = useState(initialShippingFeeCents)
   const [updatingShipping, setUpdatingShipping] = useState(false)
+
+  // Keep wallet payment sheets (Apple Pay / Google Pay) in sync whenever
+  // the amount changes — e.g. after a discount or shipping recalculation.
+  // Without this, wallets show the original amount even after a discount.
+  useEffect(() => {
+    if (!elements) return
+    elements.update({ amount: amountCents })
+  }, [amountCents, elements])
   const [email, setEmail] = useState(defaultEmail || '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
