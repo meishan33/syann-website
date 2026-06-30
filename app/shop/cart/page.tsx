@@ -258,9 +258,9 @@ export default function CartPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 24px', borderBottom: '1px solid #F0E8DF', background: '#FDFAF7' }}>
               <button
                 onClick={toggleAll}
-                style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${allChecked ? GOLD : '#D9CEC5'}`, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
+                style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${allChecked ? GOLD : '#D9CEC5'}`, background: allChecked ? '#C9B08A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
               >
-                {allChecked && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="#3D2B1F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                {null}
               </button>
               <span style={{ ...BODY, fontSize: 11, color: '#9A8573', letterSpacing: '0.06em' }}>
                 {allChecked ? 'Deselect All' : 'Select All'}
@@ -274,9 +274,9 @@ export default function CartPage() {
                 {/* Checkbox */}
                 <button
                   onClick={() => toggleCheck(item.productId)}
-                  style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked[item.productId] ? GOLD : '#D9CEC5'}`, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
+                  style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked[item.productId] ? GOLD : '#D9CEC5'}`, background: checked[item.productId] ? '#C9B08A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
                 >
-                  {checked[item.productId] && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="#3D2B1F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {null}
                 </button>
 
                 {/* Image */}
