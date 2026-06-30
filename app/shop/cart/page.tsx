@@ -197,7 +197,7 @@ export default function CartPage() {
                 onClick={toggleAll}
                 style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${allChecked ? GOLD : '#D9CEC5'}`, background: allChecked ? GOLD : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
               >
-                {allChecked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1,4 4,7 9,1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                {allChecked && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
               </button>
               <span style={{ ...BODY, fontSize: 11, color: '#9A8573', letterSpacing: '0.06em' }}>
                 {allChecked ? 'Deselect All' : 'Select All'}
@@ -213,7 +213,7 @@ export default function CartPage() {
                   onClick={() => toggleCheck(item.productId)}
                   style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked[item.productId] ? GOLD : '#D9CEC5'}`, background: checked[item.productId] ? GOLD : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
                 >
-                  {checked[item.productId] && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><polyline points="1,4 4,7 9,1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {checked[item.productId] && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </button>
 
                 {/* Image */}
@@ -238,9 +238,7 @@ export default function CartPage() {
                       <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Charm: {item.includeCharm !== false ? 'Included' : 'Excluded'}</span>
                       {item.remark && <span style={{ ...BODY, fontSize: 11, color: '#9A8573', width: '100%' }}>Note: {item.remark}</span>}
                     </div>
-                  ) : (
-                    <p style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>{item.category}</p>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Qty (shop only) + price + remove */}
@@ -309,6 +307,8 @@ export default function CartPage() {
                 {error && <p style={{ ...BODY, fontSize: 11, color: '#E07070', textAlign: 'center', marginTop: 12 }}>{error}</p>}
                 <div style={{ textAlign: 'center', marginTop: 16 }}>
                   <Link href="/shop" style={{ ...BODY, fontSize: 11, color: '#9A8573', textDecoration: 'none' }}>← Continue Shopping</Link>
+                  <span style={{ color: '#D9CEC5', margin: '0 8px' }}>·</span>
+                  <Link href="/energy-quiz" style={{ ...BODY, fontSize: 11, color: '#9A8573', textDecoration: 'none' }}>✦ Analyze Your Energy</Link>
                 </div>
               </>
             )}
