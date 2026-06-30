@@ -246,33 +246,6 @@ function PaymentFormInner({ clientSecret, initialAmountCents, initialShippingFee
         <PaymentElement />
       </div>
 
-      {/* Promo code */}
-      <div>
-        <label style={LABEL}>Promo Code</label>
-        {discountCode ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 8 }}>
-            <span style={{ ...BODY, fontSize: 12, color: '#4A3A32', fontWeight: 600, letterSpacing: '0.06em' }}>{discountCode} applied</span>
-            <button type="button" onClick={removePromoCode} disabled={promoApplying} style={{ ...BODY, fontSize: 11, color: '#9A8573', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-              Remove
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="text" value={promoInput} onChange={e => setPromoInput(e.target.value)}
-              placeholder="Enter code" style={{ ...INPUT, flex: 1 }}
-            />
-            <button
-              type="button" onClick={applyPromoCode} disabled={promoApplying || !promoInput.trim()}
-              style={{ ...BODY, padding: '0 20px', borderRadius: 8, border: `1px solid ${GOLD}`, background: 'transparent', color: GOLD, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: promoApplying ? 'not-allowed' : 'pointer', opacity: promoApplying ? 0.6 : 1 }}
-            >
-              Apply
-            </button>
-          </div>
-        )}
-        {promoError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '6px 0 0' }}>{promoError}</p>}
-      </div>
-
       {/* Price breakdown */}
       <div style={{ background: '#F6F1EB', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
