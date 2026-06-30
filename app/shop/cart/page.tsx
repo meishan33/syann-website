@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { CartItem, getCart, removeFromCart, updateQuantity, cartTotal, cartCount } from '@/lib/cart'
+import { useRouter } from 'next/navigation'
 import { useCurrency } from '@/context/CurrencyContext'
 import EmbeddedPaymentForm from '@/components/EmbeddedPaymentForm'
 
@@ -19,6 +20,7 @@ type DeliveryAddress = {
 }
 
 export default function CartPage() {
+  const router = useRouter()
   const [items, setItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -114,8 +116,20 @@ export default function CartPage() {
   }
 
   const { format, currency } = useCurrency()
-  const total = cartTotal(items)
-  const count = cartCount(items)
+  const braceletItems = items.filter(i => i.type === 'bracelet')
+  const shopItems = items.filter(i => i.type !== 'bracelet')
+  const total = cartTotal(shopItems)
+  const count = cartCount(shopItems)
+
+  function handleBraceletCheckout(item: CartItem) {
+    const params = new URLSearchParams({
+      result: item.resultId!,
+      spacer: item.spacer ?? 'silver',
+      includeCharm: String(item.includeCharm !== false),
+    })
+    if (item.remark) params.set('remark', item.remark)
+    router.push(`/payment?${params.toString()}`)
+  }
 
   if (items.length === 0) {
     return (
@@ -141,40 +155,81 @@ export default function CartPage() {
         <header style={{ maxWidth: 800, margin: '0 auto', padding: '56px 24px 32px', textAlign: 'center' }}>
           <p style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', marginBottom: 12 }}>✦ Your Selection</p>
           <h1 style={{ ...SERIF, fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 300, color: '#3D2B1F', margin: '0 0 8px' }}>Shopping Cart</h1>
-          <p style={{ ...BODY, fontSize: 12, color: '#9A8573' }}>{count} item{count !== 1 ? 's' : ''}</p>
+          <p style={{ ...BODY, fontSize: 12, color: '#9A8573' }}>{items.length} item{items.length !== 1 ? 's' : ''}</p>
         </header>
 
         <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 80px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Items */}
-          <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', overflow: 'hidden', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
-            {items.map((item, i) => (
-              <div key={item.productId} style={{ display: 'flex', gap: 16, padding: '20px 24px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center' }}>
-                <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
+          {/* Bracelet items */}
+          {braceletItems.map(item => (
+            <div key={item.productId} style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', overflow: 'hidden', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
+              <div style={{ padding: '16px 24px 12px', borderBottom: '1px solid #F0E8DF', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: GOLD }}>Custom Crystal Bracelet</span>
+              </div>
+              <div style={{ display: 'flex', gap: 16, padding: '20px 24px', alignItems: 'flex-start' }}>
+                <div style={{ position: 'relative', width: 80, height: 80, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
                   {item.imageUrl
-                    ? <Image src={item.imageUrl} alt={item.name} fill sizes="72px" style={{ objectFit: 'cover' }} />
+                    ? <Image src={item.imageUrl} alt={item.name} fill sizes="80px" style={{ objectFit: 'contain' }} />
                     : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: GOLD, opacity: 0.4 }}>✦</span></div>
                   }
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...SERIF, fontSize: 18, fontWeight: 300, color: '#3D2B1F', margin: '0 0 2px' }}>{item.name}</p>
-                  <p style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>{item.category}</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <button onClick={() => handleQty(item.productId, item.quantity - 1)} style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#FDFAF7', cursor: 'pointer', fontSize: 14, color: '#4A3A32', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-                  <span style={{ ...BODY, fontSize: 13, fontWeight: 500, color: '#3D2B1F', minWidth: 20, textAlign: 'center' }}>{item.quantity}</span>
-                  <button onClick={() => handleQty(item.productId, item.quantity + 1)} style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#FDFAF7', cursor: 'pointer', fontSize: 14, color: '#4A3A32', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  <p style={{ ...SERIF, fontSize: 17, fontWeight: 300, color: '#3D2B1F', margin: '0 0 6px' }}>{item.name}</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
+                    {item.spacer && item.spacer !== 'exclude' && (
+                      <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0, textTransform: 'capitalize' }}>Spacer: {item.spacer}</p>
+                    )}
+                    <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0 }}>Charm: {item.includeCharm !== false ? 'Included' : 'Excluded'}</p>
+                    {item.remark && <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0, width: '100%' }}>Note: {item.remark}</p>}
+                  </div>
                 </div>
                 <div style={{ flexShrink: 0, textAlign: 'right', minWidth: 80 }}>
-                  <p style={{ ...SERIF, fontSize: 18, fontWeight: 300, color: '#3D2B1F', margin: '0 0 4px' }}>{format(item.price * item.quantity)}</p>
+                  <p style={{ ...SERIF, fontSize: 18, fontWeight: 300, color: '#3D2B1F', margin: '0 0 4px' }}>{format(item.price)}</p>
                   <button onClick={() => handleRemove(item.productId)} style={{ ...BODY, background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#C5B8AD', letterSpacing: '0.1em' }}>Remove</button>
                 </div>
               </div>
-            ))}
-          </div>
+              <div style={{ padding: '0 24px 20px' }}>
+                <button
+                  onClick={() => handleBraceletCheckout(item)}
+                  style={{ ...BODY, width: '100%', padding: '13px', borderRadius: 999, background: '#4A3A32', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer', transition: 'background 0.25s' }}
+                >
+                  Checkout Bracelet ✦
+                </button>
+              </div>
+            </div>
+          ))}
 
-          {/* Summary / Checkout */}
-          <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '24px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
+          {/* Shop items */}
+          {shopItems.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', overflow: 'hidden', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
+              {shopItems.map((item, i) => (
+                <div key={item.productId} style={{ display: 'flex', gap: 16, padding: '20px 24px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
+                    {item.imageUrl
+                      ? <Image src={item.imageUrl} alt={item.name} fill sizes="72px" style={{ objectFit: 'cover' }} />
+                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: GOLD, opacity: 0.4 }}>✦</span></div>
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ ...SERIF, fontSize: 18, fontWeight: 300, color: '#3D2B1F', margin: '0 0 2px' }}>{item.name}</p>
+                    <p style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>{item.category}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <button onClick={() => handleQty(item.productId, item.quantity - 1)} style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#FDFAF7', cursor: 'pointer', fontSize: 14, color: '#4A3A32', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                    <span style={{ ...BODY, fontSize: 13, fontWeight: 500, color: '#3D2B1F', minWidth: 20, textAlign: 'center' }}>{item.quantity}</span>
+                    <button onClick={() => handleQty(item.productId, item.quantity + 1)} style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#FDFAF7', cursor: 'pointer', fontSize: 14, color: '#4A3A32', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  </div>
+                  <div style={{ flexShrink: 0, textAlign: 'right', minWidth: 80 }}>
+                    <p style={{ ...SERIF, fontSize: 18, fontWeight: 300, color: '#3D2B1F', margin: '0 0 4px' }}>{format(item.price * item.quantity)}</p>
+                    <button onClick={() => handleRemove(item.productId)} style={{ ...BODY, background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#C5B8AD', letterSpacing: '0.1em' }}>Remove</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Summary / Checkout — only for shop items */}
+          {shopItems.length > 0 && <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '24px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
             {clientSecret ? (
               <EmbeddedPaymentForm
                 clientSecret={clientSecret}
@@ -217,7 +272,7 @@ export default function CartPage() {
                 </div>
               </>
             )}
-          </div>
+          </div>}
 
         </section>
       </main>

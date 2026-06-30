@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { addBraceletToCart } from '@/lib/cart'
 import { useCurrency } from '@/context/CurrencyContext'
 import type { User } from '@supabase/supabase-js'
 
@@ -522,34 +523,53 @@ function AccountPageContent() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {readings.map((reading) => (
-                    <Link key={reading.id} href={`/results/${reading.id}`}
-                      style={{ background: '#F9F5F0', border: '1px solid #E5DDD5', borderRadius: 12, padding: '20px 24px', display: 'flex', gap: 14, alignItems: 'flex-start', textDecoration: 'none' }}
-                    >
-                      {reading.cached_image_url && (
-                        <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
-                          {/* Plain <img>, not next/image — these small bracelet photos kept hitting
-                              mobile-Safari-only quirks with Next's optimizer (content-disposition,
-                              format negotiation); bypassing it entirely is more robust at this size. */}
-                          <img src={reading.cached_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                        <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>
-                          {new Date(reading.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: '#4A3A32', margin: 0 }}>
-                          {reading.crystal_names?.join(' · ') || 'Crystal Bracelet'}
-                        </p>
-                        {(reading.calculated_weak_element || reading.calculated_strong_element) && (
-                          <p style={{ ...BODY, fontSize: 10, color: GOLD, margin: 0 }}>
-                            Weak: {reading.calculated_weak_element || '—'} · Strong: {reading.calculated_strong_element || '—'}
-                          </p>
+                    <div key={reading.id} style={{ background: '#F9F5F0', border: '1px solid #E5DDD5', borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      {/* Top row: image + info */}
+                      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                        {reading.cached_image_url && (
+                          <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
+                            <img src={reading.cached_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          </div>
                         )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, flex: 1 }}>
+                          <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>
+                            {new Date(reading.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: '#4A3A32', margin: 0 }}>
+                            {reading.crystal_names?.join(' · ') || 'Crystal Bracelet'}
+                          </p>
+                          {(reading.calculated_weak_element || reading.calculated_strong_element) && (
+                            <p style={{ ...BODY, fontSize: 10, color: GOLD, margin: 0 }}>
+                              Weak: {reading.calculated_weak_element || '—'} · Strong: {reading.calculated_strong_element || '—'}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <span style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: GOLD, alignSelf: 'center', whiteSpace: 'nowrap' }}>
-                        View →
-                      </span>
-                    </Link>
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <Link
+                          href={`/results/${reading.id}`}
+                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7A6355', textDecoration: 'none', padding: '7px 14px', borderRadius: 999, border: '1px solid #D9CEC5' }}
+                        >
+                          View Results
+                        </Link>
+                        <button
+                          onClick={() => {
+                            addBraceletToCart({ resultId: reading.id, spacer: 'silver', includeCharm: true, remark: '', imageUrl: reading.cached_image_url, crystalNames: reading.crystal_names ?? [] })
+                            router.push('/shop/cart')
+                          }}
+                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, background: 'none', border: `1px solid ${GOLD}`, borderRadius: 999, padding: '7px 14px', cursor: 'pointer' }}
+                        >
+                          Add to Cart
+                        </button>
+                        <button
+                          onClick={() => router.push(`/payment?result=${reading.id}`)}
+                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#fff', background: '#4A3A32', border: '1px solid #4A3A32', borderRadius: 999, padding: '7px 14px', cursor: 'pointer' }}
+                        >
+                          Purchase Now
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

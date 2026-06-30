@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { addBraceletToCart } from '@/lib/cart'
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
@@ -17,19 +18,26 @@ type Props = {
   strongElement?: string | null
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl }: Props) {
   const router = useRouter()
   const [spacerColor, setSpacerColor] = useState<'silver' | 'gold' | 'exclude'>('silver')
   const [includeCharm, setIncludeCharm] = useState(true)
   const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [addedToCart, setAddedToCart] = useState(false)
 
   function handlePurchase() {
     setLoading(true)
     const params = new URLSearchParams({ result: resultId, spacer: spacerColor, includeCharm: String(includeCharm) })
     if (remark) params.set('remark', remark)
     router.push(`/payment?${params.toString()}`)
+  }
+
+  function handleAddToCart() {
+    addBraceletToCart({ resultId, spacer: spacerColor, includeCharm, remark, imageUrl: imageUrl ?? null, crystalNames })
+    setAddedToCart(true)
+    setTimeout(() => router.push('/shop/cart'), 600)
   }
 
   return (
@@ -197,15 +205,23 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
           </div>
         </div>
 
-        {/* PURCHASE BUTTON */}
+        {/* PURCHASE / ADD TO CART BUTTONS */}
         <div className="flex flex-col gap-3">
           <button
             onClick={handlePurchase}
-            disabled={loading}
+            disabled={loading || addedToCart}
             className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57] disabled:opacity-60 disabled:cursor-not-allowed"
             style={BODY}
           >
-            {loading ? 'Please wait…' : <><span>Purchase My Bracelet</span><span aria-hidden="true">✦</span></>}
+            {loading ? 'Please wait…' : <><span>Purchase Now</span><span aria-hidden="true">✦</span></>}
+          </button>
+          <button
+            onClick={handleAddToCart}
+            disabled={loading || addedToCart}
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#B08B57] bg-transparent px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-[#B08B57] transition-all duration-300 hover:bg-[#B08B57] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+            style={BODY}
+          >
+            {addedToCart ? 'Added — going to cart…' : 'Add to Cart'}
           </button>
         </div>
 

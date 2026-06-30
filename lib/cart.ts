@@ -5,7 +5,15 @@ export type CartItem = {
   imageUrl: string | null
   category: string
   quantity: number
+  // Bracelet-specific (type === 'bracelet')
+  type?: 'shop' | 'bracelet'
+  resultId?: string
+  spacer?: string
+  includeCharm?: boolean
+  remark?: string
 }
+
+export const BRACELET_PRICE = 59.00
 
 const CART_KEY = 'syann_shop_cart'
 
@@ -31,6 +39,33 @@ export function addToCart(item: Omit<CartItem, 'quantity'>) {
   } else {
     cart.push({ ...item, quantity: 1 })
   }
+  saveCart(cart)
+}
+
+// Adds a bracelet to the cart, replacing any existing bracelet (one per cart).
+export function addBraceletToCart(opts: {
+  resultId: string
+  spacer: string
+  includeCharm: boolean
+  remark: string
+  imageUrl: string | null
+  crystalNames: string[]
+}) {
+  const cart = getCart().filter(i => i.type !== 'bracelet')
+  const label = opts.crystalNames.length ? opts.crystalNames.join(' · ') : 'Custom Crystal Bracelet'
+  cart.push({
+    productId: `bracelet-${opts.resultId}`,
+    name: label,
+    price: BRACELET_PRICE,
+    imageUrl: opts.imageUrl,
+    category: 'Crystal Bracelet',
+    quantity: 1,
+    type: 'bracelet',
+    resultId: opts.resultId,
+    spacer: opts.spacer,
+    includeCharm: opts.includeCharm,
+    remark: opts.remark,
+  })
   saveCart(cart)
 }
 
