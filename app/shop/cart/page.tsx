@@ -80,24 +80,19 @@ export default function CartPage() {
       const email = session?.user?.email ?? null
       const userId = session?.user?.id ?? null
 
+      // Silently look up default saved address to pre-fill Stripe's AddressElement
+      let defaultAddress: DeliveryAddress | null = null
+      if (session?.access_token) {
+        const res = await fetch('/api/addresses', { headers: { Authorization: `Bearer ${session.access_token}` } })
+        if (res.ok) {
+          const addrs: DeliveryAddress[] = await res.json()
+          defaultAddress = addrs.find(a => a.is_default) ?? addrs[0] ?? null
+        }
+      }
+
       // Combined bracelet + shop checkout
       if (selectedBracelet && selectedShopItems.length > 0) {
-        let savedAddress = null
-        if (session?.access_token) {
-          const res = await fetch('/api/addresses', { headers: { Authorization: `Bearer ${session.access_token}` } })
-          if (res.ok) {
-            const addrs: DeliveryAddress[] = await res.json()
-            if (addrs.length > 0) {
-              setSavedAddresses(addrs)
-              const def = addrs.find(a => a.is_default)
-              setSelectedAddrId(def?.id ?? addrs[0].id)
-              setLoading(false)
-              setAddrPickerOpen(true)
-              return
-            }
-          }
-        }
-        await proceedToCombinedCheckout(email, userId, savedAddress)
+        await proceedToCombinedCheckout(email, userId, defaultAddress)
         return
       }
 
@@ -113,24 +108,8 @@ export default function CartPage() {
         return
       }
 
-      // Shop-only checkout
-      if (session?.access_token) {
-        const res = await fetch('/api/addresses', { headers: { Authorization: `Bearer ${session.access_token}` } })
-        if (res.ok) {
-          const addrs: DeliveryAddress[] = await res.json()
-          if (addrs.length > 0) {
-            setSavedAddresses(addrs)
-            const def = addrs.find(a => a.is_default)
-            setSelectedAddrId(def?.id ?? addrs[0].id)
-            setLoading(false)
-            setAddrPickerOpen(true)
-            return
-          }
-        }
-        setLoading(false)
-      }
-
-      await proceedToShopCheckout(email, userId, null)
+      // Shop-only: go straight to embedded checkout (no popup)
+      await proceedToShopCheckout(email, userId, defaultAddress)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
       setLoading(false)
