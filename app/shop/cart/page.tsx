@@ -55,22 +55,16 @@ export default function CartPage() {
   const selectedShopItems = selectedItems.filter(i => i.type !== 'bracelet')
   const selectedTotal = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
   const selectedCount = selectedItems.reduce((sum, i) => sum + i.quantity, 0)
-  const needsEmbeddedForm = selectedShopItems.length > 0
-
-  // Stable key: re-create the intent whenever the selected shop/combined items change
-  const selectedKey = selectedItems
-    .map(i => `${i.productId}:${i.quantity}`)
-    .sort()
-    .join(',')
+  // Stable key — re-run whenever selection changes
+  const selectedKey = selectedItems.map(i => `${i.productId}:${i.quantity}`).sort().join(',')
 
   useEffect(() => {
-    if (!needsEmbeddedForm) { setClientSecret(null); return }
-    // Debounce so rapid checkbox toggles don't spam the API
+    if (selectedItems.length === 0) { setClientSecret(null); return }
     setClientSecret(null)
     const timer = setTimeout(() => { void initCheckout() }, 600)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedKey, needsEmbeddedForm])
+  }, [selectedKey])
 
   async function initCheckout() {
     setFormLoading(true)
@@ -99,14 +93,21 @@ export default function CartPage() {
       let body: Record<string, unknown> = { items: selectedShopItems, email, userId, savedAddress: addrPayload }
 
       if (selectedBracelet && selectedShopItems.length > 0) {
+        // Combined bracelet + shop
         endpoint = '/api/checkout/combined/intent'
         body = {
           resultId: selectedBracelet.resultId, spacer: selectedBracelet.spacer ?? 'silver',
           includeCharm: selectedBracelet.includeCharm !== false, remark: selectedBracelet.remark ?? '',
           shopItems: selectedShopItems, email, userId, savedAddress: addrPayload,
         }
-      } else if (!selectedShopItems.length) {
-        setFormLoading(false); return
+      } else if (selectedBracelet && selectedShopItems.length === 0) {
+        // Bracelet only
+        endpoint = '/api/checkout/intent'
+        body = {
+          resultId: selectedBracelet.resultId, spacer: selectedBracelet.spacer ?? 'silver',
+          includeCharm: selectedBracelet.includeCharm !== false, remark: selectedBracelet.remark ?? '',
+          email, userId, savedAddress: addrPayload,
+        }
       }
 
       const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -246,48 +247,29 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* ── RIGHT: checkout form ── */}
+          {/* ── RIGHT: checkout form (always shown for any selection) ── */}
           <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '28px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)', position: 'sticky', top: 24 }}>
-            {/* Bracelet-only */}
-            {selectedBracelet && selectedShopItems.length === 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: GOLD, margin: '0 0 4px' }}>Your Bracelet</p>
-                  <p style={{ ...SERIF, fontSize: 18, fontWeight: 300, color: '#3D2B1F', margin: 0 }}>{selectedBracelet.name}</p>
-                </div>
-                <button onClick={handleBraceletCheckout} style={{ ...BODY, width: '100%', padding: '14px', borderRadius: 999, background: '#4A3A32', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer' }}>
-                  Proceed to Payment ✦
-                </button>
-              </div>
-            )}
-
-            {/* No items selected */}
-            {selectedItems.length === 0 && (
+            {selectedItems.length === 0 ? (
               <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: '20px 0' }}>Select items above to checkout</p>
-            )}
-
-            {/* Shop / combined checkout form */}
-            {(selectedShopItems.length > 0 || (selectedBracelet && selectedShopItems.length > 0)) && (
-              formLoading ? (
-                <p style={{ ...BODY, fontSize: 11, letterSpacing: '0.28em', color: GOLD, textTransform: 'uppercase', textAlign: 'center', padding: '24px 0' }}>Preparing checkout…</p>
-              ) : formError ? (
-                <p style={{ ...BODY, fontSize: 12, color: '#C0392B', textAlign: 'center' }}>{formError}</p>
-              ) : clientSecret ? (
-                <EmbeddedPaymentForm
-                  clientSecret={clientSecret}
-                  initialAmountCents={amountCents}
-                  initialShippingFeeCents={shippingFeeCents}
-                  defaultEmail={checkoutEmail}
-                  defaultAddress={checkoutAddress ? {
-                    name: checkoutAddress.name, phone: checkoutAddress.phone,
-                    line1: checkoutAddress.line1, line2: checkoutAddress.line2,
-                    city: checkoutAddress.city, state: checkoutAddress.state,
-                    postal_code: checkoutAddress.postal_code, country: checkoutAddress.country || 'SG',
-                  } : null}
-                  returnUrlPath="/payment/success"
-                />
-              ) : null
-            )}
+            ) : formLoading ? (
+              <p style={{ ...BODY, fontSize: 11, letterSpacing: '0.28em', color: GOLD, textTransform: 'uppercase', textAlign: 'center', padding: '24px 0' }}>Preparing checkout…</p>
+            ) : formError ? (
+              <p style={{ ...BODY, fontSize: 12, color: '#C0392B', textAlign: 'center' }}>{formError}</p>
+            ) : clientSecret ? (
+              <EmbeddedPaymentForm
+                clientSecret={clientSecret}
+                initialAmountCents={amountCents}
+                initialShippingFeeCents={shippingFeeCents}
+                defaultEmail={checkoutEmail}
+                defaultAddress={checkoutAddress ? {
+                  name: checkoutAddress.name, phone: checkoutAddress.phone,
+                  line1: checkoutAddress.line1, line2: checkoutAddress.line2,
+                  city: checkoutAddress.city, state: checkoutAddress.state,
+                  postal_code: checkoutAddress.postal_code, country: checkoutAddress.country || 'SG',
+                } : null}
+                returnUrlPath={selectedBracelet ? `/payment/success?result=${selectedBracelet.resultId}` : '/payment/success'}
+              />
+            ) : null}
           </div>
 
         </div>
