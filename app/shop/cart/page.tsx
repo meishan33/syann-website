@@ -307,6 +307,7 @@ export default function CartPage() {
                 postal_code: checkoutAddress.postal_code, country: checkoutAddress.country || 'SG',
               } : null}
               returnUrlPath={selectedBracelet ? `/payment/success?result=${selectedBracelet.resultId}` : '/payment/success'}
+              showPromoCode={false}
             />
           ) : (
             <>
