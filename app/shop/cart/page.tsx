@@ -222,13 +222,14 @@ export default function CartPage() {
     <>
       <main style={{ background: '#F6F1EB', minHeight: '100vh', ...BODY }}>
 
-        <header style={{ maxWidth: 800, margin: '0 auto', padding: '56px 24px 32px', textAlign: 'center' }}>
+        <header style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 32px', textAlign: 'center' }}>
           <p style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', marginBottom: 12 }}>✦ Your Selection</p>
           <h1 style={{ ...SERIF, fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 300, color: '#3D2B1F', margin: '0 0 8px' }}>Shopping Cart</h1>
           <p style={{ ...BODY, fontSize: 12, color: '#9A8573' }}>{items.length} item{items.length !== 1 ? 's' : ''}</p>
         </header>
 
-        <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 80px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 80px' }}>
+          <div className="cart-two-col">
 
           {/* Unified item list */}
           <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', overflow: 'hidden', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
@@ -349,7 +350,7 @@ export default function CartPage() {
               </>
             )}
           </div>
-
+          </div>
         </section>
       </main>
 
