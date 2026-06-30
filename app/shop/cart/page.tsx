@@ -170,7 +170,8 @@ export default function CartPage() {
     <main style={{ background: '#F6F1EB', minHeight: '100vh', ...BODY }}>
 
       <header style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 32px', textAlign: 'center' }}>
-        <h1 style={{ ...SERIF, fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 300, color: '#3D2B1F', margin: 0 }}>Shopping Cart</h1>
+        <h1 style={{ ...SERIF, fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 300, color: '#3D2B1F', margin: '0 0 8px' }}>Shopping Cart</h1>
+        <p style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>✦ Your Selection</p>
       </header>
 
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 80px' }}>
