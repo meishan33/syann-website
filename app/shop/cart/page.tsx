@@ -164,9 +164,8 @@ export default function CartPage() {
     <main style={{ background: '#F6F1EB', minHeight: '100vh', ...BODY }}>
 
       <header style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 32px', textAlign: 'center' }}>
-        <p style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', marginBottom: 12 }}>✦ Your Selection</p>
-        <h1 style={{ ...SERIF, fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 300, color: '#3D2B1F', margin: '0 0 8px' }}>Shopping Cart</h1>
-        <p style={{ ...BODY, fontSize: 12, color: '#9A8573' }}>{items.length} item{items.length !== 1 ? 's' : ''}</p>
+        <h1 style={{ ...SERIF, fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 300, color: '#3D2B1F', margin: '0 0 6px' }}>Shopping Cart</h1>
+        <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{items.length} item{items.length !== 1 ? 's' : ''}</p>
       </header>
 
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 80px' }}>
@@ -179,14 +178,14 @@ export default function CartPage() {
             <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', overflow: 'hidden', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
               {/* Select-all row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 24px', borderBottom: '1px solid #F0E8DF', background: '#FDFAF7' }}>
-                <button onClick={toggleAll} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${allChecked ? GOLD : '#D9CEC5'}`, background: allChecked ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
+                <button onClick={toggleAll} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${allChecked ? '#C9B08A' : '#D9CEC5'}`, background: allChecked ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
                 <span style={{ ...BODY, fontSize: 11, color: '#9A8573', letterSpacing: '0.06em' }}>{allChecked ? 'Deselect All' : 'Select All'}</span>
               </div>
 
               {items.map((item, i) => (
                 <div key={item.productId} style={{ display: 'flex', gap: 14, padding: '18px 24px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center' }}>
                   {/* Checkbox */}
-                  <button onClick={() => toggleCheck(item.productId)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked[item.productId] ? GOLD : '#D9CEC5'}`, background: checked[item.productId] ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
+                  <button onClick={() => toggleCheck(item.productId)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked[item.productId] ? '#C9B08A' : '#D9CEC5'}`, background: checked[item.productId] ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
                   {/* Image */}
                   <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
                     {item.imageUrl
