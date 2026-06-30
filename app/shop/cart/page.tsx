@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -30,7 +30,6 @@ export default function CartPage() {
   const [shippingFeeCents, setShippingFeeCents] = useState(0)
   const [checkoutEmail, setCheckoutEmail] = useState<string | null>(null)
   const [checkoutAddress, setCheckoutAddress] = useState<DeliveryAddress | null>(null)
-  const initRef = useRef(false)
 
   useEffect(() => {
     const cart = getCart()
@@ -56,16 +55,22 @@ export default function CartPage() {
   const selectedShopItems = selectedItems.filter(i => i.type !== 'bracelet')
   const selectedTotal = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
   const selectedCount = selectedItems.reduce((sum, i) => sum + i.quantity, 0)
-  const needsEmbeddedForm = selectedShopItems.length > 0 || (selectedBracelet && selectedShopItems.length > 0)
+  const needsEmbeddedForm = selectedShopItems.length > 0
 
-  // Auto-initialize the checkout form when shop or combined items are selected
+  // Stable key: re-create the intent whenever the selected shop/combined items change
+  const selectedKey = selectedItems
+    .map(i => `${i.productId}:${i.quantity}`)
+    .sort()
+    .join(',')
+
   useEffect(() => {
-    if (!needsEmbeddedForm || items.length === 0) { setClientSecret(null); return }
-    if (initRef.current) return
-    initRef.current = true
-    void initCheckout()
+    if (!needsEmbeddedForm) { setClientSecret(null); return }
+    // Debounce so rapid checkbox toggles don't spam the API
+    setClientSecret(null)
+    const timer = setTimeout(() => { void initCheckout() }, 600)
+    return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, needsEmbeddedForm])
+  }, [selectedKey, needsEmbeddedForm])
 
   async function initCheckout() {
     setFormLoading(true)
