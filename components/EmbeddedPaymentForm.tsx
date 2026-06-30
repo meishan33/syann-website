@@ -32,7 +32,7 @@ type Props = {
   returnUrlPath: string
 }
 
-const LABEL: React.CSSProperties = { ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }
+const LABEL: React.CSSProperties = { ...BODY, fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }
 const INPUT: React.CSSProperties = { ...BODY, width: '100%', padding: '13px 16px', border: '1px solid #E5DDD5', background: '#FDFAF7', fontSize: 13, color: '#4A3A32', outline: 'none', borderRadius: 8, boxSizing: 'border-box' }
 
 export default function EmbeddedPaymentForm(props: Props) {
@@ -216,7 +216,7 @@ function PaymentFormInner({ clientSecret, initialAmountCents, initialShippingFee
       )}
 
       <div>
-        <label style={LABEL}>Shipping Address</label>
+        <label style={LABEL}>Shipping Info</label>
         <AddressElement
           options={{
             mode: 'shipping',
@@ -242,7 +242,7 @@ function PaymentFormInner({ clientSecret, initialAmountCents, initialShippingFee
       </div>
 
       <div>
-        <label style={LABEL}>Payment Details</label>
+        <label style={LABEL}>Payment Method</label>
         <PaymentElement />
       </div>
 
