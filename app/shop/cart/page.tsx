@@ -204,13 +204,13 @@ export default function CartPage() {
         {/* Item list */}
         <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', overflow: 'hidden', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 24px', borderBottom: '1px solid #F0E8DF', background: '#FDFAF7' }}>
-            <button onClick={toggleAll} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${allChecked ? '#C9B08A' : '#D9CEC5'}`, background: allChecked ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
+            <button onClick={toggleAll} style={{ width: 14, height: 14, borderRadius: 3, border: `2px solid ${allChecked ? '#C9B08A' : '#D9CEC5'}`, background: allChecked ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
             <span style={{ ...BODY, fontSize: 11, color: '#9A8573', letterSpacing: '0.06em' }}>{allChecked ? 'Deselect All' : 'Select All'}</span>
           </div>
 
           {items.map((item, i) => (
             <div key={item.productId} style={{ display: 'flex', gap: 14, padding: '18px 24px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center' }}>
-              <button onClick={() => toggleCheck(item.productId)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked[item.productId] ? '#C9B08A' : '#D9CEC5'}`, background: checked[item.productId] ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
+              <button onClick={() => toggleCheck(item.productId)} style={{ width: 14, height: 14, borderRadius: 3, border: `2px solid ${checked[item.productId] ? '#C9B08A' : '#D9CEC5'}`, background: checked[item.productId] ? '#C9B08A' : '#fff', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }} />
               <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
                 {item.imageUrl
                   ? <Image src={item.imageUrl} alt={item.name} fill sizes="72px" style={{ objectFit: item.type === 'bracelet' ? 'contain' : 'cover' }} />
