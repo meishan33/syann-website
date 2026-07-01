@@ -1431,21 +1431,28 @@ export default function AdminPage() {
                   ) : (
                     /* ── LIST VIEW ── */
                     <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                      {/* Header row */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '10px 18px', background: '#FAFAF8', borderBottom: '1px solid #F0E8DF', alignItems: 'center' }}>
+                        {['#', 'IMAGE', 'NAME', 'CATEGORY', 'PRICE', 'STOCK', 'STATUS', ''].map(h => (
+                          <span key={h} style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>{h}</span>
+                        ))}
+                      </div>
                       {shopProducts.map((p, i) => (
-                        <div key={p.id} style={{ display: 'flex', gap: 14, padding: '14px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.6 }}>
+                        <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55 }}>
+                          {/* # */}
+                          <span style={{ ...BODY, fontSize: 11, color: '#B0A090', letterSpacing: '0.06em' }}>#{i + 1}</span>
                           {/* Thumbnail */}
-                          <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 8, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
-                            {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: GOLD, opacity: 0.3 }}>✦</div>}
+                          <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
+                            {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: GOLD, opacity: 0.3 }}>✦</div>}
                           </div>
-                          {/* Info */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 2px' }}>{p.category}</p>
-                            <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: DARK, margin: '0 0 2px' }}>{p.name}</p>
-                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>S${p.price.toFixed(2)}</p>
-                          </div>
-                          {/* Stock inline */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                            <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9A8573' }}>Stock</span>
+                          {/* Name */}
+                          <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: DARK, margin: 0 }}>{p.name}</p>
+                          {/* Category */}
+                          <span style={{ ...BODY, fontSize: 10, color: '#7A6355' }}>{p.category}</span>
+                          {/* Price */}
+                          <span style={{ ...BODY, fontSize: 12, color: DARK }}>S${p.price.toFixed(2)}</span>
+                          {/* Stock */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                             <input type="number" min="0" defaultValue={p.stock_count}
                               onBlur={async (e) => {
                                 const val = parseInt(e.target.value)
@@ -1454,22 +1461,32 @@ export default function AdminPage() {
                                 await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, stock_count: val }) })
                                 fetchShopProducts()
                               }}
-                              style={{ ...BODY, width: 52, padding: '3px 6px', border: '1px solid #E5DDD5', borderRadius: 5, fontSize: 12, color: DARK, background: '#FAFAF8' }}
+                              style={{ ...BODY, width: 48, padding: '3px 6px', border: '1px solid #E5DDD5', borderRadius: 5, fontSize: 12, color: DARK, background: '#FAFAF8' }}
                             />
-                            <span style={{ ...BODY, fontSize: 9, color: p.stock_count === 0 ? '#DC2626' : '#15803D', fontWeight: 600 }}>{p.stock_count === 0 ? 'Out' : 'In'}</span>
                           </div>
-                          {/* Status badge */}
-                          <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 999, background: p.active ? '#22C55E22' : '#E5DDD5', color: p.active ? '#15803D' : '#9A8573', border: `1px solid ${p.active ? '#22C55E44' : '#E5DDD5'}`, flexShrink: 0 }}>
-                            {p.active ? 'Active' : 'Hidden'}
-                          </span>
+                          {/* Toggle */}
+                          <button
+                            onClick={async () => {
+                              const token = (await supabase.auth.getSession()).data.session?.access_token
+                              await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, active: !p.active }) })
+                              fetchShopProducts()
+                            }}
+                            title={p.active ? 'Click to disable' : 'Click to enable'}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                          >
+                            <div style={{ width: 36, height: 20, borderRadius: 999, background: p.active ? '#7CB98A' : '#D5CDC6', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                              <div style={{ position: 'absolute', top: 2, left: p.active ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                            </div>
+                            <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: p.active ? '#5A9B6A' : '#9A8573' }}>
+                              {p.active ? 'Active' : 'Hidden'}
+                            </span>
+                          </button>
                           {/* Actions */}
-                          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          <div style={{ display: 'flex', gap: 5 }}>
                             <button onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
-                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 10px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 6, cursor: 'pointer', color: DARK }}>Edit</button>
-                            <button onClick={async () => { const token = (await supabase.auth.getSession()).data.session?.access_token; await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, active: !p.active }) }); fetchShopProducts() }}
-                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 10px', background: p.active ? '#FEF9C3' : '#F0FDF4', border: `1px solid ${p.active ? '#FDE047' : '#BBF7D0'}`, borderRadius: 6, cursor: 'pointer', color: p.active ? '#854D0E' : '#166534' }}>{p.active ? 'Disable' : 'Enable'}</button>
+                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 8px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 5, cursor: 'pointer', color: DARK }}>Edit</button>
                             <button onClick={async () => { if (!confirm('Delete?')) return; const token = (await supabase.auth.getSession()).data.session?.access_token; await fetch('/api/shop/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id }) }); fetchShopProducts() }}
-                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 6, cursor: 'pointer', color: '#DC2626' }}>Del</button>
+                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 8px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 5, cursor: 'pointer', color: '#DC2626' }}>Del</button>
                           </div>
                         </div>
                       ))}
