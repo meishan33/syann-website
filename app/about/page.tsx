@@ -1,4 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'About SYANN.CO — Our Story & Mission',
+  description: 'SYANN combines ancient Five Elements wisdom with AI to create crystal bracelets uniquely aligned to your energy. Learn about our story, values, and commitment to natural gemstones.',
+  openGraph: { title: 'About SYANN.CO', description: 'Where Five Elements wisdom meets AI — discover the story behind every personalized crystal bracelet.' },
+}
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }

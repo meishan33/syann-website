@@ -1,4 +1,11 @@
+import type { Metadata } from 'next'
 import { getActiveDesigns } from '@/lib/design-engine'
+
+export const metadata: Metadata = {
+  title: 'Bracelet Designs — Crystal Bead Arrangements',
+  description: 'Explore the bead placement designs used in every SYANN bracelet. Each arrangement is crafted to complement the energy of your chosen crystals.',
+  openGraph: { title: 'Crystal Bracelet Designs | SYANN.CO', description: 'Discover how crystal bead arrangements are designed to harmonize your personal energy.' },
+}
 import { BEAD_COUNTS, TOTAL_BEADS } from '@/lib/bracelet-config'
 
 const RADIUS = 110

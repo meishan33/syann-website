@@ -1,4 +1,11 @@
+import type { Metadata } from 'next'
 import EnergyQuizForm from '@/components/EnergyQuizForm'
+
+export const metadata: Metadata = {
+  title: 'Crystal Energy Quiz — Discover Your Bracelet',
+  description: 'Answer a few questions about your birth date and intentions. Our AI analyzes your Five Elements profile and curates the perfect crystal bracelet for your energy.',
+  openGraph: { title: 'Take the Crystal Energy Quiz | SYANN.CO', description: 'Discover the crystals aligned with your energy — powered by Five Elements wisdom and AI.' },
+}
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }

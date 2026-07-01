@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
     }
 
-    console.log("ANALYZE API HIT");
 
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
     let userId: string | null = null
@@ -67,9 +66,7 @@ export async function POST(req: NextRequest) {
 
     // ── Five Element Analysis ──────────────────────────────────────────────
 
-    console.log("Analyzing five elements...");
     const analysis = analyzeFiveElements(birthDate, birthTime);
-    console.log("Weak Element:", analysis.weakElement, "| Strong:", analysis.strongElement);
 
     // ── Fetch active crystals ──────────────────────────────────────────────
 
@@ -87,8 +84,6 @@ export async function POST(req: NextRequest) {
     }
 
     // ── AI Crystal Selection + Explanation ────────────────────────────────
-
-    console.log("Running AI crystal selection...");
 
     const aiResponse = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -111,7 +106,6 @@ export async function POST(req: NextRequest) {
     if (!aiContent) throw new Error("No response from AI");
 
     const recommendation: AIRecommendation = JSON.parse(aiContent);
-    console.log("AI selected crystals:", recommendation.selectedCrystals);
 
     // ── Resolve crystal objects from catalog ──────────────────────────────
 
@@ -125,8 +119,6 @@ export async function POST(req: NextRequest) {
       .filter(Boolean);
 
     // ── Save result ───────────────────────────────────────────────────────
-
-    console.log("Saving result to Supabase...");
 
     const { data: savedResult, error: saveError } = await supabaseAdmin
       .from("energy_quiz_results")
@@ -151,7 +143,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: saveError.message }, { status: 500 });
     }
 
-    console.log("Saved successfully:", savedResult.id);
 
     // ── Generate bracelet photo server-side ────────────────────────────────
     // Never lets a failure here break the analyze response — the results/

@@ -1,4 +1,11 @@
+import type { Metadata } from 'next'
 import EnergyQuizForm from '@/components/EnergyQuizForm'
+
+export const metadata: Metadata = {
+  title: 'Personalized Crystal Bracelets Crafted for Your Energy',
+  description: 'Take the free Energy Quiz and receive a crystal bracelet uniquely curated for your Five Elements profile, intentions, and energy. Handcrafted with natural gemstones.',
+  openGraph: { title: 'SYANN.CO — Personalized Crystal Bracelets', description: 'Discover the crystals aligned with your energy through Five Elements wisdom and AI-powered curation.', url: 'https://syann.co' },
+}
 
 const SELLING_POINTS = [
   {
