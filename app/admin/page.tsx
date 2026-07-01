@@ -207,7 +207,7 @@ export default function AdminPage() {
     customer_phone: string | null; shipping_address: Record<string, string | null> | null
     items: ShopOrderItem[]; total_amount: number; payment_status: string; fulfillment_status: string; created_at: string
   }
-  const [shopTabView, setShopTabView] = useState<'products' | 'orders'>('products')
+  const [shopViewMode, setShopViewMode] = useState<'grid' | 'list'>('grid')
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([])
   const [shopOrdersLoading, setShopOrdersLoading] = useState(false)
   const [expandedShopOrder, setExpandedShopOrder] = useState<string | null>(null)
@@ -1324,99 +1324,44 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* ── AI PROMPT ── */}
+              {/* ── SHOP ── */}
               {tab === 'shop' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {/* Toolbar */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                    <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 4 }}>
-                      {(['products', 'orders'] as const).map(v => (
-                        <button key={v} onClick={() => { setShopTabView(v); if (v === 'orders') fetchShopOrders() }}
-                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 16px', background: shopTabView === v ? DARK : 'transparent', color: shopTabView === v ? '#F6F1EB' : '#9A8573', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                    {shopTabView === 'products' ? (
-                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopProducts.length} product{shopProducts.length !== 1 ? 's' : ''}</p>
-                    ) : (
-                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopOrders.length} order{shopOrders.length !== 1 ? 's' : ''}</p>
-                    )}
-                    {shopTabView === 'products' && (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopProducts.length} product{shopProducts.length !== 1 ? 's' : ''}</p>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {/* Grid / List toggle */}
+                      <div style={{ display: 'flex', gap: 2, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 3 }}>
+                        {(['grid', 'list'] as const).map(v => (
+                          <button key={v} onClick={() => setShopViewMode(v)}
+                            title={v === 'grid' ? 'Grid view' : 'List view'}
+                            style={{ padding: '5px 8px', background: shopViewMode === v ? DARK : 'transparent', border: 'none', borderRadius: 5, cursor: 'pointer', color: shopViewMode === v ? '#fff' : '#9A8573', display: 'flex', alignItems: 'center' }}>
+                            {v === 'grid' ? (
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="1" y1="3" x2="13" y2="3"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="11" x2="13" y2="11"/></svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                       <button
                         onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' }) }}
                         style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
                       >
                         + Add Product
                       </button>
-                    )}
+                    </div>
                   </div>
 
-                  {shopTabView === 'orders' ? (
-                    shopOrdersLoading ? (
-                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
-                    ) : shopOrders.length === 0 ? (
-                      <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No shop orders yet.</p>
-                    ) : (
-                      <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
-                        {shopOrders.map(o => {
-                          const isOpen = expandedShopOrder === o.id
-                          const addr = o.shipping_address
-                          return (
-                            <div key={o.id} style={{ borderBottom: '1px solid #F0E8DF' }}>
-                              <button
-                                onClick={() => setExpandedShopOrder(isOpen ? null : o.id)}
-                                style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, textAlign: 'left' }}
-                              >
-                                <div>
-                                  <p style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em', margin: '0 0 4px' }}>
-                                    {o.order_number ? `#${o.order_number}` : '—'} · {new Date(o.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                  </p>
-                                  <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: DARK, margin: '0 0 2px' }}>{o.customer_name || '—'} · <span style={{ color: '#9A8573', fontWeight: 300 }}>{o.customer_email || '—'}</span></p>
-                                  <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0 }}>{o.items?.map(i => `${i.name} ×${i.quantity}`).join(', ') || '—'}</p>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                                  <p style={{ ...SERIF, fontSize: 16, color: DARK, margin: 0 }}>S${Number(o.total_amount).toFixed(2)}</p>
-                                  <Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} />
-                                  <Badge label={o.fulfillment_status} color={o.fulfillment_status === 'fulfilled' ? '#7CB98A' : o.fulfillment_status === 'unfulfilled' ? GOLD : '#9A8573'} />
-                                </div>
-                              </button>
-                              {isOpen && (
-                                <div style={{ padding: '0 20px 18px', display: 'flex', flexWrap: 'wrap', gap: '12px 32px', alignItems: 'flex-end' }}>
-                                  <div>
-                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Phone</p>
-                                    <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_phone || '—'}</p>
-                                  </div>
-                                  <div>
-                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Shipping Address</p>
-                                    <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>
-                                      {addr ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ') : '—'}
-                                    </p>
-                                  </div>
-                                  <div style={{ marginLeft: 'auto' }}>
-                                    <select value={o.fulfillment_status} disabled={actionLoading === o.id} onChange={e => updateShopFulfillment(o.id, e.target.value)}
-                                      style={{ ...BODY, fontSize: 11, padding: '6px 10px', border: '1px solid #E5DDD5', background: '#fff', color: DARK, cursor: 'pointer', borderRadius: 6 }}>
-                                      <option value="unfulfilled">Unfulfilled</option>
-                                      <option value="processing">Processing</option>
-                                      <option value="fulfilled">Fulfilled</option>
-                                      <option value="cancelled">Cancelled</option>
-                                    </select>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )
-                  ) : shopLoading ? (
+                  {shopLoading ? (
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
                   ) : shopProducts.length === 0 ? (
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No products yet. Add your first one.</p>
-                  ) : (
+                  ) : shopViewMode === 'grid' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
                       {shopProducts.map(p => (
-                        <div key={p.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div key={p.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', opacity: p.active ? 1 : 0.6 }}>
                           <div style={{ position: 'relative', aspectRatio: '1', background: '#F8F4EF' }}>
                             {p.image_url
                               ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1479,6 +1424,52 @@ export default function AdminPage() {
                             >
                               Del
                             </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* ── LIST VIEW ── */
+                    <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                      {shopProducts.map((p, i) => (
+                        <div key={p.id} style={{ display: 'flex', gap: 14, padding: '14px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.6 }}>
+                          {/* Thumbnail */}
+                          <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 8, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
+                            {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: GOLD, opacity: 0.3 }}>✦</div>}
+                          </div>
+                          {/* Info */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 2px' }}>{p.category}</p>
+                            <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: DARK, margin: '0 0 2px' }}>{p.name}</p>
+                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>S${p.price.toFixed(2)}</p>
+                          </div>
+                          {/* Stock inline */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9A8573' }}>Stock</span>
+                            <input type="number" min="0" defaultValue={p.stock_count}
+                              onBlur={async (e) => {
+                                const val = parseInt(e.target.value)
+                                if (isNaN(val) || val === p.stock_count) return
+                                const token = (await supabase.auth.getSession()).data.session?.access_token
+                                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, stock_count: val }) })
+                                fetchShopProducts()
+                              }}
+                              style={{ ...BODY, width: 52, padding: '3px 6px', border: '1px solid #E5DDD5', borderRadius: 5, fontSize: 12, color: DARK, background: '#FAFAF8' }}
+                            />
+                            <span style={{ ...BODY, fontSize: 9, color: p.stock_count === 0 ? '#DC2626' : '#15803D', fontWeight: 600 }}>{p.stock_count === 0 ? 'Out' : 'In'}</span>
+                          </div>
+                          {/* Status badge */}
+                          <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 999, background: p.active ? '#22C55E22' : '#E5DDD5', color: p.active ? '#15803D' : '#9A8573', border: `1px solid ${p.active ? '#22C55E44' : '#E5DDD5'}`, flexShrink: 0 }}>
+                            {p.active ? 'Active' : 'Hidden'}
+                          </span>
+                          {/* Actions */}
+                          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                            <button onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
+                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 10px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 6, cursor: 'pointer', color: DARK }}>Edit</button>
+                            <button onClick={async () => { const token = (await supabase.auth.getSession()).data.session?.access_token; await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, active: !p.active }) }); fetchShopProducts() }}
+                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 10px', background: p.active ? '#FEF9C3' : '#F0FDF4', border: `1px solid ${p.active ? '#FDE047' : '#BBF7D0'}`, borderRadius: 6, cursor: 'pointer', color: p.active ? '#854D0E' : '#166534' }}>{p.active ? 'Disable' : 'Enable'}</button>
+                            <button onClick={async () => { if (!confirm('Delete?')) return; const token = (await supabase.auth.getSession()).data.session?.access_token; await fetch('/api/shop/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id }) }); fetchShopProducts() }}
+                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 6, cursor: 'pointer', color: '#DC2626' }}>Del</button>
                           </div>
                         </div>
                       ))}
