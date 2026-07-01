@@ -107,9 +107,6 @@ function AccordionItem({
             <div style={{ position: 'relative', width: '100%', maxWidth: 380, borderRadius: 14, overflow: 'hidden', border: '1px solid #E5DDD5', aspectRatio: '1/1' }}>
               <Image src={image} alt="Sample packaging" fill sizes="380px" style={{ objectFit: 'cover' }} />
             </div>
-            <a href={image} target="_blank" rel="noopener noreferrer" style={{ ...BODY, fontSize: 11, color: GOLD, marginTop: 8, display: 'inline-block', letterSpacing: '0.06em', textDecoration: 'none' }}>
-              View full size ↗
-            </a>
           </div>
         )}
       </div>
