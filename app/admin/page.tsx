@@ -2572,12 +2572,17 @@ export default function AdminPage() {
                   <option value="accessory">Accessory</option>
                 </select>
               </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Stock Count</label>
+                <input value={editProduct.stock_count} onChange={e => setEditProduct(p => ({ ...p, stock_count: e.target.value }))} type="number" min="0" placeholder="0"
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
               <button onClick={() => setEditProductId(null)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>Cancel</button>
               <button onClick={async () => {
                 const token = (await supabase.auth.getSession()).data.session?.access_token
-                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: editProductId, ...editProduct, price: parseFloat(editProduct.price), image_url: editProduct.image_url || null, description: editProduct.description || null }) })
+                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: editProductId, ...editProduct, price: parseFloat(editProduct.price), stock_count: parseInt(editProduct.stock_count || '0'), image_url: editProduct.image_url || null, description: editProduct.description || null }) })
                 setEditProductId(null); fetchShopProducts()
               }} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                 Save Changes
