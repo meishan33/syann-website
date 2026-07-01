@@ -2539,11 +2539,29 @@ export default function AdminPage() {
                     style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               ))}
+              {/* Description */}
               <div>
                 <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Description</label>
                 <textarea value={editProduct.description} onChange={e => setEditProduct(p => ({ ...p, description: e.target.value }))} rows={5} placeholder="Describe the product — materials, benefits, size, etc."
                   style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.7 }} />
               </div>
+              {/* Stock Count */}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Stock Count</label>
+                <input value={editProduct.stock_count} onChange={e => setEditProduct(p => ({ ...p, stock_count: e.target.value }))} type="number" min="0" placeholder="0"
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              {/* Category */}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Category</label>
+                <select value={editProduct.category} onChange={e => setEditProduct(p => ({ ...p, category: e.target.value }))}
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}>
+                  <option value="bracelet">Bracelet</option>
+                  <option value="crystal">Crystal</option>
+                  <option value="accessory">Accessory</option>
+                </select>
+              </div>
+              {/* Product Image */}
               <div>
                 <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Product Image</label>
                 {editProduct.image_url && (
@@ -2562,20 +2580,6 @@ export default function AdminPage() {
                     setProductImageUploading(false)
                   }} />
                 </label>
-              </div>
-              <div>
-                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Category</label>
-                <select value={editProduct.category} onChange={e => setEditProduct(p => ({ ...p, category: e.target.value }))}
-                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}>
-                  <option value="bracelet">Bracelet</option>
-                  <option value="crystal">Crystal</option>
-                  <option value="accessory">Accessory</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Stock Count</label>
-                <input value={editProduct.stock_count} onChange={e => setEditProduct(p => ({ ...p, stock_count: e.target.value }))} type="number" min="0" placeholder="0"
-                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>

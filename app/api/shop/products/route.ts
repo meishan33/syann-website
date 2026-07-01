@@ -27,10 +27,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
-  const { name, description, price, category, image_url } = body
+  const { name, description, price, category, image_url, stock_count } = body
   const { data, error } = await supabaseAdmin
     .from('shop_products')
-    .insert([{ name, description, price, category, image_url, stock_count: 0 }])
+    .insert([{ name, description, price, category, image_url, stock_count: parseInt(stock_count || '0') }])
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
