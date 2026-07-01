@@ -1381,7 +1381,7 @@ export default function AdminPage() {
                         ))}
                       </div>
                       <button
-                        onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' }) }}
+                        onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '', product_url: '' }) }}
                         style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
                       >
                         + Add Product
