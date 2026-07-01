@@ -40,7 +40,7 @@ const FAQS = [
   },
   {
     q: 'How long does it take to receive my order?',
-    a: 'Each bracelet is handcrafted after your order is placed. Please allow 3–5 business days for crafting, followed by 5–10 business days for shipping depending on your location. You will receive a tracking number once your order is dispatched.',
+    a: 'Each bracelet is lovingly handcrafted after your order is placed. Please allow 3–5 business days for crafting. Once dispatched, estimated delivery times are 2–3 business days for Singapore and Malaysia, and 5–10 business days for all other international destinations. A tracking number will be shared with you as soon as your order is on its way.',
   },
   {
     q: 'What does the packaging look like?',
