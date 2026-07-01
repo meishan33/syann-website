@@ -1414,18 +1414,7 @@ export default function AdminPage() {
                             {/* Stock count */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
                               <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>Stock</span>
-                              <input
-                                type="number" min="0"
-                                defaultValue={p.stock_count}
-                                onBlur={async (e) => {
-                                  const val = parseInt(e.target.value)
-                                  if (isNaN(val) || val === p.stock_count) return
-                                  const token = (await supabase.auth.getSession()).data.session?.access_token
-                                  await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, stock_count: val }) })
-                                  fetchShopProducts()
-                                }}
-                                style={{ ...BODY, width: 64, padding: '4px 8px', border: '1px solid #E5DDD5', borderRadius: 6, fontSize: 12, color: DARK, background: '#FAFAF8' }}
-                              />
+                              <span style={{ ...BODY, fontSize: 13, fontWeight: 500, color: DARK }}>{p.stock_count}</span>
                               <span style={{ ...BODY, fontSize: 10, color: p.stock_count === 0 ? '#DC2626' : '#15803D', fontWeight: 600 }}>
                                 {p.stock_count === 0 ? 'Out of Stock' : 'In Stock'}
                               </span>
@@ -1488,17 +1477,11 @@ export default function AdminPage() {
                           {/* Price */}
                           <span style={{ ...BODY, fontSize: 12, color: DARK }}>S${p.price.toFixed(2)}</span>
                           {/* Stock */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <input type="number" min="0" defaultValue={p.stock_count}
-                              onBlur={async (e) => {
-                                const val = parseInt(e.target.value)
-                                if (isNaN(val) || val === p.stock_count) return
-                                const token = (await supabase.auth.getSession()).data.session?.access_token
-                                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, stock_count: val }) })
-                                fetchShopProducts()
-                              }}
-                              style={{ ...BODY, width: 48, padding: '3px 6px', border: '1px solid #E5DDD5', borderRadius: 5, fontSize: 12, color: DARK, background: '#FAFAF8' }}
-                            />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ ...BODY, fontSize: 13, fontWeight: 500, color: DARK }}>{p.stock_count}</span>
+                            <span style={{ ...BODY, fontSize: 9, color: p.stock_count === 0 ? '#DC2626' : '#15803D', fontWeight: 600 }}>
+                              {p.stock_count === 0 ? '(Out)' : ''}
+                            </span>
                           </div>
                           {/* Toggle */}
                           <button
