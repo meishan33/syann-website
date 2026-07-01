@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { TOTAL_BEADS } from '@/lib/bracelet-config'
 
@@ -103,15 +104,11 @@ function AccordionItem({
         </p>
         {image && (
           <div style={{ paddingBottom: 20 }}>
-            <a href={image} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block' }}>
-              <img
-                src={image}
-                alt="Sample packaging"
-                style={{ width: '100%', maxWidth: 360, borderRadius: 12, border: '1px solid #E5DDD5', display: 'block' }}
-              />
-              <p style={{ ...BODY, fontSize: 11, color: GOLD, marginTop: 6, letterSpacing: '0.06em' }}>
-                Click to view full size ↗
-              </p>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 380, borderRadius: 14, overflow: 'hidden', border: '1px solid #E5DDD5', aspectRatio: '1/1' }}>
+              <Image src={image} alt="Sample packaging" fill sizes="380px" style={{ objectFit: 'cover' }} />
+            </div>
+            <a href={image} target="_blank" rel="noopener noreferrer" style={{ ...BODY, fontSize: 11, color: GOLD, marginTop: 8, display: 'inline-block', letterSpacing: '0.06em', textDecoration: 'none' }}>
+              View full size ↗
             </a>
           </div>
         )}
