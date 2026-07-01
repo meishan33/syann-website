@@ -42,16 +42,22 @@ const FAQS = [
     a: 'Each bracelet is handcrafted after your order is placed. Please allow 3–5 business days for crafting, followed by 5–10 business days for shipping depending on your location. You will receive a tracking number once your order is dispatched.',
   },
   {
+    q: 'What does the packaging look like?',
+    a: 'Every SYANN bracelet arrives in a premium gift box with a crystal care card, a small bag of cleansing salt crystals, and a pouch — beautifully presented and ready to gift.',
+    image: '/SamplePackaging.png',
+  },
+  {
     q: 'Can I return or exchange my bracelet?',
     a: 'As every bracelet is personally curated and handcrafted for you, we are unable to accept returns or exchanges. However, if your bracelet arrives damaged or defective, please contact us within 7 days and we will make it right.',
   },
 ]
 
 function AccordionItem({
-  question, answer, isOpen, onToggle,
+  question, answer, image, isOpen, onToggle,
 }: {
   question: string
   answer: string
+  image?: string
   isOpen: boolean
   onToggle: () => void
 }) {
@@ -88,13 +94,27 @@ function AccordionItem({
       </button>
 
       <div style={{
-        maxHeight: isOpen ? 400 : 0,
+        maxHeight: isOpen ? 600 : 0,
         overflow: 'hidden',
-        transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
+        transition: 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
       }}>
-        <p style={{ ...BODY, fontSize: 13, fontWeight: 300, lineHeight: 1.9, color: '#7A6355', paddingBottom: 20, margin: 0 }}>
+        <p style={{ ...BODY, fontSize: 13, fontWeight: 300, lineHeight: 1.9, color: '#7A6355', paddingBottom: image ? 12 : 20, margin: 0 }}>
           {answer}
         </p>
+        {image && (
+          <div style={{ paddingBottom: 20 }}>
+            <a href={image} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block' }}>
+              <img
+                src={image}
+                alt="Sample packaging"
+                style={{ width: '100%', maxWidth: 360, borderRadius: 12, border: '1px solid #E5DDD5', display: 'block' }}
+              />
+              <p style={{ ...BODY, fontSize: 11, color: GOLD, marginTop: 6, letterSpacing: '0.06em' }}>
+                Click to view full size ↗
+              </p>
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -153,6 +173,7 @@ export default function FAQPage() {
               key={i}
               question={faq.q}
               answer={faq.a}
+              image={'image' in faq ? faq.image : undefined}
               isOpen={openIndex === i}
               onToggle={() => toggle(i)}
             />

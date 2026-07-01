@@ -183,6 +183,11 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
             <div className="flex flex-col gap-3">
               {[
                 <>All SYANN bracelets use <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> for a consistent, premium finish.</>,
+                <>Every order arrives in a <strong className="font-medium text-[#4A3A32]">premium gift box</strong> with a crystal care card.{' '}
+                  <a href="/SamplePackaging.png" target="_blank" rel="noopener noreferrer" className="text-[#B08B57] underline underline-offset-2 transition-opacity hover:opacity-70" style={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
+                    See packaging example
+                  </a>
+                </>,
                 <>The default bracelet size is <strong className="font-medium text-[#4A3A32]">16 cm</strong>. Please include your wrist size in the remarks if you&apos;d like it larger or smaller.{' '}
                   <button
                     type="button"
