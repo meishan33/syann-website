@@ -24,6 +24,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
   const [includeCharm, setIncludeCharm] = useState(true)
   const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
+  const [packagingOpen, setPackagingOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
 
@@ -184,9 +185,14 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
               {[
                 <>All SYANN bracelets use <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> for a consistent, premium finish.</>,
                 <>Every order arrives in a <strong className="font-medium text-[#4A3A32]">premium gift box</strong> with a crystal care card.{' '}
-                  <a href="/SamplePackaging.png" target="_blank" rel="noopener noreferrer" className="text-[#B08B57] underline underline-offset-2 transition-opacity hover:opacity-70" style={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPackagingOpen(true)}
+                    className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer transition-opacity hover:opacity-70"
+                    style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
+                  >
                     See packaging example
-                  </a>
+                  </button>
                 </>,
                 <>The default bracelet size is <strong className="font-medium text-[#4A3A32]">16 cm</strong>. Please include your wrist size in the remarks if you&apos;d like it larger or smaller.{' '}
                   <button
@@ -283,6 +289,42 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
               Got It
             </button>
 
+          </div>
+        </div>
+      )}
+
+      {/* PACKAGING MODAL */}
+      {packagingOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sample packaging"
+          className="fixed inset-0 z-50 flex items-center justify-center p-5"
+        >
+          <div className="absolute inset-0 bg-[#2E2118]/50 backdrop-blur-sm" onClick={() => setPackagingOpen(false)} />
+          <div className="relative w-full max-w-md rounded-[28px] bg-[#FBF6EE] p-6 shadow-[0_40px_100px_-30px_rgba(74,58,50,0.5)]">
+            <button
+              onClick={() => setPackagingOpen(false)}
+              aria-label="Close"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full text-[#9A8573] transition-colors hover:bg-[#E5DDD5] hover:text-[#4A3A32]"
+            >
+              ✕
+            </button>
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]" style={BODY}>Packaging</p>
+            <h3 style={SERIF} className="mb-4 text-2xl font-light text-[#4A3A32]">Your Order Arrives</h3>
+            <div className="overflow-hidden rounded-2xl border border-[#E5DDD5]">
+              <img src="/SamplePackaging.png" alt="Sample packaging" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+            </div>
+            <p className="mt-4 text-[12px] leading-relaxed text-[#7A6355]" style={BODY}>
+              Every SYANN bracelet arrives in a premium gift box with a crystal care card, cleansing salt crystals, and a pouch — beautifully presented and ready to gift.
+            </p>
+            <button
+              onClick={() => setPackagingOpen(false)}
+              className="mt-5 w-full rounded-full border border-[#B08B57] bg-[#B08B57] py-3 text-[12px] font-medium uppercase tracking-[0.28em] text-white transition-colors hover:bg-[#7A5B45] hover:border-[#7A5B45]"
+              style={BODY}
+            >
+              Got It
+            </button>
           </div>
         </div>
       )}
