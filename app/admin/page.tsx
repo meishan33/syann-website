@@ -781,7 +781,7 @@ export default function AdminPage() {
                         <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', padding: '48px 0' }}>No orders found.</p>
                       ) : (
                         <div style={{ overflowX: 'auto' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                             <thead><tr style={{ background: '#F6F1EB' }}>
                               <th style={TH}>#</th>
                               <th style={TH}>Customer</th><th style={TH}>Crystals</th>
@@ -893,7 +893,7 @@ export default function AdminPage() {
                     <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', padding: '48px 0' }}>No users.</p>
                   ) : (
                     <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                         <thead><tr style={{ background: '#F6F1EB' }}>
                           <th style={TH}>Name</th><th style={TH}>Email</th><th style={TH}>Is Admin</th>
                           <th style={TH}>Joined</th><th style={TH}>Last Sign In</th><th style={TH}>Action</th>
@@ -1018,7 +1018,7 @@ export default function AdminPage() {
                       <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', padding: '48px 0' }}>No crystals found.</p>
                     ) : (
                       <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                           <thead><tr style={{ background: '#F6F1EB' }}>
                             <th style={{ ...TH, width: 40 }}>#</th>
                             {CRYSTAL_COLUMNS.filter(c => visibleCols.has(c.key)).map(col => {
@@ -1591,7 +1591,7 @@ export default function AdminPage() {
                           <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: 0 }}>Crystal Bead Inventory</p>
                         </div>
                         <div style={{ overflowX: 'auto' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                             <thead>
                               <tr style={{ background: '#F6F1EB' }}>
                                 <th style={TH}></th>
