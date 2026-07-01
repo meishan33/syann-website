@@ -1431,14 +1431,15 @@ export default function AdminPage() {
                   ) : (
                     /* ── LIST VIEW ── */
                     <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
+                      <div style={{ overflowX: 'auto' }}>
                       {/* Header row */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '10px 18px', background: '#FAFAF8', borderBottom: '1px solid #F0E8DF', alignItems: 'center' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '10px 18px', background: '#FAFAF8', borderBottom: '1px solid #F0E8DF', alignItems: 'center', minWidth: 780 }}>
                         {['#', 'IMAGE', 'NAME', 'CATEGORY', 'PRICE', 'STOCK', 'STATUS', ''].map(h => (
                           <span key={h} style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>{h}</span>
                         ))}
                       </div>
                       {shopProducts.map((p, i) => (
-                        <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55 }}>
+                        <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55, minWidth: 780 }}>
                           {/* # */}
                           <span style={{ ...BODY, fontSize: 11, color: '#B0A090', letterSpacing: '0.06em' }}>#{i + 1}</span>
                           {/* Thumbnail */}
@@ -1490,6 +1491,7 @@ export default function AdminPage() {
                           </div>
                         </div>
                       ))}
+                      </div>{/* end overflowX scroll wrapper */}
                     </div>
                   )}
                 </div>
