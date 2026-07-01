@@ -1408,7 +1408,10 @@ export default function AdminPage() {
                           </div>
                           <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>{p.category}</p>
-                            <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: DARK, margin: 0 }}>{p.name}</p>
+                            <button
+                              onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
+                              style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: DARK, margin: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                            >{p.name}</button>
                             {p.description && <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0, lineHeight: 1.6 }}>{p.description}</p>}
                             <p style={{ ...SERIF, fontSize: 18, color: DARK, margin: '4px 0 0' }}>S${p.price.toFixed(2)}</p>
                             {/* Stock count */}
@@ -1421,12 +1424,6 @@ export default function AdminPage() {
                             </div>
                           </div>
                           <div style={{ padding: '0 16px 14px', display: 'flex', gap: 8 }}>
-                            <button
-                              onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
-                              style={{ ...BODY, flex: 1, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 8, cursor: 'pointer', color: DARK }}
-                            >
-                              Edit
-                            </button>
                             <button
                               onClick={async () => {
                                 const token = (await supabase.auth.getSession()).data.session?.access_token
@@ -1470,8 +1467,11 @@ export default function AdminPage() {
                           <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5' }}>
                             {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: GOLD, opacity: 0.3 }}>✦</div>}
                           </div>
-                          {/* Name */}
-                          <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: DARK, margin: 0 }}>{p.name}</p>
+                          {/* Name — clickable to open edit modal */}
+                          <button
+                            onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
+                            style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: GOLD, margin: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', textDecoration: 'underline', textDecorationColor: `${GOLD}55` }}
+                          >{p.name}</button>
                           {/* Category */}
                           <span style={{ ...BODY, fontSize: 10, color: '#7A6355' }}>{p.category}</span>
                           {/* Price */}
@@ -1502,8 +1502,6 @@ export default function AdminPage() {
                           </button>
                           {/* Actions */}
                           <div style={{ display: 'flex', gap: 5 }}>
-                            <button onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
-                              style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 8px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 5, cursor: 'pointer', color: DARK }}>Edit</button>
                             <button onClick={async () => { if (!confirm('Delete?')) return; const token = (await supabase.auth.getSession()).data.session?.access_token; await fetch('/api/shop/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id }) }); fetchShopProducts() }}
                               style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 8px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 5, cursor: 'pointer', color: '#DC2626' }}>Del</button>
                           </div>
