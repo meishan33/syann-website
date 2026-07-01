@@ -190,16 +190,16 @@ export default function AdminPage() {
   const [editCrystalSaving, setEditCrystalSaving] = useState(false)
 
   // Shop
-  type ShopProduct = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; active: boolean; stock_count: number }
+  type ShopProduct = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; active: boolean; stock_count: number; product_url: string | null }
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([])
   const [shopLoading, setShopLoading] = useState(false)
   const [showAddProduct, setShowAddProduct] = useState(false)
-  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' })
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '', product_url: '' })
   const [addProductError, setAddProductError] = useState<string | null>(null)
   const [addProductLoading, setAddProductLoading] = useState(false)
   const [productImageUploading, setProductImageUploading] = useState(false)
   const [editProductId, setEditProductId] = useState<string | null>(null)
-  const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' })
+  const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '', product_url: '' })
 
   // Shop orders
   type ShopOrderItem = { productId: string; name: string; price: number; quantity: number }
@@ -1433,7 +1433,7 @@ export default function AdminPage() {
                           </div>
                           <div style={{ padding: '0 16px 14px', display: 'flex', gap: 8 }}>
                             <button
-                              onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
+                              onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count), product_url: p.product_url || '' }) }}
                               style={{ ...BODY, flex: 1, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 8, cursor: 'pointer', color: DARK }}
                             >
                               Edit
@@ -1519,7 +1519,7 @@ export default function AdminPage() {
                           </button>
                           {/* Actions */}
                           <div style={{ display: 'flex', gap: 5 }}>
-                            <button onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
+                            <button onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count), product_url: p.product_url || '' }) }}
                               style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 8px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 5, cursor: 'pointer', color: DARK }}>Edit</button>
                             <button onClick={async () => { if (!confirm('Delete?')) return; const token = (await supabase.auth.getSession()).data.session?.access_token; await fetch('/api/shop/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id }) }); fetchShopProducts() }}
                               style={{ ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 8px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 5, cursor: 'pointer', color: '#DC2626' }}>Del</button>
@@ -2377,6 +2377,11 @@ export default function AdminPage() {
                   }} />
                 </label>
               </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Product Link (URL)</label>
+                <input value={newProduct.product_url} onChange={e => setNewProduct(p => ({ ...p, product_url: e.target.value }))} type="url" placeholder="https://..."
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
             </div>
             {addProductError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: '12px 0 0' }}>{addProductError}</p>}
             <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
@@ -2386,7 +2391,7 @@ export default function AdminPage() {
                 if (!newProduct.name || !newProduct.price) { setAddProductError('Name and price are required.'); return }
                 setAddProductLoading(true)
                 const token = (await supabase.auth.getSession()).data.session?.access_token
-                const r = await fetch('/api/shop/products', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...newProduct, price: parseFloat(newProduct.price), stock_count: parseInt(newProduct.stock_count || '0'), image_url: newProduct.image_url || null, description: newProduct.description || null }) })
+                const r = await fetch('/api/shop/products', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...newProduct, price: parseFloat(newProduct.price), stock_count: parseInt(newProduct.stock_count || '0'), image_url: newProduct.image_url || null, description: newProduct.description || null, product_url: newProduct.product_url || null }) })
                 if (!r.ok) { const d = await r.json(); setAddProductError(d.error || 'Failed'); setAddProductLoading(false); return }
                 setAddProductLoading(false); setShowAddProduct(false); fetchShopProducts()
               }} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: addProductLoading ? 'not-allowed' : 'pointer', opacity: addProductLoading ? 0.7 : 1 }}>
@@ -2444,12 +2449,17 @@ export default function AdminPage() {
                   <option value="accessory">Accessory</option>
                 </select>
               </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Product Link (URL)</label>
+                <input value={editProduct.product_url} onChange={e => setEditProduct(p => ({ ...p, product_url: e.target.value }))} type="url" placeholder="https://..."
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
               <button onClick={() => setEditProductId(null)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>Cancel</button>
               <button onClick={async () => {
                 const token = (await supabase.auth.getSession()).data.session?.access_token
-                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: editProductId, ...editProduct, price: parseFloat(editProduct.price), image_url: editProduct.image_url || null, description: editProduct.description || null }) })
+                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: editProductId, ...editProduct, price: parseFloat(editProduct.price), image_url: editProduct.image_url || null, description: editProduct.description || null, product_url: editProduct.product_url || null }) })
                 setEditProductId(null); fetchShopProducts()
               }} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                 Save Changes
