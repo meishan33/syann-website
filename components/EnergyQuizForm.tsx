@@ -57,7 +57,7 @@ function incrementDailyCount(userId: string) {
 
 /* ── Sign-up / Log-in modal ───────────────────────────────────────────── */
 
-function AuthModal({ onSuccess, onClose }: { onSuccess: () => void; onClose: () => void }) {
+function AuthModal({ onSuccess, onClose, limitReached }: { onSuccess: () => void; onClose: () => void; limitReached?: boolean }) {
   const [mode, setMode] = useState<'signup' | 'login'>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -168,6 +168,11 @@ function AuthModal({ onSuccess, onClose }: { onSuccess: () => void; onClose: () 
             <h3 style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', textAlign: 'center', marginBottom: 6 }}>
               {mode === 'signup' ? 'Continue Your Journey' : 'Sign In to Continue'}
             </h3>
+            {limitReached && (
+              <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#B08B57', textAlign: 'center', lineHeight: 1.7, marginBottom: 12, padding: '10px 14px', background: '#FEF9F2', borderRadius: 8, border: '1px solid #E5DDD5' }}>
+                You have reached 5 free attempts. Login to unlock the reading.
+              </p>
+            )}
             <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#9A8573', textAlign: 'center', lineHeight: 1.75, marginBottom: 24 }}>
               {mode === 'signup'
                 ? 'Create a free account to unlock your personalized crystal reading.'
@@ -428,7 +433,7 @@ export default function EnergyQuizForm() {
       const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
       const isAdmin = profile?.is_admin === true
       // Logged-in: 3 attempts per 24 hours, keyed by user ID (admins are exempt)
-      if (!isAdmin && getDailyCount(session.user.id) >= 3) {
+      if (!isAdmin && getDailyCount(session.user.id) >= 8) {
         setShowDailyLimit(true)
         return
       }
@@ -455,6 +460,7 @@ export default function EnergyQuizForm() {
         <AuthModal
           onSuccess={handleAuthSuccess}
           onClose={() => setShowAuthModal(false)}
+          limitReached
         />
       )}
 
