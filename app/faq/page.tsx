@@ -44,7 +44,7 @@ const FAQS = [
   },
   {
     q: 'What does the packaging look like?',
-    a: 'Every SYANN bracelet arrives in a premium gift box with a crystal care card, a small bag of cleansing salt crystals, and a pouch — beautifully presented and ready to gift.',
+    a: 'Every SYANN bracelet arrives in a premium gift box with a crystal care card, a degaussing crystal, and a pouch — beautifully presented and ready to gift.',
     image: '/SamplePackaging.png',
   },
   {
