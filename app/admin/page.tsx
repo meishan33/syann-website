@@ -16,7 +16,7 @@ type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt
 type Order = {
   id: string; order_number: number | null; customer_name: string; customer_email: string; customer_phone: string | null
   recommended_crystal_names: string[]; total_amount: number
-  payment_status: string; fulfillment_status: string; created_at: string
+  payment_status: string; fulfillment_status: string; created_at: string; tracking_number: string | null; tracking_url: string | null
   shipping_address: string | null; spacer_choice: string | null; remark: string | null
   weak_element: string | null; strong_element: string | null; analysis_summary: string | null
   generated_image_url: string | null; logo_charm: boolean | null; current_feelings: string | null
@@ -343,10 +343,30 @@ export default function AdminPage() {
     await fetchShopOrders(); setActionLoading(null)
   }
 
+  const [trackingModal, setTrackingModal] = useState<{ orderId: string } | null>(null)
+  const [trackingNumber, setTrackingNumber] = useState('')
+  const [trackingUrl, setTrackingUrl] = useState('')
+  const [trackingError, setTrackingError] = useState<string | null>(null)
+  const [trackingSaving, setTrackingSaving] = useState(false)
+
   const updateFulfillment = async (id: string, fulfillment_status: string) => {
+    if (fulfillment_status === 'shipped') {
+      setTrackingNumber(''); setTrackingUrl(''); setTrackingError(null)
+      setTrackingModal({ orderId: id })
+      return
+    }
     setActionLoading(id)
     await fetch('/api/admin/orders', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, fulfillment_status }) })
     await fetchOrders(); setActionLoading(null)
+  }
+
+  const confirmShipped = async () => {
+    if (!trackingModal) return
+    if (!trackingNumber.trim()) { setTrackingError('Tracking number is required.'); return }
+    setTrackingSaving(true); setTrackingError(null)
+    await fetch('/api/admin/orders', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: trackingModal.orderId, fulfillment_status: 'shipped', tracking_number: trackingNumber.trim(), tracking_url: trackingUrl.trim() || null }) })
+    setTrackingModal(null); setTrackingSaving(false)
+    await fetchOrders()
   }
 
   const toggleAdmin = async (userId: string, grant: boolean) => {
@@ -2216,6 +2236,52 @@ export default function AdminPage() {
             onClick={e => e.stopPropagation()}
             style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 32px 80px rgba(0,0,0,0.6)', cursor: 'default' }}
           />
+        </div>
+      )}
+
+      {/* ── TRACKING / SHIPPED MODAL ── */}
+      {trackingModal && (
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.45)' }}
+          onClick={e => { if (e.target === e.currentTarget) setTrackingModal(null) }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+              <div>
+                <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: GOLD, margin: '0 0 4px' }}>Mark as Shipped</p>
+                <h2 style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: DARK, margin: 0 }}>Enter Tracking Details</h2>
+              </div>
+              <button onClick={() => setTrackingModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9A8573', fontSize: 18 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Tracking Number *</label>
+                <input
+                  value={trackingNumber} onChange={e => { setTrackingNumber(e.target.value); setTrackingError(null) }}
+                  placeholder="e.g. SG1234567890"
+                  style={{ ...BODY, width: '100%', fontSize: 13, padding: '10px 14px', border: `1px solid ${trackingError ? '#FECACA' : '#E5DDD5'}`, borderRadius: 8, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Tracking URL <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
+                <input
+                  value={trackingUrl} onChange={e => setTrackingUrl(e.target.value)}
+                  placeholder="https://track.example.com/..."
+                  type="url"
+                  style={{ ...BODY, width: '100%', fontSize: 13, padding: '10px 14px', border: '1px solid #E5DDD5', borderRadius: 8, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              {trackingError && <p style={{ ...BODY, fontSize: 11, color: '#DC2626', margin: 0 }}>{trackingError}</p>}
+              <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0, lineHeight: 1.6 }}>
+                A shipment confirmation email with the tracking details will be sent to the customer automatically.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+              <button onClick={() => setTrackingModal(null)} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '10px 20px', background: 'transparent', border: '1px solid #E5DDD5', color: '#9A8573', borderRadius: 8, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={confirmShipped} disabled={trackingSaving}
+                style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '10px 24px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: trackingSaving ? 'not-allowed' : 'pointer', opacity: trackingSaving ? 0.7 : 1 }}>
+                {trackingSaving ? 'Saving…' : 'Confirm Shipped ✦'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

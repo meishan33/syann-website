@@ -219,3 +219,39 @@ export function orderStatusUpdateEmail({ orderNumber, status }: { orderNumber: n
   `)
   return { subject, html }
 }
+
+export function shippedOrderEmail({
+  orderNumber, customerName, crystalNames, trackingNumber, trackingUrl,
+}: {
+  orderNumber: number | string | null
+  customerName: string | null
+  crystalNames?: string[]
+  trackingNumber: string
+  trackingUrl: string | null
+}) {
+  const subject = `Your Order is On Its Way${orderNumber ? ` — #${orderNumber}` : ''} · SYANN.CO`
+  const html = wrapper(`
+    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:${GOLD};">Shipped</p>
+    <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:${DARK};">
+      Your Order is On Its Way${customerName ? `, ${customerName.split(' ')[0]}` : ''}
+    </h1>
+    <p style="margin:0 0 24px;font-size:13px;line-height:1.7;color:#7A5B45;">
+      Your crystal bracelet has been carefully packed and dispatched. We hope it brings you everything you set out for.
+    </p>
+    <div style="background:${CREAM};border-radius:10px;padding:20px 24px;margin-bottom:24px;">
+      ${orderNumber ? `<p style="margin:0 0 10px;font-size:12px;color:#7A5B45;">Order <strong style="color:${DARK};">#${orderNumber}</strong></p>` : ''}
+      ${crystalNames?.length ? `<p style="margin:0 0 10px;font-size:12px;color:#7A5B45;">${crystalNames.join(' · ')}</p>` : ''}
+      <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#9A8573;">Tracking Number</p>
+      <p style="margin:0 0 ${trackingUrl ? 14 : 0}px;font-size:14px;font-weight:600;color:${DARK};letter-spacing:0.04em;">${trackingNumber}</p>
+      ${trackingUrl ? `
+      <a href="${trackingUrl}" style="display:inline-block;padding:10px 20px;background:${DARK};color:#fff;text-decoration:none;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">
+        Track My Order →
+      </a>` : ''}
+    </div>
+    <p style="margin:0 0 4px;font-size:12px;color:#9A8573;line-height:1.7;">
+      Estimated delivery: 2–3 business days (SG/MY) · 5–10 business days (international)
+    </p>
+    ${CTA_BLOCK}
+  `)
+  return { subject, html }
+}
