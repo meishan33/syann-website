@@ -165,19 +165,22 @@ function AuthModal({ onSuccess, onClose, limitReached }: { onSuccess: () => void
             <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', textAlign: 'center', marginBottom: 10 }}>
               {mode === 'signup' ? 'Create Your Account' : 'Welcome Back'}
             </p>
-            <h3 style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', textAlign: 'center', marginBottom: 6 }}>
-              {mode === 'signup' ? 'Continue Your Journey' : 'Sign In to Continue'}
-            </h3>
-            {limitReached && (
-              <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#B08B57', textAlign: 'center', lineHeight: 1.7, marginBottom: 12, padding: '10px 14px', background: '#FEF9F2', borderRadius: 8, border: '1px solid #E5DDD5' }}>
+            {!limitReached && (
+              <h3 style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', textAlign: 'center', marginBottom: 6 }}>
+                {mode === 'signup' ? 'Continue Your Journey' : 'Sign In to Continue'}
+              </h3>
+            )}
+            {limitReached ? (
+              <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#B08B57', textAlign: 'center', lineHeight: 1.7, marginBottom: 24, padding: '10px 14px', background: '#FEF9F2', borderRadius: 8, border: '1px solid #E5DDD5' }}>
                 You&apos;ve explored 5 readings as a guest. Sign in to continue your crystal journey.
               </p>
+            ) : (
+              <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#9A8573', textAlign: 'center', lineHeight: 1.75, marginBottom: 24 }}>
+                {mode === 'signup'
+                  ? 'Create a free account to unlock your personalized crystal reading.'
+                  : 'Sign in to continue generating your crystal reading.'}
+              </p>
             )}
-            <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#9A8573', textAlign: 'center', lineHeight: 1.75, marginBottom: 24 }}>
-              {mode === 'signup'
-                ? 'Create a free account to unlock your personalized crystal reading.'
-                : 'Sign in to continue generating your crystal reading.'}
-            </p>
 
             {/* Google Sign In */}
             <button
