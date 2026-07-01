@@ -4,13 +4,35 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail, orderConfirmationEmail, newOrderAdminEmail, notifyAdmins } from '@/lib/email'
 
 // Decrements stock_count for each purchased shop item, clamped to 0.
-async function decrementShopStock(items: { productId?: string; quantity: number }[]) {
+// Returns the names of any items that just reached 0 so admins can be notified.
+async function decrementShopStock(items: { productId?: string; name: string; quantity: number }[]) {
+  const outOfStock: string[] = []
   for (const item of items) {
     if (!item.productId) continue
-    const { data } = await supabaseAdmin.from('shop_products').select('stock_count').eq('id', item.productId).single()
+    const { data } = await supabaseAdmin.from('shop_products').select('stock_count, name').eq('id', item.productId).single()
     if (!data) continue
     const newStock = Math.max(0, (data.stock_count ?? 0) - item.quantity)
     await supabaseAdmin.from('shop_products').update({ stock_count: newStock }).eq('id', item.productId)
+    if (newStock === 0) outOfStock.push(data.name)
+  }
+
+  if (outOfStock.length > 0) {
+    const itemList = outOfStock.map(n => `• ${n}`).join('\n')
+    const subject = `⚠️ Out of Stock Alert — ${outOfStock.join(', ')} | SYANN.CO`
+    const html = `
+<div style="font-family:Helvetica,Arial,sans-serif;padding:32px 24px;background:#F6F1EB;">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #E5DDD5;">
+    <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.24em;text-transform:uppercase;color:#B08B57;">Stock Alert</p>
+    <h2 style="margin:0 0 20px;font-family:Georgia,serif;font-size:22px;font-weight:400;color:#4A3A32;">Out of Stock</h2>
+    <p style="margin:0 0 16px;font-size:13px;color:#7A5B45;">The following product${outOfStock.length > 1 ? 's have' : ' has'} just sold out:</p>
+    <div style="background:#FEF9F2;border:1px solid #E5DDD5;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+      ${outOfStock.map(n => `<p style="margin:4px 0;font-size:13px;font-weight:600;color:#4A3A32;">• ${n}</p>`).join('')}
+    </div>
+    <p style="margin:0 0 20px;font-size:12px;color:#9A8573;">Please restock or disable these items in the admin panel to avoid customer confusion.</p>
+    <a href="https://syann.co/admin" style="display:inline-block;padding:10px 24px;background:#4A3A32;color:#fff;text-decoration:none;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Go to Admin</a>
+  </div>
+</div>`.trim()
+    await notifyAdmins({ subject, html })
   }
 }
 
