@@ -34,8 +34,23 @@ const LOADING_MESSAGES = [
 ]
 
 const LS_KEY = 'syann_has_generated'
+const LS_DATE_KEY = 'syann_has_generated_date'
 
 function todayStr() { return new Date().toISOString().slice(0, 10) }
+
+function getGuestCount(): number {
+  if (localStorage.getItem(LS_DATE_KEY) !== todayStr()) {
+    localStorage.setItem(LS_DATE_KEY, todayStr())
+    localStorage.setItem(LS_KEY, '0')
+    return 0
+  }
+  return parseInt(localStorage.getItem(LS_KEY) || '0', 10)
+}
+
+function incrementGuestCount() {
+  localStorage.setItem(LS_DATE_KEY, todayStr())
+  localStorage.setItem(LS_KEY, String(getGuestCount() + 1))
+}
 
 function getDailyCount(userId: string): number {
   const countKey = `syann_daily_count_${userId}`
@@ -397,8 +412,7 @@ export default function EnergyQuizForm() {
       if (!res.ok) throw new Error(data?.error || 'We could not complete your analysis. Please try again.')
       if (!data?.id) throw new Error('Your analysis is missing a reference id.')
 
-      const prev = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
-      localStorage.setItem(LS_KEY, String(prev + 1))
+      incrementGuestCount()
       // Save birth date & time to user metadata for future auto-fill
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
@@ -442,7 +456,7 @@ export default function EnergyQuizForm() {
       }
     } else {
       // Guest: 5 free attempts then prompt to login
-      const attemptCount = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
+      const attemptCount = getGuestCount()
       if (attemptCount >= 5) {
         setShowAuthModal(true)
         return
