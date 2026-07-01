@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 // Admin — update product
 export async function PATCH(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id, name, description, price, category, image_url, active, stock_count, product_url } = await req.json()
+  const { id, name, description, price, category, image_url, active, stock_count } = await req.json()
   const updateData: Record<string, unknown> = {}
   if (name !== undefined) updateData.name = name
   if (description !== undefined) updateData.description = description
@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest) {
   if (image_url !== undefined) updateData.image_url = image_url
   if (active !== undefined) updateData.active = active
   if (stock_count !== undefined) updateData.stock_count = stock_count
-  if (product_url !== undefined) updateData.product_url = product_url || null
+
   const { error } = await supabaseAdmin.from('shop_products')
     .update(updateData)
     .eq('id', id)

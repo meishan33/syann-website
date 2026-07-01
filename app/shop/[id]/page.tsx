@@ -9,7 +9,7 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 
-type Product = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; stock_count: number; product_url: string | null }
+type Product = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; stock_count: number }
 
 async function getProduct(id: string): Promise<Product | null> {
   const { data } = await supabase.from('shop_products').select('*').eq('id', id).eq('active', true).single()
@@ -82,18 +82,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 10px' }}>About This Piece</p>
                 <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#7A6355', lineHeight: 1.9, margin: 0 }}>{product.description}</p>
               </div>
-            )}
-
-            {/* External product link */}
-            {product.product_url && (
-              <a
-                href={product.product_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: GOLD, textDecoration: 'none', letterSpacing: '0.04em' }}
-              >
-                View Product Details ↗
-              </a>
             )}
 
             {/* Add to cart */}
