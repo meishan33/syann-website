@@ -13,7 +13,7 @@ export default function Footer() {
     <footer
       style={{
         width: '100%',
-        backgroundImage: "url('/footerbanner3.png')",
+        backgroundImage: "url('/footerbanner3.webp')",
         backgroundSize: '100% 100%',
         backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat',

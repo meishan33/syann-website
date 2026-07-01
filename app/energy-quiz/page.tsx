@@ -18,7 +18,7 @@ export default function EnergyQuizPage() {
       {/* ── BANNER ───────────────────────────────────────────── */}
       <section style={{ position: 'relative', height: 280, overflow: 'hidden' }}>
         <img
-          src="/EnergyQuizBanner.png"
+          src="/EnergyQuizBanner.webp"
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
         />

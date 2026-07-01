@@ -335,7 +335,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
             </button>
             <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]" style={BODY}>Packaging</p>
             <div className="overflow-hidden rounded-2xl border border-[#E5DDD5]">
-              <img src="/SamplePackaging.png" alt="Sample packaging" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+              <img src="/SamplePackaging.webp" alt="Sample packaging" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
             </div>
             <p className="mt-4 text-[12px] leading-relaxed text-[#7A6355]" style={BODY}>
               Every SYANN bracelet arrives in a premium gift box with a crystal care card, degaussing crystal, and a pouch — beautifully presented and ready to gift.

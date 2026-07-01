@@ -71,7 +71,7 @@ export default function Navbar({ shopEnabled }: { shopEnabled: boolean }) {
       <div className="navbar-brand">
         <Link href="/" className="navbar-brand-link">
           <img
-            src="/NewSymbols_transparent.png"
+            src="/NewSymbols_transparent.webp"
             alt=""
             className="navbar-brand-icon"
           />

@@ -45,7 +45,7 @@ const FAQS = [
   {
     q: 'What does the packaging look like?',
     a: 'Every SYANN bracelet arrives in a premium gift box with a crystal care card, a degaussing crystal, and a pouch — beautifully presented and ready to gift.',
-    image: '/SamplePackaging.png',
+    image: '/SamplePackaging.webp',
   },
   {
     q: 'Can I return or exchange my bracelet?',
@@ -124,7 +124,7 @@ export default function FAQPage() {
       {/* ── HERO BANNER ───────────────────────────────────────── */}
       <section style={{ position: 'relative', height: 280, overflow: 'hidden' }}>
         <img
-          src="/FAQimage.png"
+          src="/FAQimage.webp"
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
         />

@@ -18,7 +18,7 @@ export default function AboutPage() {
       {/* ── 1 · HERO BANNER ──────────────────────────────────── */}
       <section style={{ position: 'relative', height: 280, overflow: 'hidden' }}>
         <img
-          src="/AboutPageBanner.png"
+          src="/AboutPageBanner.webp"
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
         />
@@ -50,7 +50,7 @@ export default function AboutPage() {
 
         {/* Background image */}
         <img
-          src="/AboutImage2.png"
+          src="/AboutImage2.webp"
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 78%', display: 'block' }}
         />
@@ -92,7 +92,7 @@ export default function AboutPage() {
       <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
         <div style={{ position: 'relative', minHeight: 420 }}>
-          <img src="/AboutImage1.png" alt="SYANN brand story" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src="/AboutImage1.webp" alt="SYANN brand story" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(36px, 4vw, 56px) clamp(24px, 4vw, 48px)', background: '#EDE8DF' }}>
@@ -198,7 +198,7 @@ export default function AboutPage() {
       <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
         <div style={{ position: 'relative', minHeight: 400 }}>
-          <img src="/AboutImage3.png" alt="SYANN bracelet" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src="/AboutImage3.webp" alt="SYANN bracelet" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(36px, 4vw, 56px) clamp(24px, 4vw, 48px)', background: '#F6F1EB' }}>

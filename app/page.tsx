@@ -64,22 +64,22 @@ const SELLING_POINTS = [
 
 const BRACELETS = [
   {
-    image: '/LoveAndHarmony.png',
+    image: '/LoveAndHarmony.webp',
     title: 'Love & Harmony',
     description: 'Open the heart, soften connection, invite tender devotion.',
   },
   {
-    image: '/WealthAndAbundance.png',
+    image: '/WealthAndAbundance.webp',
     title: 'Wealth & Abundance',
     description: 'Magnetize opportunity, prosperity, and creative flow.',
   },
   {
-    image: '/ProtectionAndGrounding.png',
+    image: '/ProtectionAndGrounding.webp',
     title: 'Protection & Grounding',
     description: 'Shield your aura, root your energy, walk in steady calm.',
   },
   {
-    image: '/CalmAndBalance.png',
+    image: '/CalmAndBalance.webp',
     title: 'Calm & Balance',
     description: 'Quiet the noise, restore balance, return to inner stillness.',
   },
@@ -93,7 +93,7 @@ export default function Home() {
       <section className="home-hero">
 
         <img
-          src="/banner.png"
+          src="/banner.webp"
           alt=""
           className="home-hero-bg"
         />

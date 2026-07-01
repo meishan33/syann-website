@@ -11,7 +11,7 @@ export default function ContactSuccessPage() {
       {/* ── BANNER ───────────────────────────────────────────── */}
       <section style={{ position: 'relative', height: 280, overflow: 'hidden' }}>
         <img
-          src="/ContactBanner.png"
+          src="/ContactBanner.webp"
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
         />

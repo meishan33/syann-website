@@ -97,7 +97,7 @@ export default function ContactPage() {
 
         {/* Background image */}
         <img
-          src="/ContactBanner.png"
+          src="/ContactBanner.webp"
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
         />
