@@ -3,6 +3,17 @@ import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail, orderConfirmationEmail, newOrderAdminEmail, notifyAdmins } from '@/lib/email'
 
+// Decrements stock_count for each purchased shop item, clamped to 0.
+async function decrementShopStock(items: { productId?: string; quantity: number }[]) {
+  for (const item of items) {
+    if (!item.productId) continue
+    const { data } = await supabaseAdmin.from('shop_products').select('stock_count').eq('id', item.productId).single()
+    if (!data) continue
+    const newStock = Math.max(0, (data.stock_count ?? 0) - item.quantity)
+    await supabaseAdmin.from('shop_products').update({ stock_count: newStock }).eq('id', item.productId)
+  }
+}
+
 // Discount redemption is recorded here (payment succeeded), not at apply-time,
 // so an abandoned checkout never burns a customer's one-time use of a code.
 async function recordDiscountRedemption(paymentIntent: Stripe.PaymentIntent) {
@@ -67,7 +78,7 @@ export async function POST(req: NextRequest) {
       if (existingShop) return NextResponse.json({ received: true })
 
       const orderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data, () => null)
-      const parsedItems: { name: string; quantity: number }[] = itemsJson ? JSON.parse(itemsJson) : []
+      const parsedItems: { productId?: string; name: string; quantity: number; price?: number }[] = itemsJson ? JSON.parse(itemsJson) : []
       const totalAmount = (paymentIntent.amount ?? 0) / 100
 
       await supabaseAdmin.from('shop_orders').insert({
@@ -101,6 +112,7 @@ export async function POST(req: NextRequest) {
       })
       await notifyAdmins({ subject: adminSubject, html: adminHtml })
       await recordDiscountRedemption(paymentIntent)
+      await decrementShopStock(parsedItems)
 
       return NextResponse.json({ received: true })
     }
@@ -142,7 +154,7 @@ export async function POST(req: NextRequest) {
         logo_charm: includeCharm !== 'false',
       }).select('order_number').single()
 
-      const parsedItems: { name: string; quantity: number; price: number }[] = itemsJson ? JSON.parse(itemsJson) : []
+      const parsedItems: { productId?: string; name: string; quantity: number; price: number }[] = itemsJson ? JSON.parse(itemsJson) : []
       if (parsedItems.length > 0) {
         const shopOrderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data, () => null)
         await supabaseAdmin.from('shop_orders').insert({
@@ -181,6 +193,7 @@ export async function POST(req: NextRequest) {
         totalAmount,
       })
       await notifyAdmins({ subject: adminSubject, html: adminHtml })
+      if (parsedItems.length > 0) await decrementShopStock(parsedItems)
 
       return NextResponse.json({ received: true })
     }
