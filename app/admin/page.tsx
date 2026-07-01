@@ -145,6 +145,7 @@ export default function AdminPage() {
   const router = useRouter()
   const [token, setToken] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('orders')
+  const [currentPage, setCurrentPage] = useState(1)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [shopEnabled, setShopEnabled] = useState(false)
   const [settingsSaving, setSettingsSaving] = useState(false)
@@ -207,7 +208,7 @@ export default function AdminPage() {
     customer_phone: string | null; shipping_address: Record<string, string | null> | null
     items: ShopOrderItem[]; total_amount: number; payment_status: string; fulfillment_status: string; created_at: string
   }
-  const [shopViewMode, setShopViewMode] = useState<'grid' | 'list'>('grid')
+  const [shopViewMode, setShopViewMode] = useState<'grid' | 'list'>('list')
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([])
   const [shopOrdersLoading, setShopOrdersLoading] = useState(false)
   const [expandedShopOrder, setExpandedShopOrder] = useState<string | null>(null)
@@ -569,6 +570,35 @@ export default function AdminPage() {
   )
 
   const SIDEBAR_W = sidebarOpen ? 220 : 64
+  const PAGE_SIZE = 15
+
+  function paginate<T>(arr: T[]): T[] {
+    return arr.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  }
+
+  function PaginationBar({ total }: { total: number }) {
+    const totalPages = Math.ceil(total / PAGE_SIZE)
+    if (totalPages <= 1) return null
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '20px 0 4px' }}>
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(p => p - 1)}
+          style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', padding: '7px 16px', borderRadius: 999, border: '1px solid #E5DDD5', background: currentPage === 1 ? '#F6F1EB' : '#fff', color: currentPage === 1 ? '#C5B8AD' : DARK, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+        >
+          ← Prev
+        </button>
+        <span style={{ ...BODY, fontSize: 12, color: '#9A8573' }}>Page {currentPage} of {totalPages}</span>
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage(p => p + 1)}
+          style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', padding: '7px 16px', borderRadius: 999, border: '1px solid #E5DDD5', background: currentPage === totalPages ? '#F6F1EB' : '#fff', color: currentPage === totalPages ? '#C5B8AD' : DARK, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+        >
+          Next →
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F6F1EB', ...BODY }}>
@@ -602,7 +632,7 @@ export default function AdminPage() {
             return (
               <button
                 key={key}
-                onClick={() => setTab(key)}
+                onClick={() => { setTab(key); setCurrentPage(1) }}
                 title={!sidebarOpen ? label : undefined}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
@@ -789,7 +819,7 @@ export default function AdminPage() {
                               <th style={TH}>Fulfilment</th><th style={TH}>Date</th><th style={TH}>Update</th>
                             </tr></thead>
                             <tbody>
-                              {filteredOrders.map((o, idx) => (
+                              {paginate(filteredOrders).map((o, idx) => (
                                 <React.Fragment key={o.id}>
                                   <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)}>
                                     <td style={{ ...TD, color: '#B0A090', fontSize: 11, letterSpacing: '0.06em' }}>#{o.order_number ?? '—'}</td>
@@ -876,6 +906,7 @@ export default function AdminPage() {
                       )}
                     </div>
 
+                    <PaginationBar total={filteredOrders.length} />
                     {/* Count footer */}
                     <p style={{ ...BODY, fontSize: 11, color: '#B0A090', textAlign: 'center', letterSpacing: '0.1em', paddingTop: 4 }}>
                       {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'}
@@ -899,7 +930,7 @@ export default function AdminPage() {
                           <th style={TH}>Joined</th><th style={TH}>Last Sign In</th><th style={TH}>Action</th>
                         </tr></thead>
                         <tbody>
-                          {users.map(u => (
+                          {paginate(users).map(u => (
                             <tr key={u.id}>
                               <td style={TD}>{u.name || '—'}</td>
                               <td style={TD}>{u.email}</td>
@@ -918,6 +949,7 @@ export default function AdminPage() {
                       </table>
                     </div>
                   )}
+                  <PaginationBar total={users.length} />
                 </div>
               )}
 
@@ -1043,7 +1075,7 @@ export default function AdminPage() {
                             })}
                           </tr></thead>
                           <tbody>
-                            {filteredCrystals.map((c, idx) => (
+                            {paginate(filteredCrystals).map((c, idx) => (
                               <tr key={c.id}>
                                 <td style={{ ...TD, color: '#B0A090', fontSize: 11, letterSpacing: '0.06em' }}>#{idx + 1}</td>
                                 {CRYSTAL_COLUMNS.filter(col => visibleCols.has(col.key)).map(col => {
@@ -1095,6 +1127,7 @@ export default function AdminPage() {
                         </table>
                       </div>
                     )}
+                    <PaginationBar total={filteredCrystals.length} />
                   </div>
                 </div>
                 )
@@ -1216,7 +1249,7 @@ export default function AdminPage() {
 
                     {sorted.length === 0 ? (
                       <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', paddingTop: 48 }}>No inquiries found.</p>
-                    ) : sorted.map((inq, idx) => (
+                    ) : paginate(sorted).map((inq, idx) => (
                       <div key={inq.id} style={{ background: '#fff', border: `1px solid ${inq.is_replied ? '#D4EAD8' : '#E5DDD5'}`, borderRadius: 12, overflow: 'hidden' }}>
                         <button
                           onClick={() => setExpandedInquiry(expandedInquiry === inq.id ? null : inq.id)}
@@ -1252,6 +1285,7 @@ export default function AdminPage() {
                       </div>
                     ))}
 
+                    <PaginationBar total={sorted.length} />
                     {/* Count footer */}
                     <p style={{ ...BODY, fontSize: 11, color: '#B0A090', textAlign: 'center', letterSpacing: '0.1em', paddingTop: 4 }}>
                       {sorted.length} {sorted.length === 1 ? 'inquiry' : 'inquiries'}
@@ -1268,7 +1302,7 @@ export default function AdminPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {readings.length === 0 ? (
                     <p style={{ ...BODY, fontSize: 13, color: '#9A8573', textAlign: 'center', paddingTop: 48 }}>No readings yet.</p>
-                  ) : readings.map(r => (
+                  ) : paginate(readings).map(r => (
                     <div key={r.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
                       <button
                         onClick={() => setExpandedReading(expandedReading === r.id ? null : r.id)}
@@ -1321,6 +1355,7 @@ export default function AdminPage() {
                       )}
                     </div>
                   ))}
+                  <PaginationBar total={readings.length} />
                 </div>
               )}
 
@@ -1360,7 +1395,7 @@ export default function AdminPage() {
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No products yet. Add your first one.</p>
                   ) : shopViewMode === 'grid' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-                      {shopProducts.map(p => (
+                      {paginate(shopProducts).map(p => (
                         <div key={p.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', opacity: p.active ? 1 : 0.6 }}>
                           <div style={{ position: 'relative', aspectRatio: '1', background: '#F8F4EF' }}>
                             {p.image_url
@@ -1438,7 +1473,7 @@ export default function AdminPage() {
                           <span key={h} style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>{h}</span>
                         ))}
                       </div>
-                      {shopProducts.map((p, i) => (
+                      {paginate(shopProducts).map((p, i) => (
                         <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55, minWidth: 780 }}>
                           {/* # */}
                           <span style={{ ...BODY, fontSize: 11, color: '#B0A090', letterSpacing: '0.06em' }}>#{i + 1}</span>
@@ -1494,6 +1529,7 @@ export default function AdminPage() {
                       </div>{/* end overflowX scroll wrapper */}
                     </div>
                   )}
+                  <PaginationBar total={shopProducts.length} />
                 </div>
               )}
 
@@ -2008,7 +2044,7 @@ export default function AdminPage() {
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No discount codes yet. Add your first one.</p>
                   ) : (
                     <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
-                      {discountCodes.map(d => (
+                      {paginate(discountCodes).map(d => (
                         <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', borderBottom: '1px solid #F0E8DF', opacity: d.active ? 1 : 0.55 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                             <p style={{ ...SERIF, fontSize: 17, fontWeight: 400, letterSpacing: '0.06em', color: DARK, margin: 0 }}>{d.code}</p>
@@ -2036,6 +2072,7 @@ export default function AdminPage() {
                       ))}
                     </div>
                   )}
+                  <PaginationBar total={discountCodes.length} />
                 </div>
               )}
             </>
