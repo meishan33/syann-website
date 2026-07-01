@@ -48,12 +48,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 80px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,480px)', gap: 48, alignItems: 'start' }} className="product-detail-grid">
 
-          {/* Image */}
-          <div style={{ position: 'relative', aspectRatio: '1', borderRadius: 28, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5', boxShadow: '0 20px 60px -20px rgba(101,70,46,0.2)' }}>
+          {/* Image — no fixed aspect ratio, shows full image */}
+          <div style={{ borderRadius: 28, overflow: 'hidden', background: '#F8F4EF', border: '1px solid #E5DDD5', boxShadow: '0 20px 60px -20px rgba(101,70,46,0.2)' }}>
             {product.image_url ? (
-              <Image src={product.image_url} alt={product.name} fill sizes="(max-width:900px) 100vw, 560px" style={{ objectFit: 'cover' }} priority />
+              <Image src={product.image_url} alt={product.name} width={800} height={1000} sizes="(max-width:900px) 100vw, 560px" style={{ width: '100%', height: 'auto', display: 'block' }} priority />
             ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '100%', height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: 60, color: GOLD, opacity: 0.2 }}>✦</span>
               </div>
             )}
