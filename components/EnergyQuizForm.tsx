@@ -170,7 +170,7 @@ function AuthModal({ onSuccess, onClose, limitReached }: { onSuccess: () => void
             </h3>
             {limitReached && (
               <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#B08B57', textAlign: 'center', lineHeight: 1.7, marginBottom: 12, padding: '10px 14px', background: '#FEF9F2', borderRadius: 8, border: '1px solid #E5DDD5' }}>
-                You have reached 5 free attempts. Login to unlock the reading.
+                You&apos;ve explored 5 readings as a guest. Sign in to continue your crystal journey.
               </p>
             )}
             <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#9A8573', textAlign: 'center', lineHeight: 1.75, marginBottom: 24 }}>
