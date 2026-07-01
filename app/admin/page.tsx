@@ -2337,13 +2337,18 @@ export default function AdminPage() {
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {(['name', 'description', 'price'] as const).map(k => (
+              {(['name', 'price'] as const).map(k => (
                 <div key={k}>
-                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>{k.charAt(0).toUpperCase() + k.slice(1)}{k === 'name' || k === 'price' ? ' *' : ''}</label>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>{k.charAt(0).toUpperCase() + k.slice(1)} *</label>
                   <input value={newProduct[k]} onChange={e => setNewProduct(p => ({ ...p, [k]: e.target.value }))} placeholder={k === 'price' ? 'e.g. 88.00' : ''} type={k === 'price' ? 'number' : 'text'}
                     style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               ))}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Description</label>
+                <textarea value={newProduct.description} onChange={e => setNewProduct(p => ({ ...p, description: e.target.value }))} rows={5} placeholder="Describe the product — materials, benefits, size, etc."
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.7 }} />
+              </div>
               <div>
                 <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Stock Count *</label>
                 <input value={newProduct.stock_count} onChange={e => setNewProduct(p => ({ ...p, stock_count: e.target.value }))} placeholder="e.g. 10" type="number" min="0"
@@ -2414,13 +2419,18 @@ export default function AdminPage() {
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {(['name', 'description', 'price'] as const).map(k => (
+              {(['name', 'price'] as const).map(k => (
                 <div key={k}>
-                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>{k.charAt(0).toUpperCase() + k.slice(1)}{k === 'name' || k === 'price' ? ' *' : ''}</label>
+                  <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>{k.charAt(0).toUpperCase() + k.slice(1)} *</label>
                   <input value={editProduct[k]} onChange={e => setEditProduct(p => ({ ...p, [k]: e.target.value }))} type={k === 'price' ? 'number' : 'text'}
                     style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               ))}
+              <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Description</label>
+                <textarea value={editProduct.description} onChange={e => setEditProduct(p => ({ ...p, description: e.target.value }))} rows={5} placeholder="Describe the product — materials, benefits, size, etc."
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.7 }} />
+              </div>
               <div>
                 <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Product Image</label>
                 {editProduct.image_url && (
