@@ -125,69 +125,64 @@ export default function ShopPage() {
             <p style={{ ...BODY, fontSize: 12, color: '#9A8573' }}>New pieces are being prepared for you.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
             {filtered.map(p => (
               <div
                 key={p.id}
                 style={{
-                  background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5',
-                  overflow: 'hidden', boxShadow: '0 8px 32px -12px rgba(101,70,46,0.15)',
+                  background: '#fff', borderRadius: 16, border: '1px solid #E5DDD5',
+                  overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(101,70,46,0.12)',
                   display: 'flex', flexDirection: 'column',
                 }}
               >
-                {/* Image — links to product detail */}
-                <Link href={`/shop/${p.id}`} style={{ display: 'block', position: 'relative', aspectRatio: '1', background: '#F8F4EF', textDecoration: 'none' }}>
+                {/* Rectangular image */}
+                <Link href={`/shop/${p.id}`} style={{ display: 'block', position: 'relative', aspectRatio: '4/3', background: '#F8F4EF', textDecoration: 'none' }}>
                   {p.image_url ? (
-                    <Image src={p.image_url} alt={p.name} fill sizes="320px" style={{ objectFit: 'cover' }} />
+                    <Image src={p.image_url} alt={p.name} fill sizes="280px" style={{ objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: 40, color: GOLD, opacity: 0.3 }}>✦</span>
+                      <span style={{ fontSize: 32, color: GOLD, opacity: 0.3 }}>✦</span>
                     </div>
                   )}
                   {/* Category badge */}
                   <span style={{
-                    position: 'absolute', top: 12, left: 12,
+                    position: 'absolute', top: 10, left: 10,
                     ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    background: 'rgba(253,250,247,0.92)', color: GOLD, padding: '4px 10px', borderRadius: 999,
+                    background: 'rgba(253,250,247,0.92)', color: GOLD, padding: '3px 8px', borderRadius: 999,
                     border: `1px solid ${GOLD}44`,
                   }}>
                     {p.category}
                   </span>
                   {p.stock_count === 0 && (
                     <span style={{
-                      position: 'absolute', top: 12, right: 12,
+                      position: 'absolute', top: 10, right: 10,
                       ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase',
-                      background: 'rgba(220,38,38,0.9)', color: '#fff', padding: '4px 10px', borderRadius: 999,
+                      background: 'rgba(220,38,38,0.9)', color: '#fff', padding: '3px 8px', borderRadius: 999,
                     }}>
                       Out of Stock
                     </span>
                   )}
                 </Link>
 
-                {/* Info */}
-                <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                {/* Info — title only, no description */}
+                <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
                   <Link href={`/shop/${p.id}`} style={{ textDecoration: 'none' }}>
-                    <h3 style={{ ...SERIF, fontSize: 20, fontWeight: 300, color: '#3D2B1F', margin: 0 }}>{p.name}</h3>
+                    <h3 style={{ ...SERIF, fontSize: 15, fontWeight: 300, color: '#3D2B1F', margin: 0, lineHeight: 1.4 }}>{p.name}</h3>
                   </Link>
-                  {p.description && (
-                    <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', lineHeight: 1.7, margin: 0 }}>
-                      {p.description}
-                    </p>
-                  )}
-                  <div style={{ marginTop: 'auto', paddingTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                    <span style={{ ...SERIF, fontSize: 22, fontWeight: 300, color: '#3D2B1F' }}>
+                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <span style={{ ...SERIF, fontSize: 17, fontWeight: 300, color: '#3D2B1F' }}>
                       {format(p.price)}
                     </span>
                     <button
                       onClick={() => p.stock_count > 0 && handleAddToCart(p)}
                       disabled={p.stock_count === 0}
                       style={{
-                        ...BODY, flex: 1, padding: '10px 16px', borderRadius: 999,
+                        ...BODY, padding: '7px 14px', borderRadius: 999,
                         background: p.stock_count === 0 ? '#E5DDD5' : addedId === p.id ? GOLD : '#4A3A32',
-                        border: 'none', color: p.stock_count === 0 ? '#9A8573' : '#fff', fontSize: 10, fontWeight: 600,
-                        letterSpacing: '0.2em', textTransform: 'uppercase',
+                        border: 'none', color: p.stock_count === 0 ? '#9A8573' : '#fff', fontSize: 9, fontWeight: 600,
+                        letterSpacing: '0.18em', textTransform: 'uppercase',
                         cursor: p.stock_count === 0 ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.25s',
+                        transition: 'all 0.25s', whiteSpace: 'nowrap',
                       }}
                     >
                       {p.stock_count === 0 ? 'Out of Stock' : addedId === p.id ? 'Added ✦' : 'Add to Cart'}
