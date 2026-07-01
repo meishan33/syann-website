@@ -87,3 +87,12 @@ export async function PATCH(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(req: NextRequest) {
+  if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { ids } = await req.json()
+  const idList: number[] = Array.isArray(ids) ? ids : [ids]
+  const { error } = await supabaseAdmin.from('crystals').delete().in('id', idList)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}

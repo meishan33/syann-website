@@ -213,6 +213,9 @@ export default function AdminPage() {
   const [shopSort, setShopSort] = useState<'name' | 'category' | 'price' | 'stock_count' | null>(null)
   const [shopSortAsc, setShopSortAsc] = useState(true)
   const [shopSearch, setShopSearch] = useState('')
+  const [selectedShopIds, setSelectedShopIds] = useState<Set<string>>(new Set())
+  const [selectedCrystalIds, setSelectedCrystalIds] = useState<Set<number>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([])
   const [shopOrdersLoading, setShopOrdersLoading] = useState(false)
   const [expandedShopOrder, setExpandedShopOrder] = useState<string | null>(null)
@@ -1048,6 +1051,39 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  {/* Bulk action bar — crystals */}
+                  {selectedCrystalIds.size > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#FEF9F2', border: '1px solid #E5DDD5', borderRadius: 10 }}>
+                      <span style={{ ...BODY, fontSize: 12, fontWeight: 600, color: GOLD }}>{selectedCrystalIds.size} selected</span>
+                      <button disabled={bulkLoading} onClick={async () => {
+                        if (!confirm(`Delete ${selectedCrystalIds.size} crystal(s)? This cannot be undone.`)) return
+                        setBulkLoading(true)
+                        const token = (await supabase.auth.getSession()).data.session?.access_token
+                        await fetch('/api/admin/crystals', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ids: [...selectedCrystalIds] }) })
+                        setSelectedCrystalIds(new Set()); fetchCrystals(); setBulkLoading(false)
+                      }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 6, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', cursor: 'pointer', opacity: bulkLoading ? 0.6 : 1 }}>
+                        {bulkLoading ? '…' : 'Delete Selected'}
+                      </button>
+                      <button disabled={bulkLoading} onClick={async () => {
+                        setBulkLoading(true)
+                        const token = (await supabase.auth.getSession()).data.session?.access_token
+                        await Promise.all([...selectedCrystalIds].map(id => fetch('/api/admin/crystals', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id, active: true }) })))
+                        setSelectedCrystalIds(new Set()); fetchCrystals(); setBulkLoading(false)
+                      }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 6, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', cursor: 'pointer', opacity: bulkLoading ? 0.6 : 1 }}>
+                        Activate All
+                      </button>
+                      <button disabled={bulkLoading} onClick={async () => {
+                        setBulkLoading(true)
+                        const token = (await supabase.auth.getSession()).data.session?.access_token
+                        await Promise.all([...selectedCrystalIds].map(id => fetch('/api/admin/crystals', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id, active: false }) })))
+                        setSelectedCrystalIds(new Set()); fetchCrystals(); setBulkLoading(false)
+                      }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 6, background: '#FEF9C3', border: '1px solid #FDE047', color: '#854D0E', cursor: 'pointer', opacity: bulkLoading ? 0.6 : 1 }}>
+                        Deactivate All
+                      </button>
+                      <button onClick={() => setSelectedCrystalIds(new Set())} style={{ ...BODY, fontSize: 10, color: '#9A8573', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}>Clear</button>
+                    </div>
+                  )}
+
                   {/* Table */}
                   <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }} onClick={() => setShowColPicker(false)}>
                     {filteredCrystals.length === 0 ? (
@@ -1056,6 +1092,12 @@ export default function AdminPage() {
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                           <thead><tr style={{ background: '#F6F1EB' }}>
+                            <th style={{ ...TH, width: 32 }}>
+                              <input type="checkbox" style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }}
+                                checked={filteredCrystals.length > 0 && filteredCrystals.every(c => selectedCrystalIds.has(c.id as number))}
+                                onChange={e => setSelectedCrystalIds(e.target.checked ? new Set(filteredCrystals.map(c => c.id as number)) : new Set())}
+                              />
+                            </th>
                             <th style={{ ...TH, width: 40 }}>#</th>
                             {CRYSTAL_COLUMNS.filter(c => visibleCols.has(c.key)).map(col => {
                               const sortable = col.key !== 'bead_image_url'
@@ -1080,7 +1122,13 @@ export default function AdminPage() {
                           </tr></thead>
                           <tbody>
                             {paginate(filteredCrystals).map((c, idx) => (
-                              <tr key={c.id}>
+                              <tr key={c.id} style={{ background: selectedCrystalIds.has(c.id as number) ? '#FEF9F2' : undefined }}>
+                                <td style={TD}>
+                                  <input type="checkbox" style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }}
+                                    checked={selectedCrystalIds.has(c.id as number)}
+                                    onChange={e => setSelectedCrystalIds(prev => { const n = new Set(prev); e.target.checked ? n.add(c.id as number) : n.delete(c.id as number); return n })}
+                                  />
+                                </td>
                                 <td style={{ ...TD, color: '#B0A090', fontSize: 11, letterSpacing: '0.06em' }}>#{idx + 1}</td>
                                 {CRYSTAL_COLUMNS.filter(col => visibleCols.has(col.key)).map(col => {
                                   if (col.key === 'bead_image_url') return (
@@ -1436,11 +1484,43 @@ export default function AdminPage() {
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
                   ) : displayProducts.length === 0 ? (
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>{shopProducts.length === 0 ? 'No products yet. Add your first one.' : 'No products match your filter.'}</p>
-                  ) : shopViewMode === 'grid' ? (
+                  ) : (<>
+                  {/* Bulk action bar — shop */}
+                  {selectedShopIds.size > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#FEF9F2', border: '1px solid #E5DDD5', borderRadius: 10 }}>
+                      <span style={{ ...BODY, fontSize: 12, fontWeight: 600, color: GOLD }}>{selectedShopIds.size} selected</span>
+                      <button disabled={bulkLoading} onClick={async () => {
+                        if (!confirm(`Delete ${selectedShopIds.size} product(s)?`)) return
+                        setBulkLoading(true)
+                        const token = (await supabase.auth.getSession()).data.session?.access_token
+                        await Promise.all([...selectedShopIds].map(id => fetch('/api/shop/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id }) })))
+                        setSelectedShopIds(new Set()); fetchShopProducts(); setBulkLoading(false)
+                      }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 6, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', cursor: 'pointer', opacity: bulkLoading ? 0.6 : 1 }}>
+                        {bulkLoading ? '…' : 'Delete Selected'}
+                      </button>
+                      <button disabled={bulkLoading} onClick={async () => {
+                        setBulkLoading(true)
+                        const token = (await supabase.auth.getSession()).data.session?.access_token
+                        await Promise.all([...selectedShopIds].map(id => fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id, active: true }) })))
+                        setSelectedShopIds(new Set()); fetchShopProducts(); setBulkLoading(false)
+                      }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 6, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', cursor: 'pointer', opacity: bulkLoading ? 0.6 : 1 }}>Enable All</button>
+                      <button disabled={bulkLoading} onClick={async () => {
+                        setBulkLoading(true)
+                        const token = (await supabase.auth.getSession()).data.session?.access_token
+                        await Promise.all([...selectedShopIds].map(id => fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id, active: false }) })))
+                        setSelectedShopIds(new Set()); fetchShopProducts(); setBulkLoading(false)
+                      }} style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 6, background: '#FEF9C3', border: '1px solid #FDE047', color: '#854D0E', cursor: 'pointer', opacity: bulkLoading ? 0.6 : 1 }}>Disable All</button>
+                      <button onClick={() => setSelectedShopIds(new Set())} style={{ ...BODY, fontSize: 10, color: '#9A8573', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}>Clear</button>
+                    </div>
+                  )}
+                  {shopViewMode === 'grid' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
                       {paginate(displayProducts).map(p => (
-                        <div key={p.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', opacity: p.active ? 1 : 0.6 }}>
+                        <div key={p.id} style={{ background: selectedShopIds.has(p.id) ? '#FEF9F2' : '#fff', border: `1px solid ${selectedShopIds.has(p.id) ? GOLD+'66' : '#E5DDD5'}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', opacity: p.active ? 1 : 0.6 }}>
                           <div style={{ position: 'relative', aspectRatio: '1', background: '#F8F4EF' }}>
+                            <input type="checkbox" checked={selectedShopIds.has(p.id)}
+                              onChange={e => setSelectedShopIds(prev => { const n = new Set(prev); e.target.checked ? n.add(p.id) : n.delete(p.id); return n })}
+                              style={{ position: 'absolute', top: 8, left: 8, accentColor: GOLD, width: 15, height: 15, cursor: 'pointer', zIndex: 2 }} />
                             {p.image_url
                               ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: GOLD, opacity: 0.3 }}>✦</div>
@@ -1497,7 +1577,11 @@ export default function AdminPage() {
                     <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
                       <div style={{ overflowX: 'auto' }}>
                       {/* Header row with sortable columns */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 60px', gap: 12, padding: '10px 18px', background: '#FAFAF8', borderBottom: '1px solid #F0E8DF', alignItems: 'center', minWidth: 780 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '28px 32px 56px 1fr 80px 80px 80px 160px 60px', gap: 12, padding: '10px 18px', background: '#FAFAF8', borderBottom: '1px solid #F0E8DF', alignItems: 'center', minWidth: 820 }}>
+                        <input type="checkbox" style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }}
+                          checked={displayProducts.length > 0 && displayProducts.every(p => selectedShopIds.has(p.id))}
+                          onChange={e => setSelectedShopIds(e.target.checked ? new Set(displayProducts.map(p => p.id)) : new Set())}
+                        />
                         <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>#</span>
                         <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>IMAGE</span>
                         <SortTH col="name" label="NAME" />
@@ -1508,7 +1592,10 @@ export default function AdminPage() {
                         <span />
                       </div>
                       {paginate(displayProducts).map((p, i) => (
-                        <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 60px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55, minWidth: 780 }}>
+                        <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '28px 32px 56px 1fr 80px 80px 80px 160px 60px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55, minWidth: 820, background: selectedShopIds.has(p.id) ? '#FEF9F2' : undefined }}>
+                          <input type="checkbox" checked={selectedShopIds.has(p.id)}
+                            onChange={e => setSelectedShopIds(prev => { const n = new Set(prev); e.target.checked ? n.add(p.id) : n.delete(p.id); return n })}
+                            style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }} />
                           {/* # */}
                           <span style={{ ...BODY, fontSize: 11, color: '#B0A090', letterSpacing: '0.06em' }}>#{i + 1}</span>
                           {/* Thumbnail */}
@@ -1559,8 +1646,9 @@ export default function AdminPage() {
                     </div>
                   )}
                   <PaginationBar total={displayProducts.length} />
+                  </>)}
                 </div>
-                  )
+                )
                 })()}
 
               {tab === 'ai-prompt' && (
