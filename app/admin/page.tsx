@@ -189,16 +189,16 @@ export default function AdminPage() {
   const [editCrystalSaving, setEditCrystalSaving] = useState(false)
 
   // Shop
-  type ShopProduct = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; active: boolean }
+  type ShopProduct = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; active: boolean; stock_count: number }
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([])
   const [shopLoading, setShopLoading] = useState(false)
   const [showAddProduct, setShowAddProduct] = useState(false)
-  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '' })
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' })
   const [addProductError, setAddProductError] = useState<string | null>(null)
   const [addProductLoading, setAddProductLoading] = useState(false)
   const [productImageUploading, setProductImageUploading] = useState(false)
   const [editProductId, setEditProductId] = useState<string | null>(null)
-  const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '' })
+  const [editProduct, setEditProduct] = useState({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' })
 
   // Shop orders
   type ShopOrderItem = { productId: string; name: string; price: number; quantity: number }
@@ -1344,7 +1344,7 @@ export default function AdminPage() {
                     )}
                     {shopTabView === 'products' && (
                       <button
-                        onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '' }) }}
+                        onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' }) }}
                         style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
                       >
                         + Add Product
@@ -1431,13 +1431,42 @@ export default function AdminPage() {
                             <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: DARK, margin: 0 }}>{p.name}</p>
                             {p.description && <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0, lineHeight: 1.6 }}>{p.description}</p>}
                             <p style={{ ...SERIF, fontSize: 18, color: DARK, margin: '4px 0 0' }}>S${p.price.toFixed(2)}</p>
+                            {/* Stock count */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                              <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>Stock</span>
+                              <input
+                                type="number" min="0"
+                                defaultValue={p.stock_count}
+                                onBlur={async (e) => {
+                                  const val = parseInt(e.target.value)
+                                  if (isNaN(val) || val === p.stock_count) return
+                                  const token = (await supabase.auth.getSession()).data.session?.access_token
+                                  await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, stock_count: val }) })
+                                  fetchShopProducts()
+                                }}
+                                style={{ ...BODY, width: 64, padding: '4px 8px', border: '1px solid #E5DDD5', borderRadius: 6, fontSize: 12, color: DARK, background: '#FAFAF8' }}
+                              />
+                              <span style={{ ...BODY, fontSize: 10, color: p.stock_count === 0 ? '#DC2626' : '#15803D', fontWeight: 600 }}>
+                                {p.stock_count === 0 ? 'Out of Stock' : 'In Stock'}
+                              </span>
+                            </div>
                           </div>
                           <div style={{ padding: '0 16px 14px', display: 'flex', gap: 8 }}>
                             <button
-                              onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '' }) }}
+                              onClick={() => { setEditProductId(p.id); setEditProduct({ name: p.name, description: p.description || '', price: String(p.price), category: p.category, image_url: p.image_url || '', stock_count: String(p.stock_count) }) }}
                               style={{ ...BODY, flex: 1, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 8, cursor: 'pointer', color: DARK }}
                             >
                               Edit
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const token = (await supabase.auth.getSession()).data.session?.access_token
+                                await fetch('/api/shop/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id, active: !p.active }) })
+                                fetchShopProducts()
+                              }}
+                              style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px 10px', background: p.active ? '#FEF9C3' : '#F0FDF4', border: `1px solid ${p.active ? '#FDE047' : '#BBF7D0'}`, borderRadius: 8, cursor: 'pointer', color: p.active ? '#854D0E' : '#166534' }}
+                            >
+                              {p.active ? 'Disable' : 'Enable'}
                             </button>
                             <button
                               onClick={async () => {
@@ -1446,7 +1475,7 @@ export default function AdminPage() {
                                 await fetch('/api/shop/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: p.id }) })
                                 fetchShopProducts()
                               }}
-                              style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, cursor: 'pointer', color: '#DC2626' }}
+                              style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '8px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, cursor: 'pointer', color: '#DC2626' }}
                             >
                               Del
                             </button>
@@ -2269,6 +2298,11 @@ export default function AdminPage() {
                 </div>
               ))}
               <div>
+                <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Stock Count *</label>
+                <input value={newProduct.stock_count} onChange={e => setNewProduct(p => ({ ...p, stock_count: e.target.value }))} placeholder="e.g. 10" type="number" min="0"
+                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
                 <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 5 }}>Category *</label>
                 <select value={newProduct.category} onChange={e => setNewProduct(p => ({ ...p, category: e.target.value }))}
                   style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 7, color: DARK, background: '#FAFAF8', outline: 'none' }}>
@@ -2305,7 +2339,7 @@ export default function AdminPage() {
                 if (!newProduct.name || !newProduct.price) { setAddProductError('Name and price are required.'); return }
                 setAddProductLoading(true)
                 const token = (await supabase.auth.getSession()).data.session?.access_token
-                const r = await fetch('/api/shop/products', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...newProduct, price: parseFloat(newProduct.price), image_url: newProduct.image_url || null, description: newProduct.description || null }) })
+                const r = await fetch('/api/shop/products', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ ...newProduct, price: parseFloat(newProduct.price), stock_count: parseInt(newProduct.stock_count || '0'), image_url: newProduct.image_url || null, description: newProduct.description || null }) })
                 if (!r.ok) { const d = await r.json(); setAddProductError(d.error || 'Failed'); setAddProductLoading(false); return }
                 setAddProductLoading(false); setShowAddProduct(false); fetchShopProducts()
               }} style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '9px 20px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: addProductLoading ? 'not-allowed' : 'pointer', opacity: addProductLoading ? 0.7 : 1 }}>

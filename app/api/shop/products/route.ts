@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   const { name, description, price, category, image_url } = body
   const { data, error } = await supabaseAdmin
     .from('shop_products')
-    .insert([{ name, description, price, category, image_url }])
+    .insert([{ name, description, price, category, image_url, stock_count: 0 }])
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -40,9 +40,17 @@ export async function POST(req: NextRequest) {
 // Admin — update product
 export async function PATCH(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id, name, description, price, category, image_url, active } = await req.json()
+  const { id, name, description, price, category, image_url, active, stock_count } = await req.json()
+  const updateData: Record<string, unknown> = {}
+  if (name !== undefined) updateData.name = name
+  if (description !== undefined) updateData.description = description
+  if (price !== undefined) updateData.price = price
+  if (category !== undefined) updateData.category = category
+  if (image_url !== undefined) updateData.image_url = image_url
+  if (active !== undefined) updateData.active = active
+  if (stock_count !== undefined) updateData.stock_count = stock_count
   const { error } = await supabaseAdmin.from('shop_products')
-    .update({ name, description, price, category, image_url, active })
+    .update(updateData)
     .eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

@@ -9,7 +9,7 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 
-type Product = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null }
+type Product = { id: string; name: string; description: string | null; price: number; category: string; image_url: string | null; stock_count: number }
 
 async function getProduct(id: string): Promise<Product | null> {
   const { data } = await supabase.from('shop_products').select('*').eq('id', id).eq('active', true).single()
@@ -85,7 +85,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             )}
 
             {/* Add to cart */}
-            <AddToCartButton product={product} />
+            <AddToCartButton product={{ id: product.id, name: product.name, price: product.price, image_url: product.image_url, category: product.category, stock_count: product.stock_count }} />
 
             {/* Back link */}
             <Link href="/shop" style={{ ...BODY, fontSize: 11, color: '#9A8573', textDecoration: 'none', textAlign: 'center' }}>← Back to Shop</Link>

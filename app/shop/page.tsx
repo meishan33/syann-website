@@ -19,6 +19,7 @@ type Product = {
   category: string
   image_url: string | null
   active: boolean
+  stock_count: number
 }
 
 const CATEGORIES = [
@@ -152,6 +153,15 @@ export default function ShopPage() {
                   }}>
                     {p.category}
                   </span>
+                  {p.stock_count === 0 && (
+                    <span style={{
+                      position: 'absolute', top: 12, right: 12,
+                      ...BODY, fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase',
+                      background: 'rgba(220,38,38,0.9)', color: '#fff', padding: '4px 10px', borderRadius: 999,
+                    }}>
+                      Out of Stock
+                    </span>
+                  )}
                 </Link>
 
                 {/* Info */}
@@ -169,16 +179,18 @@ export default function ShopPage() {
                       {format(p.price)}
                     </span>
                     <button
-                      onClick={() => handleAddToCart(p)}
+                      onClick={() => p.stock_count > 0 && handleAddToCart(p)}
+                      disabled={p.stock_count === 0}
                       style={{
                         ...BODY, flex: 1, padding: '10px 16px', borderRadius: 999,
-                        background: addedId === p.id ? GOLD : '#4A3A32',
-                        border: 'none', color: '#fff', fontSize: 10, fontWeight: 600,
-                        letterSpacing: '0.2em', textTransform: 'uppercase', cursor: 'pointer',
+                        background: p.stock_count === 0 ? '#E5DDD5' : addedId === p.id ? GOLD : '#4A3A32',
+                        border: 'none', color: p.stock_count === 0 ? '#9A8573' : '#fff', fontSize: 10, fontWeight: 600,
+                        letterSpacing: '0.2em', textTransform: 'uppercase',
+                        cursor: p.stock_count === 0 ? 'not-allowed' : 'pointer',
                         transition: 'all 0.25s',
                       }}
                     >
-                      {addedId === p.id ? 'Added ✦' : 'Add to Cart'}
+                      {p.stock_count === 0 ? 'Out of Stock' : addedId === p.id ? 'Added ✦' : 'Add to Cart'}
                     </button>
                   </div>
                 </div>

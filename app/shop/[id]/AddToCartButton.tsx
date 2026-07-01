@@ -7,7 +7,7 @@ import { addToCart } from '@/lib/cart'
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 
-type Product = { id: string; name: string; price: number; image_url: string | null; category: string }
+type Product = { id: string; name: string; price: number; image_url: string | null; category: string; stock_count: number }
 
 export default function AddToCartButton({ product }: { product: Product }) {
   const router = useRouter()
@@ -17,6 +17,14 @@ export default function AddToCartButton({ product }: { product: Product }) {
     addToCart({ productId: product.id, name: product.name, price: product.price, imageUrl: product.image_url, category: product.category })
     setAdded(true)
     setTimeout(() => { router.push('/shop/cart') }, 700)
+  }
+
+  if (product.stock_count === 0) {
+    return (
+      <button disabled style={{ ...BODY, width: '100%', padding: '15px 28px', borderRadius: 999, background: '#E5DDD5', border: 'none', color: '#9A8573', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'not-allowed' }}>
+        Out of Stock
+      </button>
+    )
   }
 
   return (
