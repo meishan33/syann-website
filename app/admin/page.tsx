@@ -209,6 +209,10 @@ export default function AdminPage() {
     items: ShopOrderItem[]; total_amount: number; payment_status: string; fulfillment_status: string; created_at: string
   }
   const [shopViewMode, setShopViewMode] = useState<'grid' | 'list'>('list')
+  const [shopFilter, setShopFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [shopSort, setShopSort] = useState<'name' | 'category' | 'price' | 'stock_count' | null>(null)
+  const [shopSortAsc, setShopSortAsc] = useState(true)
+  const [shopSearch, setShopSearch] = useState('')
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([])
   const [shopOrdersLoading, setShopOrdersLoading] = useState(false)
   const [expandedShopOrder, setExpandedShopOrder] = useState<string | null>(null)
@@ -1360,42 +1364,81 @@ export default function AdminPage() {
               )}
 
               {/* ── SHOP ── */}
-              {tab === 'shop' && (
+              {tab === 'shop' && (() => {
+                  const activeCount = shopProducts.filter(p => p.active).length
+                  const inactiveCount = shopProducts.length - activeCount
+                  const displayProducts = shopProducts
+                    .filter(p => shopFilter === 'all' ? true : shopFilter === 'active' ? p.active : !p.active)
+                    .filter(p => !shopSearch.trim() || p.name.toLowerCase().includes(shopSearch.toLowerCase()) || p.category.toLowerCase().includes(shopSearch.toLowerCase()))
+                    .sort((a, b) => {
+                      if (!shopSort) return 0
+                      const av = a[shopSort] ?? ''
+                      const bv = b[shopSort] ?? ''
+                      const r = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).toLowerCase().localeCompare(String(bv).toLowerCase())
+                      return shopSortAsc ? r : -r
+                    })
+
+                  function SortTH({ col, label }: { col: typeof shopSort; label: string }) {
+                    const active = shopSort === col
+                    return (
+                      <span onClick={() => { if (shopSort === col) setShopSortAsc(a => !a); else { setShopSort(col); setShopSortAsc(true) } }}
+                        style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: active ? GOLD : '#9A8573', cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        {label}{active ? (shopSortAsc ? ' ↑' : ' ↓') : ''}
+                      </span>
+                    )
+                  }
+
+                  return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {/* Toolbar */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: 0 }}>{shopProducts.length} product{shopProducts.length !== 1 ? 's' : ''}</p>
+                    {/* Filter tabs */}
+                    <div style={{ display: 'flex', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 4 }}>
+                      {([
+                        { key: 'all',      label: 'All',      count: shopProducts.length },
+                        { key: 'active',   label: 'Active',   count: activeCount },
+                        { key: 'inactive', label: 'Hidden',   count: inactiveCount },
+                      ] as const).map(f => (
+                        <button key={f.key} onClick={() => { setShopFilter(f.key); setCurrentPage(1) }}
+                          style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '6px 14px', background: shopFilter === f.key ? DARK : 'transparent', color: shopFilter === f.key ? '#F6F1EB' : '#9A8573', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                          {f.label}
+                          {f.count > 0 && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 999, background: shopFilter === f.key ? 'rgba(255,255,255,0.2)' : '#F0E8DF', color: shopFilter === f.key ? '#F6F1EB' : '#9A8573' }}>{f.count}</span>}
+                        </button>
+                      ))}
+                    </div>
+
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {/* Search */}
+                      <div style={{ position: 'relative' }}>
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="9" cy="9" r="7"/><path d="M15 15l3 3"/></svg>
+                        <input type="text" value={shopSearch} onChange={e => { setShopSearch(e.target.value); setCurrentPage(1) }} placeholder="Search…"
+                          style={{ ...BODY, paddingLeft: 28, paddingRight: 10, paddingTop: 7, paddingBottom: 7, border: '1px solid #E5DDD5', borderRadius: 999, fontSize: 12, color: DARK, background: '#fff', outline: 'none', width: 140 }} />
+                      </div>
                       {/* Grid / List toggle */}
                       <div style={{ display: 'flex', gap: 2, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: 3 }}>
                         {(['grid', 'list'] as const).map(v => (
-                          <button key={v} onClick={() => setShopViewMode(v)}
-                            title={v === 'grid' ? 'Grid view' : 'List view'}
+                          <button key={v} onClick={() => setShopViewMode(v)} title={v === 'grid' ? 'Grid view' : 'List view'}
                             style={{ padding: '5px 8px', background: shopViewMode === v ? DARK : 'transparent', border: 'none', borderRadius: 5, cursor: 'pointer', color: shopViewMode === v ? '#fff' : '#9A8573', display: 'flex', alignItems: 'center' }}>
-                            {v === 'grid' ? (
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
-                            ) : (
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="1" y1="3" x2="13" y2="3"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="11" x2="13" y2="11"/></svg>
-                            )}
+                            {v === 'grid' ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+                            : <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="1" y1="3" x2="13" y2="3"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="11" x2="13" y2="11"/></svg>}
                           </button>
                         ))}
                       </div>
-                      <button
-                        onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' }) }}
-                        style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                      >
-                        + Add Product
+                      <button onClick={() => { setShowAddProduct(true); setAddProductError(null); setNewProduct({ name: '', description: '', price: '', category: 'bracelet', image_url: '', stock_count: '' }) }}
+                        style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '9px 18px', background: DARK, color: '#F6F1EB', border: 'none', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Product
                       </button>
                     </div>
                   </div>
 
                   {shopLoading ? (
                     <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>Loading…</p>
-                  ) : shopProducts.length === 0 ? (
-                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>No products yet. Add your first one.</p>
+                  ) : displayProducts.length === 0 ? (
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', textAlign: 'center', padding: 40 }}>{shopProducts.length === 0 ? 'No products yet. Add your first one.' : 'No products match your filter.'}</p>
                   ) : shopViewMode === 'grid' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-                      {paginate(shopProducts).map(p => (
+                      {paginate(displayProducts).map(p => (
                         <div key={p.id} style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', opacity: p.active ? 1 : 0.6 }}>
                           <div style={{ position: 'relative', aspectRatio: '1', background: '#F8F4EF' }}>
                             {p.image_url
@@ -1453,14 +1496,19 @@ export default function AdminPage() {
                     /* ── LIST VIEW ── */
                     <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, overflow: 'hidden' }}>
                       <div style={{ overflowX: 'auto' }}>
-                      {/* Header row */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '10px 18px', background: '#FAFAF8', borderBottom: '1px solid #F0E8DF', alignItems: 'center', minWidth: 780 }}>
-                        {['#', 'IMAGE', 'NAME', 'CATEGORY', 'PRICE', 'STOCK', 'STATUS', ''].map(h => (
-                          <span key={h} style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>{h}</span>
-                        ))}
+                      {/* Header row with sortable columns */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 60px', gap: 12, padding: '10px 18px', background: '#FAFAF8', borderBottom: '1px solid #F0E8DF', alignItems: 'center', minWidth: 780 }}>
+                        <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>#</span>
+                        <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>IMAGE</span>
+                        <SortTH col="name" label="NAME" />
+                        <SortTH col="category" label="CATEGORY" />
+                        <SortTH col="price" label="PRICE" />
+                        <SortTH col="stock_count" label="STOCK" />
+                        <span style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A8573' }}>STATUS</span>
+                        <span />
                       </div>
-                      {paginate(shopProducts).map((p, i) => (
-                        <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 80px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55, minWidth: 780 }}>
+                      {paginate(displayProducts).map((p, i) => (
+                        <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '32px 56px 1fr 80px 80px 80px 160px 60px', gap: 12, padding: '12px 18px', borderTop: i > 0 ? '1px solid #F0E8DF' : 'none', alignItems: 'center', opacity: p.active ? 1 : 0.55, minWidth: 780 }}>
                           {/* # */}
                           <span style={{ ...BODY, fontSize: 11, color: '#B0A090', letterSpacing: '0.06em' }}>#{i + 1}</span>
                           {/* Thumbnail */}
@@ -1510,9 +1558,10 @@ export default function AdminPage() {
                       </div>{/* end overflowX scroll wrapper */}
                     </div>
                   )}
-                  <PaginationBar total={shopProducts.length} />
+                  <PaginationBar total={displayProducts.length} />
                 </div>
-              )}
+                  )
+                })()}
 
               {tab === 'ai-prompt' && (
                 <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '28px 32px' }}>
