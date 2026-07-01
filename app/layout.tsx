@@ -25,13 +25,13 @@ export const metadata: Metadata = {
     title: "SYANN.CO — Personalized Crystal Bracelets",
     description: "Discover your personalized crystal bracelet powered by Five Elements wisdom and AI.",
     url: SITE_URL,
-    images: [{ url: "/NewLogo.png", width: 600, height: 600, alt: "SYANN.CO Crystal Bracelets" }],
+    images: [{ url: "/NewSymbols_transparent.png", width: 800, height: 800, alt: "SYANN.CO Crystal Bracelets" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "SYANN.CO — Personalized Crystal Bracelets",
     description: "Discover your personalized crystal bracelet powered by Five Elements wisdom and AI.",
-    images: ["/NewLogo.png"],
+    images: ["/NewSymbols_transparent.png"],
   },
   robots: { index: true, follow: true },
 };
