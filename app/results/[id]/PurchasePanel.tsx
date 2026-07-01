@@ -1,8 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { addBraceletToCart } from '@/lib/cart'
+
+function useFocusTrap(active: boolean) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!active || !ref.current) return
+    const el = ref.current
+    const focusable = el.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    if (focusable.length) focusable[0].focus()
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Tab' || !focusable.length) return
+      const first = focusable[0], last = focusable[focusable.length - 1]
+      if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus() } }
+      else { if (document.activeElement === last) { e.preventDefault(); first.focus() } }
+    }
+    el.addEventListener('keydown', onKey)
+    return () => el.removeEventListener('keydown', onKey)
+  }, [active])
+  return ref
+}
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
@@ -27,6 +46,8 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
   const [packagingOpen, setPackagingOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
+  const measureRef = useFocusTrap(measureOpen)
+  const packagingRef = useFocusTrap(packagingOpen)
 
   function handlePurchase() {
     setLoading(true)
@@ -241,6 +262,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
       {/* MEASURE WRIST MODAL */}
       {measureOpen && (
         <div
+          ref={measureRef}
           role="dialog"
           aria-modal="true"
           aria-label="How to measure your wrist"
@@ -296,6 +318,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
       {/* PACKAGING MODAL */}
       {packagingOpen && (
         <div
+          ref={packagingRef}
           role="dialog"
           aria-modal="true"
           aria-label="Sample packaging"

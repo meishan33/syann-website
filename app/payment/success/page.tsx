@@ -1,5 +1,11 @@
+import type { Metadata } from 'next'
 import Stripe from 'stripe'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'Order Confirmed — Thank You',
+  robots: { index: false, follow: false },
+}
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
@@ -108,7 +114,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
           We'll be in touch soon with your order update.
         </p>
 
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 64 }}>
           <Link
             href="/account?tab=orders"
             style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999, background: '#4A3A32', padding: '12px 28px', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none' }}
@@ -121,6 +127,31 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
           >
             Return Home
           </Link>
+        </div>
+
+        {/* ── What's Next ── */}
+        <div style={{ width: '100%', borderTop: '1px solid #E5DDD5', paddingTop: 48 }}>
+          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', textTransform: 'uppercase', color: GOLD, margin: '0 0 20px' }}>
+            Continue Your Journey
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+            {[
+              { href: '/energy-quiz', icon: '✦', label: 'New Reading', desc: 'Discover crystals for someone else' },
+              { href: '/crystals', icon: '◈', label: 'Crystal Guide', desc: 'Learn about your chosen crystals' },
+              { href: '/shop', icon: '◇', label: 'Our Shop', desc: 'Explore crystal accessories & gifts' },
+              { href: '/faq', icon: '○', label: 'Care Guide', desc: 'How to cleanse and wear your bracelet' },
+            ].map(({ href, icon, label, desc }) => (
+              <Link
+                key={href}
+                href={href}
+                style={{ ...BODY, textDecoration: 'none', background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color 0.2s' }}
+              >
+                <span style={{ fontSize: 18, color: GOLD }}>{icon}</span>
+                <p style={{ ...BODY, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#3D2B1F', margin: 0 }}>{label}</p>
+                <p style={{ ...BODY, fontSize: 11, fontWeight: 300, color: '#9A8573', margin: 0, lineHeight: 1.6 }}>{desc}</p>
+              </Link>
+            ))}
+          </div>
         </div>
 
       </div>
