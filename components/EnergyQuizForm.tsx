@@ -433,9 +433,9 @@ export default function EnergyQuizForm() {
         return
       }
     } else {
-      // Guest: 2 free attempts then prompt to login
+      // Guest: 5 free attempts then prompt to login
       const attemptCount = parseInt(localStorage.getItem(LS_KEY) || '0', 10)
-      if (attemptCount >= 2) {
+      if (attemptCount >= 5) {
         setShowAuthModal(true)
         return
       }
