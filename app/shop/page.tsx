@@ -33,6 +33,7 @@ export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState('all')
+  const [search, setSearch] = useState('')
   const [addedId, setAddedId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -42,7 +43,9 @@ export default function ShopPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const filtered = category === 'all' ? products : products.filter(p => p.category === category)
+  const filtered = products
+    .filter(p => category === 'all' || p.category === category)
+    .filter(p => !search.trim() || p.name.toLowerCase().includes(search.toLowerCase()) || p.description?.toLowerCase().includes(search.toLowerCase()))
 
   function handleAddToCart(p: Product) {
     addToCart({ productId: p.id, name: p.name, price: p.price, imageUrl: p.image_url, category: p.category })
@@ -64,8 +67,8 @@ export default function ShopPage() {
         </p>
       </section>
 
-      {/* CATEGORY TABS */}
-      <section style={{ background: '#FDFAF7', borderBottom: '1px solid #E5DDD5', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* CATEGORY TABS + SEARCH */}
+      <section style={{ background: '#FDFAF7', borderBottom: '1px solid #E5DDD5', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', gap: 0 }}>
           {CATEGORIES.map(c => (
             <button
@@ -84,12 +87,33 @@ export default function ShopPage() {
             </button>
           ))}
         </div>
-        <CurrencySelector />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Search */}
+          <div style={{ position: 'relative' }}>
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <circle cx="9" cy="9" r="7"/><path d="M15 15l3 3"/>
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search…"
+              style={{ ...BODY, paddingLeft: 30, paddingRight: 12, paddingTop: 7, paddingBottom: 7, border: '1px solid #E5DDD5', borderRadius: 999, fontSize: 12, color: '#4A3A32', background: '#FDFAF7', outline: 'none', width: 160 }}
+            />
+          </div>
+          <CurrencySelector />
+        </div>
       </section>
 
 
       {/* GRID */}
       <section style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 80px' }}>
+        {!loading && filtered.length > 0 && (
+          <p style={{ ...BODY, fontSize: 11, color: '#9A8573', marginBottom: 20, letterSpacing: '0.06em' }}>
+            {filtered.length} item{filtered.length !== 1 ? 's' : ''}
+            {search && <> matching &ldquo;{search}&rdquo;</>}
+          </p>
+        )}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0', color: '#9A8573', ...BODY, fontSize: 13 }}>
             Loading…
@@ -110,8 +134,8 @@ export default function ShopPage() {
                   display: 'flex', flexDirection: 'column',
                 }}
               >
-                {/* Image */}
-                <div style={{ position: 'relative', aspectRatio: '1', background: '#F8F4EF' }}>
+                {/* Image — links to product detail */}
+                <Link href={`/shop/${p.id}`} style={{ display: 'block', position: 'relative', aspectRatio: '1', background: '#F8F4EF', textDecoration: 'none' }}>
                   {p.image_url ? (
                     <Image src={p.image_url} alt={p.name} fill sizes="320px" style={{ objectFit: 'cover' }} />
                   ) : (
@@ -128,11 +152,13 @@ export default function ShopPage() {
                   }}>
                     {p.category}
                   </span>
-                </div>
+                </Link>
 
                 {/* Info */}
                 <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                  <h3 style={{ ...SERIF, fontSize: 20, fontWeight: 300, color: '#3D2B1F', margin: 0 }}>{p.name}</h3>
+                  <Link href={`/shop/${p.id}`} style={{ textDecoration: 'none' }}>
+                    <h3 style={{ ...SERIF, fontSize: 20, fontWeight: 300, color: '#3D2B1F', margin: 0 }}>{p.name}</h3>
+                  </Link>
                   {p.description && (
                     <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', lineHeight: 1.7, margin: 0 }}>
                       {p.description}
