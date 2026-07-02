@@ -214,6 +214,75 @@ function SignInPanel() {
   )
 }
 
+/* ── Change Password card ─────────────────────────────────── */
+function ChangePasswordCard() {
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setSuccess(false)
+    if (newPassword.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return }
+    setSaving(true)
+    const { error: err } = await supabase.auth.updateUser({ password: newPassword })
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    setSuccess(true)
+    setNewPassword('')
+    setConfirmPassword('')
+    setTimeout(() => setSuccess(false), 4000)
+  }
+
+  return (
+    <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '32px 36px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+        <Diamond />
+        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>Change Password</p>
+      </div>
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 400 }}>
+        <div>
+          <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>New Password</label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={e => { setNewPassword(e.target.value); setError(null); setSuccess(false) }}
+            placeholder="Min. 8 characters"
+            required
+            style={{ ...INPUT, fontSize: 12, padding: '10px 14px' }}
+          />
+        </div>
+        <div>
+          <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 6 }}>Confirm New Password</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={e => { setConfirmPassword(e.target.value); setError(null); setSuccess(false) }}
+            placeholder="Re-enter new password"
+            required
+            style={{ ...INPUT, fontSize: 12, padding: '10px 14px' }}
+          />
+        </div>
+        {error && <p style={{ ...BODY, fontSize: 12, color: '#C0392B', margin: 0 }}>{error}</p>}
+        {success && <p style={{ ...BODY, fontSize: 12, color: '#7CB98A', margin: 0 }}>Password updated successfully.</p>}
+        <div>
+          <button
+            type="submit"
+            disabled={saving || !newPassword || !confirmPassword}
+            style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '10px 24px', background: saving ? '#C9A96E' : '#4A3A32', border: 'none', borderRadius: 999, color: '#fff', cursor: saving || !newPassword || !confirmPassword ? 'not-allowed' : 'pointer', opacity: !newPassword || !confirmPassword ? 0.5 : 1, transition: 'background 0.25s' }}
+          >
+            {saving ? 'Saving…' : 'Update Password'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 /* ── Profile panel (shown when logged in) ─────────────────── */
 function AccountPageContent() {
   const router = useRouter()
@@ -746,6 +815,11 @@ function AccountPageContent() {
               </div>
             </div>
           </div>
+
+          {/* Change Password — only for email/password accounts */}
+          {user.app_metadata?.provider !== 'google' && (
+            <ChangePasswordCard />
+          )}
 
           {/* Delivery Addresses */}
           <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '32px 36px' }}>
