@@ -28,7 +28,7 @@ function wrapper(bodyHtml: string): string {
 <div style="background:${CREAM};padding:40px 20px;font-family:Helvetica,Arial,sans-serif;">
   <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #E5DDD5;">
     <div style="padding:32px 32px 24px;text-align:center;border-bottom:1px solid #F0E8DF;">
-      <img src="${SITE_URL}/NewSymbols_transparent.png" alt="SYANN.CO" width="56" height="56" style="display:block;margin:0 auto 12px;width:56px;height:56px;object-fit:contain;" />
+      <img src="${SITE_URL}/NewSymbols_transparent.webp" alt="SYANN.CO" width="56" height="56" style="display:block;margin:0 auto 12px;width:56px;height:56px;object-fit:contain;" />
       <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:${DARK};letter-spacing:0.12em;">SYANN.CO</p>
       <p style="margin:4px 0 0;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:${GOLD};">Crystals · Energy · You</p>
     </div>
