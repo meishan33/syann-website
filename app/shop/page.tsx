@@ -187,16 +187,25 @@ export default function ShopPage() {
                     <button
                       onClick={() => p.stock_count > 0 && handleAddToCart(p)}
                       disabled={p.stock_count === 0}
+                      title={p.stock_count === 0 ? 'Out of Stock' : 'Add to Cart'}
                       style={{
-                        ...BODY, padding: '7px 14px', borderRadius: 999,
+                        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
                         background: p.stock_count === 0 ? '#E5DDD5' : addedId === p.id ? GOLD : '#4A3A32',
-                        border: 'none', color: p.stock_count === 0 ? '#9A8573' : '#fff', fontSize: 9, fontWeight: 600,
-                        letterSpacing: '0.18em', textTransform: 'uppercase',
-                        cursor: p.stock_count === 0 ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.25s', whiteSpace: 'nowrap',
+                        border: 'none', cursor: p.stock_count === 0 ? 'not-allowed' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.25s',
                       }}
                     >
-                      {p.stock_count === 0 ? 'Out of Stock' : addedId === p.id ? 'Added ✦' : 'Add to Cart'}
+                      {addedId === p.id ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={p.stock_count === 0 ? '#9A8573' : '#fff'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                          <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/>
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>
