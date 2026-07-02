@@ -763,12 +763,9 @@ function AccountPageContent() {
                         onClick={() => setExpandedOrder(isOpen ? null : order.id)}
                         style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, textAlign: 'left' }}>
-                          <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>
-                            {order.order_number ? `#${order.order_number}` : '—'} · {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                          </span>
-                          <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: '#4A3A32', margin: 0 }}>Crystal Bracelet</p>
-                        </div>
+                        <span style={{ ...BODY, fontSize: 11, color: '#7A6355', letterSpacing: '0.06em', flex: 1, textAlign: 'left' }}>
+                          {order.order_number ? `#${order.order_number}` : '—'} · {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </span>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                           <p style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32', margin: 0 }}>{format(Number(order.total_amount))}</p>
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -791,7 +788,10 @@ function AccountPageContent() {
                                 : <span style={{ color: GOLD, fontSize: 18, opacity: 0.4 }}>✦</span>}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, margin: '0 0 3px' }}>Custom Crystal Bracelet</p>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 3 }}>
+                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>Custom Crystal Bracelet</p>
+                                <p style={{ ...SERIF, fontSize: 14, color: '#4A3A32', margin: 0, flexShrink: 0, paddingLeft: 8 }}>S$59.00</p>
+                              </div>
                               {order.recommended_crystal_names?.length > 0 && (
                                 <p style={{ ...SERIF, fontSize: 13, fontWeight: 300, color: '#4A3A32', margin: '0 0 8px', lineHeight: 1.5 }}>{order.recommended_crystal_names.join(' · ')}</p>
                               )}
