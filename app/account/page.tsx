@@ -8,7 +8,7 @@ import { addBraceletToCart } from '@/lib/cart'
 import { useCurrency } from '@/context/CurrencyContext'
 import type { User } from '@supabase/supabase-js'
 
-type Tab = 'profile' | 'orders' | 'readings'
+type Tab = 'profile' | 'orders' | 'readings' | 'password'
 
 type Reading = {
   id: string
@@ -366,7 +366,7 @@ function AccountPageContent() {
   const initialTab = searchParams.get('tab')
   const [tab, setTab] = useState<Tab>(initialTab === 'orders' || initialTab === 'readings' ? initialTab : 'profile')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const TAB_LABELS: Record<Tab, string> = { profile: 'My Profile', orders: 'My Orders', readings: 'Recent Readings' }
+  const TAB_LABELS: Record<Tab, string> = { profile: 'My Profile', orders: 'My Orders', readings: 'Recent Readings', password: 'Change Password' }
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
@@ -591,6 +591,18 @@ function AccountPageContent() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span style={{ ...BODY, fontSize: 12, fontWeight: tab === 'readings' ? 600 : 400 }}>Recent Readings</span>
             </button>
+
+            {/* Change Password tab — hidden for Google OAuth users */}
+            {user?.app_metadata?.provider !== 'google' && (
+              <button onClick={() => { setTab('password'); setSidebarOpen(false) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, color: '#4A3A32', marginBottom: 2, width: '100%', background: tab === 'password' ? '#F6F1EB' : 'transparent', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#F6F1EB')}
+                onMouseLeave={e => (e.currentTarget.style.background = tab === 'password' ? '#F6F1EB' : 'transparent')}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <span style={{ ...BODY, fontSize: 12, fontWeight: tab === 'password' ? 600 : 400 }}>Change Password</span>
+              </button>
+            )}
 
             {/* External links */}
             {[
@@ -839,6 +851,9 @@ function AccountPageContent() {
             </div>
           )}
 
+          {/* ── CHANGE PASSWORD TAB ── */}
+          {tab === 'password' && <ChangePasswordCard />}
+
           {/* ── PROFILE TAB ── */}
           {tab === 'profile' && <>
 
@@ -871,11 +886,6 @@ function AccountPageContent() {
               </div>
             </div>
           </div>
-
-          {/* Change Password — only for email/password accounts */}
-          {user.app_metadata?.provider !== 'google' && (
-            <ChangePasswordCard />
-          )}
 
           {/* Delivery Addresses */}
           <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '32px 36px' }}>
