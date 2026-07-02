@@ -4,6 +4,7 @@ import "../components/navbar.css";
 import { headers } from "next/headers";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import CartToast from "../components/CartToast";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -60,6 +61,7 @@ export default async function RootLayout({
           <Navbar shopEnabled={shopEnabled} />
           {children}
           <Footer />
+          <CartToast />
         </CurrencyProvider>
       </body>
     </html>

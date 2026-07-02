@@ -40,6 +40,7 @@ export function addToCart(item: Omit<CartItem, 'quantity'>) {
     cart.push({ ...item, quantity: 1 })
   }
   saveCart(cart)
+  window.dispatchEvent(new CustomEvent('cart-item-added', { detail: { name: item.name } }))
 }
 
 // Adds a bracelet to the cart, replacing any existing bracelet (one per cart).
@@ -67,6 +68,7 @@ export function addBraceletToCart(opts: {
     remark: opts.remark,
   })
   saveCart(cart)
+  window.dispatchEvent(new CustomEvent('cart-item-added', { detail: { name: label } }))
 }
 
 export function removeFromCart(productId: string) {
