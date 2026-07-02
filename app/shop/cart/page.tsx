@@ -26,6 +26,10 @@ export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([])
   const [checked, setChecked] = useState<Record<string, boolean>>({})
 
+  // Session email: undefined = not yet resolved, null = guest, string = logged in
+  const [sessionEmail, setSessionEmail] = useState<string | null | undefined>(undefined)
+  const [guestEmail, setGuestEmail] = useState('')
+
   // Promo code
   const [promoInput, setPromoInput] = useState('')
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null)
@@ -40,6 +44,9 @@ export default function CartPage() {
   const [shippingFeeCents, setShippingFeeCents] = useState(0)
   const [checkoutEmail, setCheckoutEmail] = useState<string | null>(null)
   const [checkoutAddress, setCheckoutAddress] = useState<DeliveryAddress | null>(null)
+
+  // Effective email: logged-in email takes priority, otherwise guest input
+  const effectiveEmail = (sessionEmail !== undefined ? sessionEmail : null) ?? (guestEmail.trim() || null)
 
   useEffect(() => {
     const cart = getCart()
@@ -57,6 +64,10 @@ export default function CartPage() {
       })
     }
     window.addEventListener('cart-updated', onUpdate)
+    // Resolve once on mount: string = logged in, null = guest
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSessionEmail(session?.user?.email ?? null)
+    })
     return () => window.removeEventListener('cart-updated', onUpdate)
   }, [])
 
@@ -83,14 +94,17 @@ export default function CartPage() {
   const someChecked = selectedItems.length > 0
 
   async function applyPromo() {
+    if (!effectiveEmail) {
+      setPromoError('Please enter your email address first.')
+      return
+    }
     setPromoLoading(true)
     setPromoError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/checkout/validate-discount', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoInput, subtotalCents: selectedSubtotalCents, email: session?.user?.email ?? null }),
+        body: JSON.stringify({ code: promoInput, subtotalCents: selectedSubtotalCents, email: effectiveEmail }),
       })
       const data = await res.json()
       if (!res.ok) { setPromoError(data.error); return }
@@ -104,14 +118,17 @@ export default function CartPage() {
         const applyRes = await fetch('/api/checkout/apply-discount', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId: piId, code: data.code, email: session?.user?.email ?? null }),
+          body: JSON.stringify({ paymentIntentId: piId, code: data.code, email: effectiveEmail }),
         })
         if (applyRes.ok) {
           const applyData = await applyRes.json()
-          // Update amount and remount the form with the new amount
           setAmountCents(applyData.amountCents)
           setShippingFeeCents(applyData.shippingFeeCents)
-          // key={amountCents} on EmbeddedPaymentForm triggers a clean remount
+          // key={amountCents} on EmbeddedPaymentForm triggers clean remount
+        } else {
+          // PI update failed — close the form so the next "Proceed to Payment"
+          // click creates a fresh PI with the correct discounted amount.
+          setClientSecret(null)
         }
       }
     } catch { setPromoError('Failed to apply code.') }
@@ -123,7 +140,7 @@ export default function CartPage() {
     setCheckoutLoading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const email = session?.user?.email ?? null
+      const email = (session?.user?.email ?? guestEmail.trim()) || null
       const userId = session?.user?.id ?? null
       let defaultAddress: DeliveryAddress | null = null
       if (session?.access_token) {
@@ -183,7 +200,7 @@ export default function CartPage() {
       setClientSecret(data.clientSecret)
       setAmountCents(appliedPromo ? Math.max(50, data.amountCents - appliedPromo.discountCents) : data.amountCents)
       setShippingFeeCents(data.shippingFeeCents)
-      setCheckoutEmail(email)
+      setCheckoutEmail(email)  // now includes guestEmail for guests
       setCheckoutAddress(defaultAddress)
     } catch (err: unknown) {
       setCheckoutError(err instanceof Error ? err.message : 'Something went wrong.')
@@ -265,6 +282,20 @@ export default function CartPage() {
         {/* Order summary + promo + proceed */}
         <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '24px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.15)' }}>
 
+          {/* Guest email — only shown after session resolves and user is not logged in */}
+          {sessionEmail === null && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }}>Email Address</label>
+              <input
+                type="email"
+                value={guestEmail}
+                onChange={e => { setGuestEmail(e.target.value); setPromoError(null) }}
+                placeholder="you@example.com"
+                style={{ ...BODY, width: '100%', padding: '10px 14px', border: '1px solid #E5DDD5', background: '#FDFAF7', fontSize: 13, color: '#4A3A32', outline: 'none', borderRadius: 8, boxSizing: 'border-box' }}
+              />
+            </div>
+          )}
+
           {/* Promo code */}
           <div style={{ marginBottom: 20 }}>
             <label style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }}>Promo Code</label>
@@ -275,12 +306,11 @@ export default function CartPage() {
                   setAppliedPromo(null)
                   if (clientSecret) {
                     const piId = clientSecret.split('_secret_')[0]
-                    const { data: { session } } = await supabase.auth.getSession()
-                    const res = await fetch('/api/checkout/apply-discount', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentIntentId: piId, code: '', email: session?.user?.email ?? null }) })
+                    const res = await fetch('/api/checkout/apply-discount', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentIntentId: piId, code: '', email: effectiveEmail }) })
                     if (res.ok) {
                       const d = await res.json()
                       setAmountCents(d.amountCents); setShippingFeeCents(d.shippingFeeCents)
-                      // key={amountCents} on EmbeddedPaymentForm triggers a clean remount
+                      // key={amountCents} on EmbeddedPaymentForm triggers clean remount
                     }
                   }
                 }} style={{ ...BODY, fontSize: 11, color: '#9A8573', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Remove</button>
