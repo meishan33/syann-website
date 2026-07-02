@@ -19,6 +19,8 @@ type Reading = {
   created_at: string
 }
 
+type ShopItem = { name: string; quantity: number; price: number }
+
 type Order = {
   id: string
   order_number: number | null
@@ -38,6 +40,7 @@ type Order = {
   customer_phone: string | null
   logo_charm: boolean | null
   current_feelings: string | null
+  shop_items: ShopItem[]
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -789,41 +792,63 @@ function AccountPageContent() {
 
                       {/* Expanded details */}
                       {isOpen && (
-                        <div style={{ borderTop: '1px solid #E5DDD5', padding: '16px 24px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div style={{ borderTop: '1px solid #E5DDD5', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-                          {/* Item row */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                          {/* ── Bracelet item ── */}
+                          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                            {order.generated_image_url && (
+                              <div style={{ width: 80, height: 80, borderRadius: 12, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0, background: '#F8F4EF' }}>
+                                <img src={order.generated_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              </div>
+                            )}
                             <div style={{ flex: 1 }}>
-                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Item</p>
-                              <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: '#4A3A32', margin: '0 0 4px' }}>Custom Crystal Bracelet</p>
+                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 3px' }}>Custom Crystal Bracelet</p>
                               {order.recommended_crystal_names?.length > 0 && (
-                                <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0 }}>{order.recommended_crystal_names.join(' · ')}</p>
+                                <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: '#4A3A32', margin: '0 0 8px', lineHeight: 1.5 }}>{order.recommended_crystal_names.join(' · ')}</p>
                               )}
+                              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                {order.spacer_choice && (
+                                  <div>
+                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Spacer</p>
+                                    <p style={{ ...BODY, fontSize: 11, color: '#4A3A32', margin: 0, textTransform: 'capitalize' }}>{order.spacer_choice}</p>
+                                  </div>
+                                )}
+                                <div>
+                                  <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Logo Charm</p>
+                                  <p style={{ ...BODY, fontSize: 11, color: '#4A3A32', margin: 0 }}>{order.logo_charm === false ? 'Excluded' : 'Included'}</p>
+                                </div>
+                                {order.remark && (
+                                  <div>
+                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Remarks</p>
+                                    <p style={{ ...BODY, fontSize: 11, color: '#4A3A32', margin: 0 }}>{order.remark}</p>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <p style={{ ...SERIF, fontSize: 16, fontWeight: 400, color: '#4A3A32', margin: 0, flexShrink: 0 }}>{format(Number(order.total_amount))}</p>
                           </div>
 
-                          {/* Bracelet options */}
-                          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                            {order.spacer_choice && (
-                              <div>
-                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Spacer</p>
-                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0, textTransform: 'capitalize' }}>{order.spacer_choice}</p>
-                              </div>
-                            )}
-                            <div>
-                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Logo Charm</p>
-                              <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.logo_charm === false ? 'Excluded' : 'Included'}</p>
+                          {/* ── Shop items (combined orders) ── */}
+                          {order.shop_items?.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {order.shop_items.map((item, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F9F5F0', borderRadius: 10, border: '1px solid #EDE8DF' }}>
+                                  <div>
+                                    <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#4A3A32', margin: '0 0 2px' }}>{item.name}</p>
+                                    <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>Qty: {item.quantity}</p>
+                                  </div>
+                                  <p style={{ ...SERIF, fontSize: 14, color: '#4A3A32', margin: 0 }}>{format(item.price * item.quantity)}</p>
+                                </div>
+                              ))}
                             </div>
-                            {order.remark && (
-                              <div>
-                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Remarks</p>
-                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.remark}</p>
-                              </div>
-                            )}
+                          )}
+
+                          {/* ── Order total ── */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4, borderTop: '1px solid #F0E8DF' }}>
+                            <span style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573' }}>Total Paid</span>
+                            <span style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32' }}>{format(Number(order.total_amount))}</span>
                           </div>
 
-                          {/* Element analysis */}
+                          {/* ── Elemental Analysis ── */}
                           {order.analysis_summary && (
                             <div style={{ background: '#F6F1EB', borderRadius: 10, padding: '14px 16px' }}>
                               <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 6px' }}>Elemental Analysis</p>
@@ -831,6 +856,7 @@ function AccountPageContent() {
                             </div>
                           )}
 
+                          {/* ── How You Were Feeling ── */}
                           {order.current_feelings && (
                             <div style={{ background: '#F6F1EB', borderRadius: 10, padding: '14px 16px' }}>
                               <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 6px' }}>How You Were Feeling</p>
