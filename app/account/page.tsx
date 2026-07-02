@@ -761,18 +761,15 @@ function AccountPageContent() {
                       {/* Clickable header */}
                       <button
                         onClick={() => setExpandedOrder(isOpen ? null : order.id)}
-                        style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}
+                        style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
                       >
-                        <span style={{ ...BODY, fontSize: 11, color: '#7A6355', letterSpacing: '0.06em', flex: 1, textAlign: 'left' }}>
+                        <span style={{ ...BODY, fontSize: 13, fontWeight: 500, color: '#4A3A32', letterSpacing: '0.04em', flex: 1, textAlign: 'left' }}>
                           {order.order_number ? `#${order.order_number}` : '—'} · {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                         </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-                          <p style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32', margin: 0 }}>{format(Number(order.total_amount))}</p>
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                            <StatusBadge label={order.payment_status} color={order.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} />
-                            <StatusBadge label={order.fulfillment_status} color={order.fulfillment_status === 'fulfilled' ? '#7CB98A' : order.fulfillment_status === 'processing' ? GOLD : '#9A8573'} />
-                          </div>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginTop: 4 }}><polyline points="6 9 12 15 18 9"/></svg>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          <StatusBadge label={order.payment_status} color={order.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} />
+                          <StatusBadge label={order.fulfillment_status} color={order.fulfillment_status === 'fulfilled' ? '#7CB98A' : order.fulfillment_status === 'processing' ? GOLD : '#9A8573'} />
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 4 }}><polyline points="6 9 12 15 18 9"/></svg>
                         </div>
                       </button>
 
