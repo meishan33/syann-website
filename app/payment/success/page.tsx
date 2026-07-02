@@ -22,6 +22,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
   let customerName: string | null = null
   let crystalNames: string[] = []
   let totalAmount: number | null = null
+  let isGuest = false
 
   if ((session_id || payment_intent) && process.env.STRIPE_SECRET_KEY) {
     try {
@@ -34,6 +35,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
           customerName = intent.shipping?.name ?? null
           totalAmount = intent.amount ? intent.amount / 100 : null
           resultId = resultId || intent.metadata?.resultId
+          isGuest = !intent.metadata?.userId
         }
       } else if (session_id) {
         // Legacy Checkout Session flow — kept as a safety net for any sessions
@@ -110,17 +112,42 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
         <p style={{ ...BODY, fontSize: 13, lineHeight: 1.85, color: '#7A5B45', margin: '0 0 8px' }}>
           Your crystal bracelet is being prepared with care.
         </p>
-        <p style={{ ...BODY, fontSize: 13, lineHeight: 1.85, color: '#7A5B45', margin: '0 0 36px' }}>
+        <p style={{ ...BODY, fontSize: 13, lineHeight: 1.85, color: '#7A5B45', margin: '0 0 28px' }}>
           We'll be in touch soon with your order update.
         </p>
 
+        {/* Guest notice */}
+        {isGuest && (
+          <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 14, padding: '18px 22px', marginBottom: 28, textAlign: 'left' }}>
+            <p style={{ ...BODY, fontSize: 12, lineHeight: 1.8, color: '#7A5B45', margin: '0 0 8px' }}>
+              A confirmation email is on its way to your inbox, and you'll receive updates as your order is prepared and shipped.
+            </p>
+            <p style={{ ...BODY, fontSize: 12, lineHeight: 1.8, color: '#7A5B45', margin: 0 }}>
+              To track your order anytime,{' '}
+              <Link href="/account" style={{ color: GOLD, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                create an account
+              </Link>
+              {' '}— it only takes a moment.
+            </p>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 64 }}>
-          <Link
-            href="/account?tab=orders"
-            style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999, background: '#4A3A32', padding: '12px 28px', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none' }}
-          >
-            View My Orders
-          </Link>
+          {isGuest ? (
+            <Link
+              href="/account"
+              style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999, background: '#4A3A32', padding: '12px 28px', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none' }}
+            >
+              Create an Account
+            </Link>
+          ) : (
+            <Link
+              href="/account?tab=orders"
+              style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999, background: '#4A3A32', padding: '12px 28px', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#fff', textDecoration: 'none' }}
+            >
+              View My Orders
+            </Link>
+          )}
           <Link
             href="/"
             style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999, border: '1px solid #D9C4A8', padding: '12px 28px', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#4A3A32', textDecoration: 'none', background: 'transparent' }}
