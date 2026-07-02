@@ -16,6 +16,7 @@ export type CartItem = {
 export const BRACELET_PRICE = 59.00
 
 const CART_KEY = 'syann_shop_cart'
+const CART_OWNER_KEY = 'syann_cart_owner'
 
 export function getCart(): CartItem[] {
   if (typeof window === 'undefined') return []
@@ -29,6 +30,18 @@ export function getCart(): CartItem[] {
 export function saveCart(items: CartItem[]) {
   localStorage.setItem(CART_KEY, JSON.stringify(items))
   window.dispatchEvent(new Event('cart-updated'))
+}
+
+// Call when auth resolves. Clears the cart if a different user is now active
+// so carts never leak between accounts.
+export function bindCartToUser(userId: string | null) {
+  if (typeof window === 'undefined') return
+  const owner = userId ?? 'guest'
+  const stored = localStorage.getItem(CART_OWNER_KEY)
+  if (stored !== null && stored !== owner) {
+    clearCart()
+  }
+  localStorage.setItem(CART_OWNER_KEY, owner)
 }
 
 export function addToCart(item: Omit<CartItem, 'quantity'>) {

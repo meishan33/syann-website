@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { CartItem, getCart, removeFromCart, updateQuantity } from '@/lib/cart'
+import { CartItem, getCart, removeFromCart, updateQuantity, bindCartToUser } from '@/lib/cart'
 import { useRouter } from 'next/navigation'
 import { useCurrency } from '@/context/CurrencyContext'
 import EmbeddedPaymentForm from '@/components/EmbeddedPaymentForm'
@@ -67,6 +67,7 @@ export default function CartPage() {
     // Resolve once on mount: string = logged in, null = guest
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessionEmail(session?.user?.email ?? null)
+      bindCartToUser(session?.user?.id ?? null)
     })
     return () => window.removeEventListener('cart-updated', onUpdate)
   }, [])

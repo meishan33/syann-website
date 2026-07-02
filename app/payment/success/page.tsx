@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Stripe from 'stripe'
 import Link from 'next/link'
+import ClearCartOnSuccess from '@/components/ClearCartOnSuccess'
 
 export const metadata: Metadata = {
   title: 'Order Confirmed — Thank You',
@@ -68,6 +69,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
 
   return (
     <main style={{ background: '#F6F1EB', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <ClearCartOnSuccess />
       <div style={{ textAlign: 'center', maxWidth: 480, width: '100%' }}>
 
         {/* Gold diamond */}
