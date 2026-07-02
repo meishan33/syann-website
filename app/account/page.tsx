@@ -777,43 +777,22 @@ function AccountPageContent() {
 
                       {/* Expanded details */}
                       {isOpen && (
-                        <div style={{ borderTop: '1px solid #E5DDD5', padding: '16px 24px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ borderTop: '1px solid #E5DDD5', padding: '16px 24px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-                          {/* Delivery info */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '12px 24px' }}>
-                            {order.customer_name && <>
-                              <div>
-                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Name</p>
-                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.customer_name}</p>
-                              </div>
-                              {order.shipping_address
-                                ? <div>
-                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Delivery Address</p>
-                                    <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.shipping_address}</p>
-                                  </div>
-                                : <div />
-                              }
-                            </>}
-                            {order.customer_phone && <>
-                              <div>
-                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Phone</p>
-                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.customer_phone}</p>
-                              </div>
-                              {order.remark
-                                ? <div>
-                                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Remarks</p>
-                                    <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.remark}</p>
-                                  </div>
-                                : <div />
-                              }
-                            </>}
-                            {!order.customer_phone && order.remark && <>
-                              <div>
-                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Remarks</p>
-                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.remark}</p>
-                              </div>
-                              <div />
-                            </>}
+                          {/* Item row */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Item</p>
+                              <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: '#4A3A32', margin: '0 0 4px' }}>Custom Crystal Bracelet</p>
+                              {order.recommended_crystal_names?.length > 0 && (
+                                <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0 }}>{order.recommended_crystal_names.join(' · ')}</p>
+                              )}
+                            </div>
+                            <p style={{ ...SERIF, fontSize: 16, fontWeight: 400, color: '#4A3A32', margin: 0, flexShrink: 0 }}>{format(Number(order.total_amount))}</p>
+                          </div>
+
+                          {/* Bracelet options */}
+                          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                             {order.spacer_choice && (
                               <div>
                                 <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Spacer</p>
@@ -824,6 +803,12 @@ function AccountPageContent() {
                               <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Logo Charm</p>
                               <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.logo_charm === false ? 'Excluded' : 'Included'}</p>
                             </div>
+                            {order.remark && (
+                              <div>
+                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 3px' }}>Remarks</p>
+                                <p style={{ ...BODY, fontSize: 12, color: '#4A3A32', margin: 0 }}>{order.remark}</p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Element analysis */}
