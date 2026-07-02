@@ -19,7 +19,7 @@ type Reading = {
   created_at: string
 }
 
-type ShopItem = { name: string; quantity: number; price: number }
+type ShopItem = { name: string; quantity: number; price: number; image_url?: string | null }
 
 type Order = {
   id: string
@@ -792,21 +792,21 @@ function AccountPageContent() {
 
                       {/* Expanded details */}
                       {isOpen && (
-                        <div style={{ borderTop: '1px solid #E5DDD5', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={{ borderTop: '1px solid #E5DDD5', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-                          {/* ── Bracelet item ── */}
-                          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                            {order.generated_image_url && (
-                              <div style={{ width: 80, height: 80, borderRadius: 12, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0, background: '#F8F4EF' }}>
-                                <img src={order.generated_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                              </div>
-                            )}
-                            <div style={{ flex: 1 }}>
-                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 3px' }}>Custom Crystal Bracelet</p>
+                          {/* ── Bracelet item row ── */}
+                          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '12px 14px', background: '#F9F5F0', borderRadius: 12, border: '1px solid #EDE8DF' }}>
+                            <div style={{ width: 72, height: 72, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0, background: '#F8F4EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {order.generated_image_url
+                                ? <img src={order.generated_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                : <span style={{ color: GOLD, fontSize: 18, opacity: 0.4 }}>✦</span>}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, margin: '0 0 3px' }}>Custom Crystal Bracelet</p>
                               {order.recommended_crystal_names?.length > 0 && (
-                                <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: '#4A3A32', margin: '0 0 8px', lineHeight: 1.5 }}>{order.recommended_crystal_names.join(' · ')}</p>
+                                <p style={{ ...SERIF, fontSize: 13, fontWeight: 300, color: '#4A3A32', margin: '0 0 8px', lineHeight: 1.5 }}>{order.recommended_crystal_names.join(' · ')}</p>
                               )}
-                              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                                 {order.spacer_choice && (
                                   <div>
                                     <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Spacer</p>
@@ -827,24 +827,25 @@ function AccountPageContent() {
                             </div>
                           </div>
 
-                          {/* ── Shop items (combined orders) ── */}
-                          {order.shop_items?.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                              {order.shop_items.map((item, idx) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F9F5F0', borderRadius: 10, border: '1px solid #EDE8DF' }}>
-                                  <div>
-                                    <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#4A3A32', margin: '0 0 2px' }}>{item.name}</p>
-                                    <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>Qty: {item.quantity}</p>
-                                  </div>
-                                  <p style={{ ...SERIF, fontSize: 14, color: '#4A3A32', margin: 0 }}>{format(item.price * item.quantity)}</p>
-                                </div>
-                              ))}
+                          {/* ── Shop items ── */}
+                          {order.shop_items?.map((item, idx) => (
+                            <div key={idx} style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '12px 14px', background: '#F9F5F0', borderRadius: 12, border: '1px solid #EDE8DF' }}>
+                              <div style={{ width: 72, height: 72, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0, background: '#F8F4EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {item.image_url
+                                  ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  : <span style={{ color: GOLD, fontSize: 18, opacity: 0.4 }}>◇</span>}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#4A3A32', margin: '0 0 4px' }}>{item.name}</p>
+                                <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>Qty: {item.quantity}</p>
+                              </div>
+                              <p style={{ ...SERIF, fontSize: 14, color: '#4A3A32', margin: 0, flexShrink: 0 }}>{format(item.price * item.quantity)}</p>
                             </div>
-                          )}
+                          ))}
 
-                          {/* ── Order total ── */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4, borderTop: '1px solid #F0E8DF' }}>
-                            <span style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573' }}>Total Paid</span>
+                          {/* ── Total ── */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderTop: '1px solid #EDE8DF' }}>
+                            <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573' }}>Total Paid</span>
                             <span style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32' }}>{format(Number(order.total_amount))}</span>
                           </div>
 
