@@ -13,6 +13,7 @@ const DARK = '#4A3A32'
 
 type Tab = 'orders' | 'users' | 'crystals' | 'inquiry' | 'readings' | 'ai-prompt' | 'shop' | 'instagram' | 'stock' | 'designs' | 'discount-codes' | 'settings'
 
+type ShopItem = { name: string; quantity: number; price: number; image_url?: string | null }
 type Order = {
   id: string; order_number: number | null; customer_name: string; customer_email: string; customer_phone: string | null
   recommended_crystal_names: string[]; total_amount: number
@@ -20,6 +21,9 @@ type Order = {
   shipping_address: string | null; spacer_choice: string | null; remark: string | null
   weak_element: string | null; strong_element: string | null; analysis_summary: string | null
   generated_image_url: string | null; logo_charm: boolean | null; current_feelings: string | null
+  stripe_payment_intent_id: string | null; promo_code: string | null
+  original_amount: number | null; discount_amount: number | null; shipping_fee: number | null
+  shop_items: ShopItem[]
 }
 type User = {
   id: string; email: string; name: string | null
@@ -868,59 +872,132 @@ export default function AdminPage() {
                                   </tr>
                                   {expandedOrder === o.id && (
                                     <tr>
-                                      <td colSpan={8} style={{ ...TD, background: '#F9F6F2', borderBottom: '2px solid #E5DDD5' }}>
-                                        <div style={{ display: 'flex', gap: 24, padding: '4px 0', alignItems: 'flex-start' }}>
-                                          {o.generated_image_url && (
-                                            <button
-                                              onClick={e => { e.stopPropagation(); setLightboxUrl(o.generated_image_url) }}
-                                              style={{ background: 'none', border: '1px solid #E5DDD5', borderRadius: 10, padding: 0, cursor: 'zoom-in', flexShrink: 0, overflow: 'hidden', width: 80, height: 80 }}
-                                              title="Click to enlarge"
-                                            >
-                                              <img src={o.generated_image_url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', display: 'block' }} />
-                                            </button>
-                                          )}
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 40px', flex: 1 }}>
-                                          <div>
-                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Delivery Address</p>
-                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.shipping_address || '—'}</p>
+                                      <td colSpan={8} style={{ ...TD, background: '#F9F6F2', borderBottom: '2px solid #E5DDD5', padding: '20px 24px' }}>
+                                        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+                                          {/* Left: bracelet image */}
+                                          <div style={{ flexShrink: 0 }}>
+                                            {o.generated_image_url
+                                              ? <button onClick={e => { e.stopPropagation(); setLightboxUrl(o.generated_image_url) }} style={{ background: 'none', border: '1px solid #E5DDD5', borderRadius: 10, padding: 0, cursor: 'zoom-in', overflow: 'hidden', width: 88, height: 88 }} title="Click to enlarge">
+                                                  <img src={o.generated_image_url} alt="" style={{ width: 88, height: 88, objectFit: 'cover', display: 'block' }} />
+                                                </button>
+                                              : <div style={{ width: 88, height: 88, borderRadius: 10, border: '1px solid #E5DDD5', background: '#F5F0EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                  <span style={{ color: GOLD, fontSize: 20, opacity: 0.4 }}>✦</span>
+                                                </div>}
                                           </div>
-                                          <div>
-                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Phone</p>
-                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_phone || '—'}</p>
+
+                                          {/* Right: all details */}
+                                          <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+                                            {/* Bracelet options */}
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 32px' }}>
+                                              <div>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Crystals</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.recommended_crystal_names?.join(' · ') || '—'}</p>
+                                              </div>
+                                              <div>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Spacer</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0, textTransform: 'capitalize' }}>{o.spacer_choice || '—'}</p>
+                                              </div>
+                                              <div>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Logo Charm</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.logo_charm === false ? 'Excluded' : 'Included'}</p>
+                                              </div>
+                                              {o.remark && (
+                                                <div>
+                                                  <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Remark</p>
+                                                  <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.remark}</p>
+                                                </div>
+                                              )}
+                                            </div>
+
+                                            {/* Shop items */}
+                                            {o.shop_items?.length > 0 && (
+                                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: 0 }}>Add-on Items</p>
+                                                {o.shop_items.map((item, idx) => (
+                                                  <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#F0EBE4', borderRadius: 8, padding: '8px 12px' }}>
+                                                    <div style={{ width: 48, height: 48, borderRadius: 6, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0, background: '#F8F4EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                      {item.image_url
+                                                        ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        : <span style={{ color: GOLD, fontSize: 14, opacity: 0.4 }}>◇</span>}
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                      <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: DARK, margin: '0 0 2px' }}>{item.name}</p>
+                                                      <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>Qty: {item.quantity} · S${(item.price * item.quantity).toFixed(2)}</p>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+
+                                            {/* Pricing breakdown */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: '1px solid #E5DDD5', paddingTop: 10 }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Custom Crystal Bracelet</span>
+                                                <span style={{ ...BODY, fontSize: 11, color: DARK }}>S$59.00</span>
+                                              </div>
+                                              {o.shop_items?.map((item, idx) => (
+                                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                  <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>{item.name} × {item.quantity}</span>
+                                                  <span style={{ ...BODY, fontSize: 11, color: DARK }}>S${(item.price * item.quantity).toFixed(2)}</span>
+                                                </div>
+                                              ))}
+                                              {o.shipping_fee != null && o.shipping_fee > 0 && (
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                  <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Shipping</span>
+                                                  <span style={{ ...BODY, fontSize: 11, color: DARK }}>S${Number(o.shipping_fee).toFixed(2)}</span>
+                                                </div>
+                                              )}
+                                              {o.promo_code && o.discount_amount != null && (
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                  <span style={{ ...BODY, fontSize: 11, color: '#7CB98A' }}>Promo ({o.promo_code})</span>
+                                                  <span style={{ ...BODY, fontSize: 11, color: '#7CB98A' }}>−S${Number(o.discount_amount).toFixed(2)}</span>
+                                                </div>
+                                              )}
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #E5DDD5', paddingTop: 6, marginTop: 2 }}>
+                                                <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573' }}>Total Paid</span>
+                                                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: DARK }}>S${Number(o.total_amount).toFixed(2)}</span>
+                                              </div>
+                                            </div>
+
+                                            {/* Shipping / contact */}
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 32px', background: '#EEE9E0', borderRadius: 8, padding: '10px 14px' }}>
+                                              <div style={{ width: '100%' }}>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Recipient</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_name || '—'}</p>
+                                              </div>
+                                              <div style={{ flex: 1, minWidth: 200 }}>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Delivery Address</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0, lineHeight: 1.6 }}>{o.shipping_address || '—'}</p>
+                                              </div>
+                                              <div>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Phone</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.customer_phone || '—'}</p>
+                                              </div>
+                                            </div>
+
+                                            {/* Element analysis + feelings */}
+                                            {(o.weak_element || o.strong_element) && (
+                                              <div>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Element Analysis</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>Weak: {o.weak_element || '—'} · Strong: {o.strong_element || '—'}</p>
+                                              </div>
+                                            )}
+                                            {o.current_feelings && (
+                                              <div>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>How They Were Feeling</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.current_feelings}</p>
+                                              </div>
+                                            )}
+                                            {o.analysis_summary && (
+                                              <div>
+                                                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 2px' }}>Analysis Summary</p>
+                                                <p style={{ ...BODY, fontSize: 12, color: '#7A6355', margin: 0, lineHeight: 1.7 }}>{o.analysis_summary}</p>
+                                              </div>
+                                            )}
+
                                           </div>
-                                          <div>
-                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Spacer</p>
-                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0, textTransform: 'capitalize' }}>{o.spacer_choice || '—'}</p>
-                                          </div>
-                                          <div>
-                                            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Logo Charm</p>
-                                            <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.logo_charm === false ? 'Excluded' : 'Included'}</p>
-                                          </div>
-                                          {o.remark && (
-                                            <div>
-                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Remark</p>
-                                              <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.remark}</p>
-                                            </div>
-                                          )}
-                                          {o.current_feelings && (
-                                            <div style={{ width: '100%' }}>
-                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>How They Were Feeling</p>
-                                              <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>{o.current_feelings}</p>
-                                            </div>
-                                          )}
-                                          {(o.weak_element || o.strong_element) && (
-                                            <div>
-                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Element Analysis</p>
-                                              <p style={{ ...BODY, fontSize: 12, color: DARK, margin: 0 }}>Weak: {o.weak_element || '—'} · Strong: {o.strong_element || '—'}</p>
-                                            </div>
-                                          )}
-                                          {o.analysis_summary && (
-                                            <div style={{ width: '100%' }}>
-                                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Analysis Summary</p>
-                                              <p style={{ ...BODY, fontSize: 12, color: '#7A6355', margin: 0, lineHeight: 1.7 }}>{o.analysis_summary}</p>
-                                            </div>
-                                          )}
-                                        </div>
                                         </div>
                                       </td>
                                     </tr>

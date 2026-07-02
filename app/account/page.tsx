@@ -41,6 +41,10 @@ type Order = {
   logo_charm: boolean | null
   current_feelings: string | null
   shop_items: ShopItem[]
+  promo_code: string | null
+  original_amount: number | null
+  discount_amount: number | null
+  shipping_fee: number | null
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -843,11 +847,45 @@ function AccountPageContent() {
                             </div>
                           ))}
 
-                          {/* ── Total ── */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderTop: '1px solid #EDE8DF' }}>
-                            <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573' }}>Total Paid</span>
-                            <span style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32' }}>{format(Number(order.total_amount))}</span>
+                          {/* ── Pricing breakdown ── */}
+                          <div style={{ borderTop: '1px solid #EDE8DF', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Custom Crystal Bracelet</span>
+                              <span style={{ ...BODY, fontSize: 11, color: '#4A3A32' }}>S$59.00</span>
+                            </div>
+                            {order.shop_items?.map((item, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>{item.name} × {item.quantity}</span>
+                                <span style={{ ...BODY, fontSize: 11, color: '#4A3A32' }}>{format(item.price * item.quantity)}</span>
+                              </div>
+                            ))}
+                            {order.shipping_fee != null && order.shipping_fee > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Shipping</span>
+                                <span style={{ ...BODY, fontSize: 11, color: '#4A3A32' }}>{format(order.shipping_fee)}</span>
+                              </div>
+                            )}
+                            {order.promo_code && order.discount_amount != null && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ ...BODY, fontSize: 11, color: '#7CB98A' }}>Promo ({order.promo_code})</span>
+                                <span style={{ ...BODY, fontSize: 11, color: '#7CB98A' }}>−{format(order.discount_amount)}</span>
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #EDE8DF', paddingTop: 10, marginTop: 4 }}>
+                              <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573' }}>Total Paid</span>
+                              <span style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32' }}>{format(Number(order.total_amount))}</span>
+                            </div>
                           </div>
+
+                          {/* ── Shipping info ── */}
+                          {(order.shipping_address || order.customer_phone) && (
+                            <div style={{ background: '#F6F1EB', borderRadius: 10, padding: '14px 16px' }}>
+                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: '0 0 8px' }}>Delivery Details</p>
+                              {order.customer_name && <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: '#4A3A32', margin: '0 0 2px' }}>{order.customer_name}</p>}
+                              {order.shipping_address && <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: '0 0 2px', lineHeight: 1.6 }}>{order.shipping_address}</p>}
+                              {order.customer_phone && <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0 }}>{order.customer_phone}</p>}
+                            </div>
+                          )}
 
                           {/* ── Elemental Analysis ── */}
                           {order.analysis_summary && (

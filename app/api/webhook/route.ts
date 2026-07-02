@@ -82,6 +82,18 @@ export async function POST(req: NextRequest) {
     let savedAddress: ShippingAddr | null = null
     try { if (savedAddressJson) savedAddress = JSON.parse(savedAddressJson) } catch {}
 
+    // Promo / pricing breakdown — derived from PI metadata set at checkout time
+    const baseAmountCents = parseInt(paymentIntent.metadata?.baseAmountCents || '0', 10)
+    const discountCents = parseInt(paymentIntent.metadata?.discountCents || '0', 10)
+    const promoCode = paymentIntent.metadata?.discountCode || null
+    const shippingFeeCents = Math.max(0, paymentIntent.amount - baseAmountCents + discountCents)
+    const promoFields = {
+      promo_code: promoCode || null,
+      discount_amount: discountCents > 0 ? discountCents / 100 : null,
+      shipping_fee: shippingFeeCents > 0 ? shippingFeeCents / 100 : null,
+      original_amount: baseAmountCents > 0 ? (baseAmountCents + shippingFeeCents) / 100 : null,
+    }
+
     // Prefer the address actually collected via AddressElement at confirm time;
     // fall back to a pre-picked saved address if the customer skipped re-entering one.
     const collected = paymentIntent.shipping
@@ -174,6 +186,7 @@ export async function POST(req: NextRequest) {
         spacer_choice: spacer || null,
         remark: remark || null,
         logo_charm: includeCharm !== 'false',
+        ...promoFields,
       }).select('order_number').single()
 
       const parsedItems: { productId?: string; name: string; quantity: number; price: number }[] = itemsJson ? JSON.parse(itemsJson) : []
@@ -259,6 +272,7 @@ export async function POST(req: NextRequest) {
       remark: remark || null,
       logo_charm: includeCharm !== 'false',
       current_feelings: result?.current_feelings || null,
+      ...promoFields,
     }).select('order_number').single()
 
     if (insertError) {
