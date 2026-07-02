@@ -86,6 +86,28 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   }
 }
 
+export function resetPasswordEmail({ resetUrl }: { resetUrl: string }) {
+  const subject = 'Reset Your Password · SYANN.CO'
+  const html = wrapper(`
+    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:${GOLD};">Password Reset</p>
+    <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:${DARK};">
+      Reset Your Password
+    </h1>
+    <p style="margin:0 0 24px;font-size:13px;line-height:1.7;color:#7A5B45;">
+      We received a request to reset the password for your SYANN.CO account. Click the button below to choose a new password.
+    </p>
+    <div style="text-align:center;margin-bottom:24px;">
+      <a href="${resetUrl}" style="display:inline-block;padding:13px 32px;background:${DARK};color:#ffffff;text-decoration:none;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;">
+        Reset Password
+      </a>
+    </div>
+    <p style="margin:0;font-size:11px;line-height:1.7;color:#9A8573;">
+      This link expires in 24 hours. If you didn't request a password reset, you can safely ignore this email — your account remains secure.
+    </p>
+  `)
+  return { subject, html }
+}
+
 export function orderConfirmationEmail({
   orderNumber, customerName, items, totalAmount, shippingAddress,
 }: {

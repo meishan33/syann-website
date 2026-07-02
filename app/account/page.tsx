@@ -96,11 +96,13 @@ function SignInPanel() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/account/reset-password`,
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
     setLoading(false)
-    if (error) { setError(error.message); return }
+    if (!res.ok) { const d = await res.json(); setError(d.error || 'Something went wrong.'); return }
     setForgotSent(true)
   }
 
