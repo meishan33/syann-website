@@ -79,6 +79,8 @@ function SignInPanel() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [forgotMode, setForgotMode] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
 
   const handleGoogle = async () => {
     setError(null)
@@ -88,6 +90,18 @@ function SignInPanel() {
       options: { redirectTo: `${window.location.origin}/account` },
     })
     if (error) { setError(error.message); setLoading(false) }
+  }
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/account/reset-password`,
+    })
+    setLoading(false)
+    if (error) { setError(error.message); return }
+    setForgotSent(true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -178,32 +192,87 @@ function SignInPanel() {
                 <div style={{ flex: 1, height: 1, background: '#E5DDD5' }} />
               </div>
 
-              {/* Email / password */}
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required style={INPUT} />
-                <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={INPUT} />
+              {/* Forgot password flow */}
+              {forgotMode ? (
+                forgotSent ? (
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ ...BODY, fontSize: 13, color: '#7CB98A', lineHeight: 1.8, margin: '0 0 20px' }}>
+                      A password reset link has been sent to <strong>{email}</strong>. Please check your inbox and follow the link to set a new password.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setForgotMode(false); setForgotSent(false); setError(null) }}
+                      style={{ ...BODY, background: 'none', border: 'none', color: GOLD, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ ...BODY, fontSize: 13, color: '#7A6355', lineHeight: 1.7, margin: 0 }}>
+                      Enter your email address and we'll send you a link to reset your password.
+                    </p>
+                    <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required style={INPUT} />
+                    {error && <p style={{ ...BODY, fontSize: 12, color: '#C0392B', margin: 0 }}>{error}</p>}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{ ...BODY, marginTop: 4, padding: '14px', background: loading ? '#C9A96E' : '#4A3A32', border: 'none', borderRadius: 999, color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.3s' }}
+                    >
+                      {loading ? 'Sending…' : 'Send Reset Link'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setForgotMode(false); setError(null) }}
+                      style={{ ...BODY, background: 'none', border: 'none', color: '#9A8573', fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                    >
+                      Back to Sign In
+                    </button>
+                  </form>
+                )
+              ) : (
+                <>
+                  {/* Email / password */}
+                  <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required style={INPUT} />
+                    <div>
+                      <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={INPUT} />
+                      {mode === 'login' && (
+                        <div style={{ textAlign: 'right', marginTop: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => { setForgotMode(true); setError(null) }}
+                            style={{ ...BODY, background: 'none', border: 'none', color: '#9A8573', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                          >
+                            Forgot password?
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                {error && <p style={{ ...BODY, fontSize: 12, color: '#C0392B', margin: 0 }}>{error}</p>}
+                    {error && <p style={{ ...BODY, fontSize: 12, color: '#C0392B', margin: 0 }}>{error}</p>}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{ ...BODY, marginTop: 4, padding: '14px', background: loading ? '#C9A96E' : '#4A3A32', border: 'none', borderRadius: 999, color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.3s' }}
-                >
-                  {loading ? 'Please wait…' : mode === 'signup' ? 'Create Account' : 'Sign In'}
-                </button>
-              </form>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{ ...BODY, marginTop: 4, padding: '14px', background: loading ? '#C9A96E' : '#4A3A32', border: 'none', borderRadius: 999, color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.3s' }}
+                    >
+                      {loading ? 'Please wait…' : mode === 'signup' ? 'Create Account' : 'Sign In'}
+                    </button>
+                  </form>
 
-              <p style={{ ...BODY, fontSize: 12, textAlign: 'center', color: '#9A8573', marginTop: 20, marginBottom: 0 }}>
-                {mode === 'signup' ? 'Already have an account? ' : 'New to SYANN? '}
-                <button
-                  type="button"
-                  onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError(null) }}
-                  style={{ ...BODY, background: 'none', border: 'none', color: GOLD, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                >
-                  {mode === 'signup' ? 'Sign In' : 'Create Account'}
-                </button>
-              </p>
+                  <p style={{ ...BODY, fontSize: 12, textAlign: 'center', color: '#9A8573', marginTop: 20, marginBottom: 0 }}>
+                    {mode === 'signup' ? 'Already have an account? ' : 'New to SYANN? '}
+                    <button
+                      type="button"
+                      onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError(null) }}
+                      style={{ ...BODY, background: 'none', border: 'none', color: GOLD, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                    >
+                      {mode === 'signup' ? 'Sign In' : 'Create Account'}
+                    </button>
+                  </p>
+                </>
+              )}
 
             </div>
 
