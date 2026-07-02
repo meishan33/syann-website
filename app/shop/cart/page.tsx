@@ -96,6 +96,27 @@ export default function CartPage() {
       if (!res.ok) { setPromoError(data.error); return }
       setAppliedPromo(data)
       setPromoInput('')
+
+      // If the Stripe form is already open, apply the discount to the existing
+      // PaymentIntent so the amount the customer pays actually reflects it.
+      if (clientSecret) {
+        const piId = clientSecret.split('_secret_')[0]
+        const applyRes = await fetch('/api/checkout/apply-discount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId: piId, code: data.code, email: session?.user?.email ?? null }),
+        })
+        if (applyRes.ok) {
+          const applyData = await applyRes.json()
+          // Update amount and remount the form with the new amount
+          setAmountCents(applyData.amountCents)
+          setShippingFeeCents(applyData.shippingFeeCents)
+          // Force remount of EmbeddedPaymentForm so it picks up the new amount
+          const saved = clientSecret
+          setClientSecret(null)
+          setTimeout(() => setClientSecret(saved), 50)
+        }
+      }
     } catch { setPromoError('Failed to apply code.') }
     finally { setPromoLoading(false) }
   }
@@ -253,7 +274,19 @@ export default function CartPage() {
             {appliedPromo ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#F6F1EB', border: '1px solid #E5DDD5', borderRadius: 8 }}>
                 <span style={{ ...BODY, fontSize: 12, color: '#4A3A32', fontWeight: 600, letterSpacing: '0.06em' }}>{appliedPromo.code} — {appliedPromo.discountLabel}</span>
-                <button type="button" onClick={() => setAppliedPromo(null)} style={{ ...BODY, fontSize: 11, color: '#9A8573', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Remove</button>
+                <button type="button" onClick={async () => {
+                  setAppliedPromo(null)
+                  if (clientSecret) {
+                    const piId = clientSecret.split('_secret_')[0]
+                    const { data: { session } } = await supabase.auth.getSession()
+                    const res = await fetch('/api/checkout/apply-discount', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentIntentId: piId, code: '', email: session?.user?.email ?? null }) })
+                    if (res.ok) {
+                      const d = await res.json()
+                      setAmountCents(d.amountCents); setShippingFeeCents(d.shippingFeeCents)
+                      const saved = clientSecret; setClientSecret(null); setTimeout(() => setClientSecret(saved), 50)
+                    }
+                  }
+                }} style={{ ...BODY, fontSize: 11, color: '#9A8573', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Remove</button>
               </div>
             ) : (
               <>
