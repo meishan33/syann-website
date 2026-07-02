@@ -56,29 +56,40 @@ export default function ShopPage() {
 
   return (
     <main style={{ background: '#F6F1EB', minHeight: '100vh', ...BODY }}>
-
+      <style>{`
+        .shop-filter-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .shop-tabs { display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 0; }
+        .shop-tabs::-webkit-scrollbar { display: none; }
+        .shop-search-row { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        @media (max-width: 540px) {
+          .shop-filter-bar { flex-direction: column; align-items: stretch; padding: 0 !important; }
+          .shop-tabs { border-bottom: 1px solid #E5DDD5; padding: 0 16px; }
+          .shop-search-row { padding: 10px 16px 12px; }
+          .shop-search-input { width: 100% !important; }
+        }
+      `}</style>
 
       {/* CRYSTAL COLLECTION BANNER */}
       <section style={{ background: '#FDFAF7', borderBottom: '1px solid #E5DDD5', padding: '24px 24px 20px', textAlign: 'center' }}>
         <p style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: '0 0 10px' }}>
           ✦ Crystal Collection
         </p>
-        <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#7A6355', margin: '0 auto', lineHeight: 1.8, whiteSpace: 'nowrap' }}>
+        <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#7A6355', margin: '0 auto', lineHeight: 1.8, maxWidth: 480 }}>
           Handcrafted crystal pieces and curated accessories for your energy journey.
         </p>
       </section>
 
       {/* CATEGORY TABS + SEARCH */}
-      <section style={{ background: '#FDFAF7', borderBottom: '1px solid #E5DDD5', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 0 }}>
+      <section style={{ background: '#FDFAF7', borderBottom: '1px solid #E5DDD5', padding: '0 24px' }} className="shop-filter-bar">
+        <div className="shop-tabs">
           {CATEGORIES.map(c => (
             <button
               key={c.key}
               onClick={() => setCategory(c.key)}
               style={{
                 ...BODY, background: 'none', border: 'none', cursor: 'pointer',
-                padding: '16px 20px', fontSize: 11, fontWeight: 600,
-                letterSpacing: '0.2em', textTransform: 'uppercase',
+                padding: '14px 16px', fontSize: 11, fontWeight: 600,
+                letterSpacing: '0.2em', textTransform: 'uppercase', whiteSpace: 'nowrap',
                 color: category === c.key ? '#3D2B1F' : '#9A8573',
                 borderBottom: category === c.key ? `2px solid ${GOLD}` : '2px solid transparent',
                 transition: 'all 0.2s',
@@ -88,9 +99,8 @@ export default function ShopPage() {
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Search */}
-          <div style={{ position: 'relative' }}>
+        <div className="shop-search-row">
+          <div style={{ position: 'relative', flex: 1 }}>
             <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <circle cx="9" cy="9" r="7"/><path d="M15 15l3 3"/>
             </svg>
@@ -99,6 +109,7 @@ export default function ShopPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search…"
+              className="shop-search-input"
               style={{ ...BODY, paddingLeft: 30, paddingRight: 12, paddingTop: 7, paddingBottom: 7, border: '1px solid #E5DDD5', borderRadius: 999, fontSize: 12, color: '#4A3A32', background: '#FDFAF7', outline: 'none', width: 160 }}
             />
           </div>
@@ -125,7 +136,7 @@ export default function ShopPage() {
             <p style={{ ...BODY, fontSize: 12, color: '#9A8573' }}>New pieces are being prepared for you.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 45%), 1fr))', gap: 16 }}>
             {filtered.map(p => (
               <div
                 key={p.id}
