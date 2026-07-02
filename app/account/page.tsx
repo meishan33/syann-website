@@ -763,26 +763,11 @@ function AccountPageContent() {
                         onClick={() => setExpandedOrder(isOpen ? null : order.id)}
                         style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}
                       >
-                        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flex: 1, flexWrap: 'wrap', textAlign: 'left' }}>
-                          {order.generated_image_url && (
-                            <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
-                              <img src={order.generated_image_url} alt="Crystal bracelet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            </div>
-                          )}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>
-                              {order.order_number ? `#${order.order_number}` : '—'} · {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                            </span>
-                            <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: '#4A3A32', margin: 0 }}>Crystal Bracelet</p>
-                            <p style={{ ...BODY, fontSize: 11, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.6 }}>
-                              {order.recommended_crystal_names?.join(' · ') || '—'}
-                            </p>
-                            {(order.weak_element || order.strong_element) && (
-                              <p style={{ ...BODY, fontSize: 10, color: GOLD, margin: 0 }}>
-                                Weak: {order.weak_element || '—'} · Strong: {order.strong_element || '—'}
-                              </p>
-                            )}
-                          </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, textAlign: 'left' }}>
+                          <span style={{ ...BODY, fontSize: 10, color: '#B0A090', letterSpacing: '0.06em' }}>
+                            {order.order_number ? `#${order.order_number}` : '—'} · {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </span>
+                          <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: '#4A3A32', margin: 0 }}>Crystal Bracelet</p>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                           <p style={{ ...SERIF, fontSize: 18, fontWeight: 400, color: '#4A3A32', margin: 0 }}>{format(Number(order.total_amount))}</p>
