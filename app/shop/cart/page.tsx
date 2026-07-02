@@ -111,10 +111,7 @@ export default function CartPage() {
           // Update amount and remount the form with the new amount
           setAmountCents(applyData.amountCents)
           setShippingFeeCents(applyData.shippingFeeCents)
-          // Force remount of EmbeddedPaymentForm so it picks up the new amount
-          const saved = clientSecret
-          setClientSecret(null)
-          setTimeout(() => setClientSecret(saved), 50)
+          // key={amountCents} on EmbeddedPaymentForm triggers a clean remount
         }
       }
     } catch { setPromoError('Failed to apply code.') }
@@ -283,7 +280,7 @@ export default function CartPage() {
                     if (res.ok) {
                       const d = await res.json()
                       setAmountCents(d.amountCents); setShippingFeeCents(d.shippingFeeCents)
-                      const saved = clientSecret; setClientSecret(null); setTimeout(() => setClientSecret(saved), 50)
+                      // key={amountCents} on EmbeddedPaymentForm triggers a clean remount
                     }
                   }
                 }} style={{ ...BODY, fontSize: 11, color: '#9A8573', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Remove</button>
@@ -331,6 +328,7 @@ export default function CartPage() {
           {/* Checkout form (shop/combined) or proceed button */}
           {clientSecret ? (
             <EmbeddedPaymentForm
+              key={amountCents}
               clientSecret={clientSecret}
               initialAmountCents={amountCents}
               initialShippingFeeCents={shippingFeeCents}
