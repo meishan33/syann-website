@@ -10,6 +10,7 @@ import MobileMenu from './MobileMenu'
 
 const BASE_NAV_LINKS = [
   { href: '/energy-quiz', label: 'Energy Quiz' },
+  { href: '/design',      label: 'Design' },
   { href: '/about',       label: 'About' },
   { href: '/faq',         label: 'FAQ' },
   { href: '/contact',     label: 'Contact' },
