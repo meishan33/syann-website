@@ -57,8 +57,20 @@ export default function DesignPage() {
   const [addedToCart, setAddedToCart]   = useState(false)
   const [measureOpen, setMeasureOpen]   = useState(false)
   const [packagingOpen, setPackagingOpen] = useState(false)
-  const measureRef   = useFocusTrap(measureOpen)
-  const packagingRef = useFocusTrap(packagingOpen)
+  const measureRef    = useFocusTrap(measureOpen)
+  const packagingRef  = useFocusTrap(packagingOpen)
+  const containerRef  = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const update = () => setScale(el.offsetWidth / CANVAS)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     fetch('/api/crystals')
@@ -164,11 +176,11 @@ export default function DesignPage() {
           <div className="lg:col-span-3 lg:h-full">
             <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
 
-              {/* Bracelet circle — fills the same role as the bracelet image */}
-              <div className="w-full lg:flex-1 flex items-center justify-center">
-                <div style={{ position: 'relative', width: CANVAS, height: CANVAS }}>
+              {/* Bracelet circle — scales to fill the card width, mirrors results page image */}
+              <div ref={containerRef} style={{ width: '100%', aspectRatio: '1', position: 'relative', overflow: 'hidden', background: '#FBF8F4', borderRadius: 16 }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: CANVAS, height: CANVAS, transformOrigin: 'top left', transform: `scale(${scale})` }}>
                   <svg width={CANVAS} height={CANVAS} viewBox={`0 0 ${CANVAS} ${CANVAS}`} style={{ position: 'absolute', inset: 0 }}>
-                    <rect width={CANVAS} height={CANVAS} rx="20" fill="#FBF8F4" />
+                    <rect width={CANVAS} height={CANVAS} fill="#FBF8F4" />
                     <circle cx={CX} cy={CX} r={RING_R} fill="none" stroke="rgba(140,100,60,0.18)" strokeWidth="1.5" strokeDasharray="3.5 3" />
                   </svg>
                   {beads.map((bead, i) => {
