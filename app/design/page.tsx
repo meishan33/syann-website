@@ -182,6 +182,8 @@ export default function DesignPage() {
                   <svg width={CANVAS} height={CANVAS} viewBox={`0 0 ${CANVAS} ${CANVAS}`} style={{ position: 'absolute', inset: 0 }}>
                     <rect width={CANVAS} height={CANVAS} fill="#FBF8F4" />
                     <circle cx={CX} cy={CX} r={RING_R} fill="none" stroke="rgba(140,100,60,0.18)" strokeWidth="1.5" strokeDasharray="3.5 3" />
+                    <text x={CX} y={CX - 8} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="14" fontWeight="400" letterSpacing="3" fill="rgba(176,139,87,0.55)">SYANN.CO</text>
+                    <text x={CX} y={CX + 10} textAnchor="middle" fontFamily="'Montserrat', Arial, sans-serif" fontSize="6" fontWeight="500" letterSpacing="2" fill="rgba(154,133,115,0.5)">CRYSTAL · ENERGY · YOU</text>
                   </svg>
                   {beads.map((bead, i) => {
                     const { left, top } = slotPos(i)
@@ -197,8 +199,8 @@ export default function DesignPage() {
                           width: BEAD_R * 2, height: BEAD_R * 2,
                           borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
                           background: bead ? '#D8CCB8' : '#EDE6DD',
-                          border: isActive ? `2px solid ${GOLD}` : bead ? 'none' : '1.5px dashed rgba(140,100,60,0.3)',
-                          boxShadow: isActive ? `0 0 0 3px ${GOLD}44` : undefined,
+                          border: isActive && filledCount < N ? `2px solid ${GOLD}` : bead ? 'none' : '1.5px dashed rgba(140,100,60,0.3)',
+                          boxShadow: isActive && filledCount < N ? `0 0 0 3px ${GOLD}44` : undefined,
                           transition: 'border 0.15s, box-shadow 0.15s',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           userSelect: 'none', zIndex: isActive ? 3 : 1,
