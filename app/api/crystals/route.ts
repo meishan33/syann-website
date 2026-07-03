@@ -14,6 +14,7 @@ export async function GET() {
         bead_image_url,
         luxury_score
       `)
+      .eq("active", true)
       .order("name", { ascending: true });
 
     if (error) {

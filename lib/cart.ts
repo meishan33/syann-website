@@ -57,6 +57,7 @@ export function addToCart(item: Omit<CartItem, 'quantity'>) {
 }
 
 // Adds a bracelet to the cart, replacing any existing bracelet (one per cart).
+// Pass `price` to override the default BRACELET_PRICE (e.g. for the builder page).
 export function addBraceletToCart(opts: {
   resultId: string
   spacer: string
@@ -64,13 +65,14 @@ export function addBraceletToCart(opts: {
   remark: string
   imageUrl: string | null
   crystalNames: string[]
+  price?: number
 }) {
   const cart = getCart().filter(i => i.type !== 'bracelet')
   const label = opts.crystalNames.length ? opts.crystalNames.join(' · ') : 'Custom Crystal Bracelet'
   cart.push({
     productId: `bracelet-${opts.resultId}`,
     name: label,
-    price: BRACELET_PRICE,
+    price: opts.price ?? BRACELET_PRICE,
     imageUrl: opts.imageUrl,
     category: 'Crystal Bracelet',
     quantity: 1,

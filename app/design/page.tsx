@@ -10,38 +10,35 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 
+const DESIGN_PRICE = 79
 const N = 21
-const RING_R = 100 // px from center of 280×280 canvas
-const BEAD_R = 14  // px radius of each slot
-const CANVAS = 280
-const CX = CANVAS / 2 // 140
+// Bead radius and ring radius tuned so adjacent beads nearly touch (chord ≈ diameter)
+const BEAD_R  = 15   // px
+const RING_R  = 100  // px from canvas centre  →  chord = 2×100×sin(π/21) ≈ 29.8 ≈ BEAD_R×2
+const CANVAS  = 280
+const CX      = CANVAS / 2  // 140
 
-type Crystal = {
-  id: number
-  name: string
-  bead_image_url: string | null
-}
+type Crystal = { id: number; name: string; bead_image_url: string | null }
 
 function slotPos(i: number) {
   const angle = (i / N) * 2 * Math.PI - Math.PI / 2
   return {
     left: CX + RING_R * Math.cos(angle) - BEAD_R,
-    top: CX + RING_R * Math.sin(angle) - BEAD_R,
+    top:  CX + RING_R * Math.sin(angle) - BEAD_R,
   }
 }
 
 export default function DesignPage() {
   const router = useRouter()
-  const [crystals, setCrystals] = useState<Crystal[]>([])
-  const [search, setSearch] = useState('')
-  const [beads, setBeads] = useState<(string | null)[]>(Array(N).fill(null))
-  const [activeSlot, setActiveSlot] = useState<number>(0)
-  const [spacer, setSpacer] = useState('silver')
+  const [crystals, setCrystals]       = useState<Crystal[]>([])
+  const [beads, setBeads]             = useState<(string | null)[]>(Array(N).fill(null))
+  const [activeSlot, setActiveSlot]   = useState<number>(0)
+  const [spacer, setSpacer]           = useState('silver')
   const [includeCharm, setIncludeCharm] = useState(true)
-  const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
+  const [notes, setNotes]             = useState('')
+  const [saving, setSaving]           = useState(false)
+  const [saveError, setSaveError]     = useState<string | null>(null)
+  const [addedToCart, setAddedToCart] = useState(false)
 
   useEffect(() => {
     fetch('/api/crystals')
@@ -50,179 +47,157 @@ export default function DesignPage() {
       .catch(() => {})
   }, [])
 
-  const filtered = search
-    ? crystals.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-    : crystals
-
-  const filledCount = beads.filter(Boolean).length
+  const filledCount    = beads.filter(Boolean).length
   const uniqueCrystals = [...new Set(beads.filter(Boolean) as string[])]
+  const crystalMap     = Object.fromEntries(crystals.map(c => [c.name, c]))
 
   function handleBeadClick(i: number) {
-    // Clicking an active filled slot clears it; otherwise just selects the slot
+    // Tap an active+filled slot → clear it; otherwise just select it
     if (activeSlot === i && beads[i]) {
-      const next = [...beads]
-      next[i] = null
-      setBeads(next)
+      const next = [...beads]; next[i] = null; setBeads(next)
     } else {
       setActiveSlot(i)
     }
   }
 
-  function assignCrystal(crystalName: string) {
+  function assignCrystal(name: string) {
     const next = [...beads]
-    next[activeSlot] = crystalName
+    next[activeSlot] = name
     setBeads(next)
-    // Advance to next empty slot (wrap around), or stay if all filled
-    const startSearch = activeSlot + 1
-    for (let k = 0; k < N; k++) {
-      const idx = (startSearch + k) % N
+    // Advance to next empty slot (wrapping), or stay if full
+    for (let k = 1; k <= N; k++) {
+      const idx = (activeSlot + k) % N
       if (!next[idx]) { setActiveSlot(idx); return }
     }
-    // All filled — stay on current
   }
 
-  function clearAll() {
-    setBeads(Array(N).fill(null))
-    setActiveSlot(0)
+  async function saveDesign() {
+    setSaving(true); setSaveError(null)
+    const res = await fetch('/api/bracelet-builder/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ beadSequence: beads.map(b => b ?? ''), crystalNames: uniqueCrystals }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to save design.')
+    return data as { resultId: string; imageUrl: string | null }
   }
 
   async function handleAddToCart() {
-    if (filledCount === 0 || saving || done) return
-    setSaving(true)
-    setSaveError(null)
+    if (filledCount === 0 || saving) return
     try {
-      const res = await fetch('/api/bracelet-builder/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          beadSequence: beads.map(b => b ?? ''),
-          crystalNames: uniqueCrystals,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to save design.')
-
-      addBraceletToCart({
-        resultId: data.resultId,
-        spacer,
-        includeCharm,
-        remark: notes,
-        imageUrl: data.imageUrl,
-        crystalNames: uniqueCrystals,
-      })
-
-      setDone(true)
-      setTimeout(() => router.push('/shop/cart'), 700)
+      const { resultId, imageUrl } = await saveDesign()
+      addBraceletToCart({ resultId, spacer, includeCharm, remark: notes, imageUrl, crystalNames: uniqueCrystals, price: DESIGN_PRICE })
+      setAddedToCart(true)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Something went wrong.')
-    } finally {
+    } finally { setSaving(false) }
+  }
+
+  async function handleBuyNow() {
+    if (filledCount === 0 || saving) return
+    try {
+      const { resultId, imageUrl } = await saveDesign()
+      addBraceletToCart({ resultId, spacer, includeCharm, remark: notes, imageUrl, crystalNames: uniqueCrystals, price: DESIGN_PRICE })
+      const params = new URLSearchParams({ result: resultId, spacer, includeCharm: String(includeCharm) })
+      if (notes) params.set('remark', notes)
+      router.push(`/payment?${params.toString()}`)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Something went wrong.')
       setSaving(false)
     }
   }
 
-  const crystalMap = Object.fromEntries(crystals.map(c => [c.name, c]))
+  const canCheckout = filledCount > 0 && !saving
 
   return (
     <main style={{ background: '#F6F1EB', minHeight: '100vh', ...BODY }}>
+      <style>{`
+        .design-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .crystal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: 320px; overflow-y: auto; padding: 2px; }
+        @media (max-width: 860px) {
+          .design-grid { grid-template-columns: 1fr; }
+          .crystal-grid { grid-template-columns: repeat(5, 1fr); max-height: 260px; }
+        }
+        @media (max-width: 480px) {
+          .crystal-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+      `}</style>
 
-      {/* Page header */}
-      <section style={{ background: '#FDFAF7', borderBottom: '1px solid #E5DDD5', padding: '32px 24px 28px', textAlign: 'center' }}>
-        <p style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: '0 0 10px' }}>
+      {/* Header */}
+      <section style={{ background: '#FDFAF7', borderBottom: '1px solid #E5DDD5', padding: '28px 24px 24px', textAlign: 'center' }}>
+        <p style={{ ...BODY, fontSize: 11, fontWeight: 600, letterSpacing: '0.32em', color: GOLD, textTransform: 'uppercase', margin: '0 0 8px' }}>
           ✦ Custom Bracelet Builder
         </p>
-        <h1 style={{ ...SERIF, fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 300, color: '#3D2B1F', margin: '0 0 10px', lineHeight: 1.2 }}>
+        <h1 style={{ ...SERIF, fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 300, color: '#3D2B1F', margin: '0 0 8px', lineHeight: 1.2 }}>
           Design Your Bracelet
         </h1>
-        <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#7A6355', margin: '0 auto', lineHeight: 1.8, maxWidth: 480 }}>
-          Place crystals into each of the 21 bead positions. Click a slot, then pick a crystal.
+        <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: '#7A6355', margin: '0 auto', lineHeight: 1.7, maxWidth: 460 }}>
+          Select each crystal bead for all 21 positions. Click a slot, then choose a crystal.
         </p>
       </section>
 
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px 80px' }}>
+      <section style={{ maxWidth: 1060, margin: '0 auto', padding: '28px 20px 80px' }}>
 
-        {/* Builder: bracelet circle + crystal picker */}
-        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
+        {/* ── Two-column builder ── */}
+        <div className="design-grid">
 
-          {/* ── Bracelet circle ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+          {/* LEFT — Interactive bracelet */}
+          <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '28px 20px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.14)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
 
             <div style={{ position: 'relative', width: CANVAS, height: CANVAS }}>
-              {/* Background + thread ring */}
-              <svg
-                width={CANVAS} height={CANVAS}
-                viewBox={`0 0 ${CANVAS} ${CANVAS}`}
-                style={{ position: 'absolute', inset: 0, borderRadius: 20, background: '#FBF8F4' }}
-              >
+              {/* Thread ring SVG */}
+              <svg width={CANVAS} height={CANVAS} viewBox={`0 0 ${CANVAS} ${CANVAS}`} style={{ position: 'absolute', inset: 0 }}>
                 <rect width={CANVAS} height={CANVAS} rx="20" fill="#FBF8F4" />
-                <circle
-                  cx={CX} cy={CX} r={RING_R}
-                  fill="none" stroke="rgba(140,100,60,0.2)" strokeWidth="1.2"
-                  strokeDasharray="3 2.5"
-                />
+                <circle cx={CX} cy={CX} r={RING_R} fill="none" stroke="rgba(140,100,60,0.18)" strokeWidth="1.5" strokeDasharray="3.5 3" />
               </svg>
 
               {/* Bead slots */}
               {beads.map((bead, i) => {
                 const { left, top } = slotPos(i)
                 const isActive = activeSlot === i
-                const crystal = bead ? crystalMap[bead] : null
+                const img = bead ? crystalMap[bead]?.bead_image_url : null
                 return (
                   <div
                     key={i}
                     onClick={() => handleBeadClick(i)}
-                    title={bead ? `Slot ${i + 1}: ${bead} — click to clear` : `Slot ${i + 1}: empty`}
+                    title={bead ? `Slot ${i + 1}: ${bead} — tap to clear` : `Slot ${i + 1}`}
                     style={{
-                      position: 'absolute',
-                      left, top,
-                      width: BEAD_R * 2,
-                      height: BEAD_R * 2,
+                      position: 'absolute', left, top,
+                      width: BEAD_R * 2, height: BEAD_R * 2,
                       borderRadius: '50%',
-                      cursor: 'pointer',
                       overflow: 'hidden',
-                      background: bead ? '#DDD0C4' : '#EDE6DD',
+                      cursor: 'pointer',
+                      background: bead ? '#D8CCB8' : '#EDE6DD',
                       border: isActive
                         ? `2px solid ${GOLD}`
                         : bead
-                        ? '1.5px solid rgba(140,100,60,0.28)'
-                        : '1.5px dashed rgba(140,100,60,0.28)',
-                      boxShadow: isActive ? `0 0 0 3px ${GOLD}44` : 'none',
+                        ? '1.5px solid rgba(120,85,45,0.25)'
+                        : '1.5px dashed rgba(140,100,60,0.3)',
+                      boxShadow: isActive ? `0 0 0 3px ${GOLD}44` : undefined,
                       transition: 'border 0.15s, box-shadow 0.15s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      userSelect: 'none',
-                      zIndex: isActive ? 2 : 1,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      userSelect: 'none', zIndex: isActive ? 3 : 1,
                     }}
                   >
-                    {crystal?.bead_image_url ? (
+                    {img && (
                       <Image
-                        src={crystal.bead_image_url}
-                        alt={bead!}
-                        fill
-                        sizes="28px"
+                        src={img} alt={bead!} fill sizes="30px"
                         style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }}
                       />
-                    ) : bead ? (
-                      <span style={{ fontSize: 8, color: GOLD, position: 'relative', zIndex: 1 }}>✦</span>
-                    ) : (
-                      <span style={{
-                        fontSize: 8, fontWeight: 600,
-                        color: isActive ? GOLD : 'rgba(140,100,60,0.35)',
-                        fontFamily: "'Montserrat', sans-serif",
-                        position: 'relative', zIndex: 1,
-                      }}>
+                    )}
+                    {bead && !img && (
+                      <span style={{ fontSize: 7, color: GOLD, position: 'relative', zIndex: 1 }}>✦</span>
+                    )}
+                    {!bead && (
+                      <span style={{ fontSize: 8, fontWeight: 700, color: isActive ? GOLD : 'rgba(140,100,60,0.3)', position: 'relative', zIndex: 1 }}>
                         {i + 1}
                       </span>
                     )}
-                    {/* Clear overlay when active + filled */}
+                    {/* Clear overlay when slot is active + filled */}
                     {isActive && bead && (
-                      <div style={{
-                        position: 'absolute', inset: 0, borderRadius: '50%',
-                        background: 'rgba(46,33,24,0.65)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        zIndex: 3,
-                      }}>
-                        <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, lineHeight: 1 }}>×</span>
+                      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,33,24,0.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4 }}>
+                        <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, lineHeight: 1 }}>×</span>
                       </div>
                     )}
                   </div>
@@ -230,20 +205,20 @@ export default function DesignPage() {
               })}
             </div>
 
-            {/* Slot counter + clear */}
+            {/* Counter */}
             <div style={{ textAlign: 'center' }}>
-              <p style={{ ...BODY, fontSize: 12, color: '#7A5B45', margin: 0 }}>
-                <span style={{ fontWeight: 700, color: filledCount === N ? GOLD : '#3D2B1F' }}>{filledCount}</span>
+              <p style={{ ...BODY, fontSize: 13, color: '#7A5B45', margin: 0 }}>
+                <strong style={{ color: filledCount === N ? GOLD : '#3D2B1F', fontWeight: 700 }}>{filledCount}</strong>
                 <span style={{ color: '#9A8573' }}> / {N} beads</span>
               </p>
-              <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: '3px 0 0' }}>
-                Slot {activeSlot + 1} active — pick a crystal below
+              <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: '4px 0 0' }}>
+                {beads[activeSlot] ? `Slot ${activeSlot + 1} — tap to clear` : `Slot ${activeSlot + 1} — pick a crystal`}
               </p>
             </div>
 
             {filledCount > 0 && (
               <button
-                onClick={clearAll}
+                onClick={() => { setBeads(Array(N).fill(null)); setActiveSlot(0) }}
                 style={{ ...BODY, background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#C5B8AD', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'underline', padding: 0 }}
               >
                 Clear All
@@ -251,189 +226,171 @@ export default function DesignPage() {
             )}
           </div>
 
-          {/* ── Crystal picker ── */}
-          <div style={{ flex: 1, minWidth: 260, maxWidth: 560 }}>
-            <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 12px' }}>
-              Crystal Palette
-            </p>
+          {/* RIGHT — Crystals + Options */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Search */}
-            <div style={{ position: 'relative', marginBottom: 14 }}>
-              <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#9A8573" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                <circle cx="9" cy="9" r="7"/><path d="M15 15l3 3"/>
-              </svg>
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search crystals…"
-                style={{ ...BODY, width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8, border: '1px solid #E5DDD5', borderRadius: 999, fontSize: 12, color: '#4A3A32', background: '#FDFAF7', outline: 'none', boxSizing: 'border-box' }}
-              />
-            </div>
+            {/* Crystal picker */}
+            <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '20px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.14)' }}>
+              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 14px' }}>
+                Crystal Palette
+              </p>
 
-            {/* Crystal grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))',
-              gap: 8,
-              maxHeight: 340,
-              overflowY: 'auto',
-              padding: '2px 2px 8px',
-            }}>
-              {filtered.map(c => {
-                const inUse = uniqueCrystals.includes(c.name)
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => assignCrystal(c.name)}
-                    title={c.name}
-                    style={{
-                      background: '#fff',
-                      border: `1.5px solid ${inUse ? GOLD : '#E5DDD5'}`,
-                      borderRadius: 12,
-                      padding: '8px 4px 6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 5,
-                      transition: 'border-color 0.15s, background 0.15s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = GOLD; e.currentTarget.style.background = '#FDFAF7' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = inUse ? GOLD : '#E5DDD5'; e.currentTarget.style.background = '#fff' }}
-                  >
-                    <div style={{ width: 46, height: 46, borderRadius: '50%', overflow: 'hidden', background: '#F0EBE4', flexShrink: 0, position: 'relative' }}>
-                      {c.bead_image_url ? (
-                        <Image
-                          src={c.bead_image_url}
-                          alt={c.name}
-                          fill
-                          sizes="46px"
-                          style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }}
-                        />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ color: GOLD, opacity: 0.3, fontSize: 18 }}>✦</span>
-                        </div>
-                      )}
-                    </div>
-                    <span style={{ ...BODY, fontSize: 9, fontWeight: 500, color: '#4A3A32', letterSpacing: '0.03em', textAlign: 'center', lineHeight: 1.4, wordBreak: 'break-word', width: '100%' }}>
-                      {c.name}
-                    </span>
-                  </button>
-                )
-              })}
-              {filtered.length === 0 && (
-                <p style={{ ...BODY, fontSize: 12, color: '#9A8573', gridColumn: '1 / -1', margin: '20px 0', textAlign: 'center' }}>
-                  No crystals found
-                </p>
+              <div className="crystal-grid">
+                {crystals.map(c => {
+                  const inUse = uniqueCrystals.includes(c.name)
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => assignCrystal(c.name)}
+                      title={c.name}
+                      style={{
+                        background: '#fff', border: `1.5px solid ${inUse ? GOLD : '#E5DDD5'}`,
+                        borderRadius: 10, padding: '6px 4px 5px', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                        transition: 'border-color 0.15s, background 0.15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = GOLD; e.currentTarget.style.background = '#FDFAF7' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = inUse ? GOLD : '#E5DDD5'; e.currentTarget.style.background = '#fff' }}
+                    >
+                      <div style={{ width: 42, height: 42, borderRadius: '50%', overflow: 'hidden', background: '#F0EBE4', position: 'relative', flexShrink: 0 }}>
+                        {c.bead_image_url ? (
+                          <Image src={c.bead_image_url} alt={c.name} fill sizes="42px" style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ color: GOLD, opacity: 0.3, fontSize: 16 }}>✦</span>
+                          </div>
+                        )}
+                      </div>
+                      <span style={{ ...BODY, fontSize: 8, fontWeight: 500, color: '#4A3A32', textAlign: 'center', lineHeight: 1.3, wordBreak: 'break-word', width: '100%' }}>
+                        {c.name}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* In-use summary */}
+              {uniqueCrystals.length > 0 && (
+                <div style={{ marginTop: 14, padding: '10px 12px', background: '#FBF8F4', borderRadius: 8, border: '1px solid #EDE6DD' }}>
+                  <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>In Your Design</p>
+                  <p style={{ ...SERIF, fontSize: 13, fontWeight: 300, color: '#4A3A32', margin: 0, lineHeight: 1.7 }}>
+                    {uniqueCrystals.join(' · ')}
+                  </p>
+                </div>
               )}
             </div>
 
-            {/* In-use legend */}
-            {uniqueCrystals.length > 0 && (
-              <div style={{ marginTop: 14, padding: '12px 14px', background: '#FBF8F4', borderRadius: 10, border: '1px solid #E5DDD5' }}>
-                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>
-                  In Your Design
-                </p>
-                <p style={{ ...SERIF, fontSize: 14, fontWeight: 300, color: '#4A3A32', margin: 0, lineHeight: 1.7 }}>
-                  {uniqueCrystals.join(' · ')}
-                </p>
+            {/* Options */}
+            <div style={{ background: '#fff', borderRadius: 24, border: '1px solid #E5DDD5', padding: '20px', boxShadow: '0 8px 40px -16px rgba(101,70,46,0.14)' }}>
+              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 16px' }}>
+                Customise Your Order
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                {/* Spacer */}
+                <div>
+                  <label style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 7 }}>Spacer</label>
+                  <select
+                    value={spacer} onChange={e => setSpacer(e.target.value)}
+                    style={{ ...BODY, width: '100%', padding: '9px 10px', border: '1px solid #E5DDD5', borderRadius: 8, fontSize: 11, color: '#4A3A32', background: '#FDFAF7', cursor: 'pointer', outline: 'none' }}
+                  >
+                    <option value="silver">Silver</option>
+                    <option value="gold">Gold</option>
+                    <option value="rosegold">Rose Gold</option>
+                    <option value="exclude">No Spacer</option>
+                  </select>
+                </div>
+
+                {/* Charm */}
+                <div>
+                  <label style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 7 }}>Logo Charm</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {([true, false] as const).map(val => (
+                      <button
+                        key={String(val)} onClick={() => setIncludeCharm(val)}
+                        style={{
+                          ...BODY, flex: 1, padding: '9px 0', borderRadius: 8,
+                          border: `1px solid ${includeCharm === val ? GOLD : '#E5DDD5'}`,
+                          background: includeCharm === val ? '#FAF5EE' : '#FDFAF7',
+                          color: includeCharm === val ? GOLD : '#9A8573',
+                          fontSize: 10, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                        }}
+                      >
+                        {val ? 'Include' : 'Exclude'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 7 }}>
+                  Special Requests
+                </label>
+                <textarea
+                  value={notes} onChange={e => setNotes(e.target.value)}
+                  placeholder="Any special instructions or notes…"
+                  rows={2}
+                  style={{ ...BODY, width: '100%', padding: '9px 10px', border: '1px solid #E5DDD5', borderRadius: 8, fontSize: 11, color: '#4A3A32', background: '#FDFAF7', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Price + Action buttons ── */}
+        <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', background: '#fff', borderRadius: 20, border: '1px solid #E5DDD5', padding: '20px 24px', boxShadow: '0 4px 24px -8px rgba(101,70,46,0.1)' }}>
+          <div>
+            <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: '0 0 2px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Custom Design Bracelet</p>
+            <p style={{ ...SERIF, fontSize: 36, fontWeight: 300, color: '#3D2B1F', margin: 0, lineHeight: 1.1 }}>S$79.00</p>
+            <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: '3px 0 0' }}>+ shipping · Free local delivery</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+            {addedToCart ? (
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <span style={{ ...BODY, fontSize: 12, color: '#5C8B5C', fontWeight: 600 }}>✓ Added to cart</span>
+                <Link
+                  href="/shop/cart"
+                  style={{ ...BODY, padding: '12px 28px', borderRadius: 999, background: '#4A3A32', color: '#fff', fontSize: 10, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase', textDecoration: 'none' }}
+                >
+                  View Cart ✦
+                </Link>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!canCheckout}
+                  style={{
+                    ...BODY, padding: '12px 24px', borderRadius: 999,
+                    border: `1px solid ${canCheckout ? '#4A3A32' : '#C5B8AD'}`,
+                    background: 'transparent',
+                    color: canCheckout ? '#4A3A32' : '#C5B8AD',
+                    fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase',
+                    cursor: canCheckout ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
+                  }}
+                >
+                  {saving ? 'Saving…' : 'Add to Cart'}
+                </button>
+                <button
+                  onClick={handleBuyNow}
+                  disabled={!canCheckout}
+                  style={{
+                    ...BODY, padding: '12px 28px', borderRadius: 999,
+                    background: canCheckout ? '#4A3A32' : '#C5B8AD',
+                    border: 'none', color: '#fff',
+                    fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase',
+                    cursor: canCheckout ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
+                  }}
+                >
+                  {saving ? 'Saving…' : 'Purchase Now ✦'}
+                </button>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* ── Options ── */}
-        <div style={{ marginTop: 40, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', background: '#fff', borderRadius: 20, border: '1px solid #E5DDD5', padding: '24px', boxShadow: '0 4px 24px -8px rgba(101,70,46,0.1)' }}>
-          <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 20px' }}>
-            Customise Your Order
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
-            {/* Spacer */}
-            <div>
-              <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }}>
-                Spacer Beads
-              </label>
-              <select
-                value={spacer}
-                onChange={e => setSpacer(e.target.value)}
-                style={{ ...BODY, width: '100%', padding: '10px 12px', border: '1px solid #E5DDD5', borderRadius: 8, fontSize: 12, color: '#4A3A32', background: '#FDFAF7', cursor: 'pointer', outline: 'none' }}
-              >
-                <option value="silver">Silver</option>
-                <option value="gold">Gold</option>
-                <option value="rosegold">Rose Gold</option>
-                <option value="exclude">No Spacer</option>
-              </select>
-            </div>
-
-            {/* Charm */}
-            <div>
-              <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }}>
-                Logo Charm
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {([true, false] as const).map(val => (
-                  <button
-                    key={String(val)}
-                    onClick={() => setIncludeCharm(val)}
-                    style={{
-                      ...BODY, flex: 1, padding: '10px 0', borderRadius: 8,
-                      border: `1px solid ${includeCharm === val ? GOLD : '#E5DDD5'}`,
-                      background: includeCharm === val ? '#FAF5EE' : '#FDFAF7',
-                      color: includeCharm === val ? GOLD : '#9A8573',
-                      fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                    }}
-                  >
-                    {val ? 'Include' : 'Exclude'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 20 }}>
-            <label style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }}>
-              Special Requests
-            </label>
-            <textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Any special instructions or notes for your order…"
-              rows={2}
-              style={{ ...BODY, width: '100%', padding: '10px 12px', border: '1px solid #E5DDD5', borderRadius: 8, fontSize: 12, color: '#4A3A32', background: '#FDFAF7', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
-            />
-          </div>
-        </div>
-
-        {/* ── Price + Add to Cart ── */}
-        <div style={{ marginTop: 24, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <div>
-            <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: '0 0 2px', letterSpacing: '0.06em' }}>Custom Crystal Bracelet</p>
-            <p style={{ ...SERIF, fontSize: 34, fontWeight: 300, color: '#3D2B1F', margin: 0 }}>S$59.00</p>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-            <button
-              onClick={handleAddToCart}
-              disabled={saving || filledCount === 0 || done}
-              style={{
-                ...BODY,
-                padding: '14px 36px', borderRadius: 999,
-                background: done ? '#5C8B5C' : filledCount === 0 ? '#C5B8AD' : '#4A3A32',
-                border: 'none', color: '#fff',
-                fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase',
-                cursor: saving || filledCount === 0 || done ? 'not-allowed' : 'pointer',
-                opacity: saving ? 0.7 : 1,
-                transition: 'all 0.25s',
-              }}
-            >
-              {done ? 'Added to Cart ✓' : saving ? 'Saving Design…' : 'Add to Cart ✦'}
-            </button>
-            {filledCount === 0 && (
-              <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0 }}>
-                Select at least one crystal to continue
-              </p>
+            {!canCheckout && !saving && (
+              <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>Select at least one crystal to continue</p>
             )}
             {saveError && (
               <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: 0 }}>{saveError}</p>
@@ -441,10 +398,9 @@ export default function DesignPage() {
           </div>
         </div>
 
-        {/* Back link */}
-        <div style={{ textAlign: 'center', marginTop: 32 }}>
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
           <Link href="/energy-quiz" style={{ ...BODY, fontSize: 11, color: '#9A8573', textDecoration: 'none' }}>
-            ✦ Let our quiz recommend crystals for you instead
+            ✦ Prefer crystal recommendations? Take the Energy Quiz
           </Link>
         </div>
 

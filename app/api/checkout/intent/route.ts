@@ -3,7 +3,8 @@ import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getShippingFeeCents } from '@/lib/shipping'
 
-const PRICE_BASE_CENTS = 5900   // SGD 59.00
+const QUIZ_BRACELET_CENTS   = 5900  // SGD 59.00 — Energy Quiz bracelet
+const DESIGN_BRACELET_CENTS = 7900  // SGD 79.00 — Custom Design bracelet
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -29,6 +30,16 @@ export async function POST(req: NextRequest) {
     if (existingOrder) {
       return NextResponse.json({ error: 'This bracelet design has already been purchased.' }, { status: 409 })
     }
+
+    // Custom builder designs store beadSequence in crystal_explanations;
+    // quiz designs do not — use that to pick the correct price tier.
+    const { data: resultRow } = await supabaseAdmin
+      .from('energy_quiz_results')
+      .select('crystal_explanations')
+      .eq('id', resultId)
+      .single()
+    const isCustomDesign = !!(resultRow?.crystal_explanations as { beadSequence?: unknown } | null)?.beadSequence
+    const PRICE_BASE_CENTS = isCustomDesign ? DESIGN_BRACELET_CENTS : QUIZ_BRACELET_CENTS
 
     const geoCountry = req.headers.get('x-vercel-ip-country')
     const shippingCountry = savedAddress?.country || geoCountry
