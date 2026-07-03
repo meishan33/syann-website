@@ -398,9 +398,11 @@ export default function DesignPage() {
 
               {/* PRICE */}
               <div style={BODY}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#B08B57] mb-1">Custom Design Bracelet</p>
-                <p style={SERIF} className="text-[36px] font-light text-[#4A3A32] leading-none">S$79.00</p>
-                <p className="text-[11px] text-[#9A8573] mt-1">+ shipping · free local delivery</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#B08B57]">Build Your Own Bracelet</p>
+                  <p style={SERIF} className="text-[22px] font-light text-[#4A3A32] leading-none shrink-0">S$79.00</p>
+                </div>
+                <p className="text-[11px] text-[#9A8573] mt-1">Free local delivery</p>
               </div>
 
               {/* BUTTONS — exact copy of PurchasePanel */}
