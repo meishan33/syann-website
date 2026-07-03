@@ -1,9 +1,38 @@
 import sharp from 'sharp'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 // Mirrors components/BraceletRenderer.tsx's layout math exactly, so the
 // server-generated photo and the live fallback render look the same.
 const SIZE = 1024
 const RADIUS_PCT = 28
+
+// Vercel's librsvg has no system fonts, so SVG <text> renders as blank there.
+// The watermark is a pre-rendered PNG composited as a bitmap — no font needed.
+// We reduce the alpha channel of every pixel to ~35% of the file's original
+// opacity so the watermark is subtle. The result is cached across invocations
+// in the same serverless instance to avoid repeating the pixel pass.
+const _rawWatermark = readFileSync(join(process.cwd(), 'lib/assets/bracelet-watermark.png'))
+let _dimmedWatermarkCache: Promise<Buffer> | null = null
+
+function getDimmedWatermark(): Promise<Buffer> {
+  if (!_dimmedWatermarkCache) {
+    _dimmedWatermarkCache = (async () => {
+      const { data, info } = await sharp(_rawWatermark)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true })
+      const buf = Buffer.from(data)
+      for (let i = 3; i < buf.length; i += 4) {
+        buf[i] = Math.round(buf[i] * 0.35)
+      }
+      return sharp(buf, { raw: { width: info.width, height: info.height, channels: 4 } })
+        .png()
+        .toBuffer()
+    })()
+  }
+  return _dimmedWatermarkCache
+}
 
 // Source crystal bead photos are uploaded at full camera resolution (some are
 // 1.5MB+) — embedding several of those as base64 inside one SVG bloats it
@@ -65,11 +94,12 @@ export async function generateBraceletImage(
   <rect width="100" height="100" rx="4" fill="#F5F0EB" />
   <circle cx="50" cy="50" r="${RADIUS_PCT}" fill="none" stroke="rgba(140,100,60,0.18)" stroke-width="0.15" stroke-dasharray="0.6 0.5" />
   ${beadParts.join('\n')}
-  <text x="50" y="47" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="3.5" letter-spacing="0.8" fill="rgba(176,139,87,0.22)">SYANN.CO</text>
-  <text x="50" y="52.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="1.8" letter-spacing="0.5" fill="rgba(154,133,115,0.18)">CRYSTAL · ENERGY · YOU</text>
 </svg>`.trim()
 
+  const dimmedWatermark = await getDimmedWatermark()
+
   const pngBuffer = await sharp(Buffer.from(svg))
+    .composite([{ input: dimmedWatermark, top: 0, left: 0 }])
     .png()
     .toBuffer()
 
