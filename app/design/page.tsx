@@ -207,7 +207,7 @@ export default function DesignPage() {
                         {img && <Image src={img} alt={bead!} fill sizes="30px" style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }} />}
                         {bead && !img && <span style={{ fontSize: 7, color: GOLD, position: 'relative', zIndex: 1 }}>✦</span>}
                         {!bead && <span style={{ fontSize: 8, fontWeight: 700, color: isActive ? GOLD : 'rgba(140,100,60,0.3)', position: 'relative', zIndex: 1 }}>{i + 1}</span>}
-                        {isActive && bead && (
+                        {isActive && bead && filledCount < N && (
                           <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,33,24,0.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4 }}>
                             <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, lineHeight: 1 }}>×</span>
                           </div>
