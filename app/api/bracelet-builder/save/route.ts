@@ -32,13 +32,18 @@ export async function POST(req: NextRequest) {
         calculated_strong_element: null,
         analysis_summary: null,
         user_name: null,
+        user_id: null,
+        birth_date: null,
+        birth_time: null,
+        main_goal: null,
+        current_feelings: null,
       })
       .select('id')
       .single()
 
     if (insertError || !result?.id) {
       console.error('Bracelet builder DB insert error:', insertError)
-      return NextResponse.json({ error: 'Failed to save design.' }, { status: 500 })
+      return NextResponse.json({ error: insertError?.message ?? 'Failed to save design.' }, { status: 500 })
     }
 
     const resultId: string = result.id
