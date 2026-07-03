@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
       .insert({
         crystal_names: uniqueCrystals,
         crystal_explanations: { beadSequence },
-        calculated_weak_element: null,
-        calculated_strong_element: null,
-        analysis_summary: null,
+        calculated_weak_element: 'custom',
+        calculated_strong_element: 'custom',
+        analysis_summary: 'Custom design bracelet',
         user_name: null,
         user_id: null,
         birth_date: null,
