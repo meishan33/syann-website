@@ -46,9 +46,13 @@ export default async function PaymentPage({ searchParams }: Props) {
 
   const crystalNames: string[] = data?.crystal_names ?? [];
   const imageUrl: string | null = data?.cached_image_url ?? null;
-  const weakElement: string | null = data?.calculated_weak_element ?? null;
-  const strongElement: string | null = data?.calculated_strong_element ?? null;
-  const analysisSummary: string | null = data?.analysis_summary ?? null;
+  const rawWeakElement: string | null = data?.calculated_weak_element ?? null;
+  const rawStrongElement: string | null = data?.calculated_strong_element ?? null;
+  const rawAnalysisSummary: string | null = data?.analysis_summary ?? null;
+  const isCustomDesign = rawWeakElement === 'custom'
+  const weakElement = isCustomDesign ? null : rawWeakElement;
+  const strongElement = isCustomDesign ? null : rawStrongElement;
+  const analysisSummary = isCustomDesign ? null : rawAnalysisSummary;
   const userName: string | null = data?.user_name ?? null;
 
   const [analysisParagraph, analysisBulletBlock] = analysisSummary ? analysisSummary.split('\n\n') : [null, null];
@@ -124,7 +128,7 @@ export default async function PaymentPage({ searchParams }: Props) {
                   SYANN.CO
                 </p>
                 <p style={SERIF} className="text-xl font-light text-[#4A3A32] leading-snug capitalize">
-                  {weakElement ? `Your ${weakElement} Harmony Bracelet` : 'Your Crystal Bracelet'}
+                  {isCustomDesign ? 'Build Your Own Bracelet' : weakElement ? `Your ${weakElement} Harmony Bracelet` : 'Your Crystal Bracelet'}
                 </p>
                 {crystalNames.length > 0 && (
                   <p style={BODY} className="text-[11px] text-[#9A8573] leading-snug">
