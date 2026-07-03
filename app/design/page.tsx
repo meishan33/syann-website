@@ -197,7 +197,7 @@ export default function DesignPage() {
                           width: BEAD_R * 2, height: BEAD_R * 2,
                           borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
                           background: bead ? '#D8CCB8' : '#EDE6DD',
-                          border: isActive ? `2px solid ${GOLD}` : bead ? '1.5px solid rgba(120,85,45,0.25)' : '1.5px dashed rgba(140,100,60,0.3)',
+                          border: isActive ? `2px solid ${GOLD}` : bead ? 'none' : '1.5px dashed rgba(140,100,60,0.3)',
                           boxShadow: isActive ? `0 0 0 3px ${GOLD}44` : undefined,
                           transition: 'border 0.15s, box-shadow 0.15s',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
