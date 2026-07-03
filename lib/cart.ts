@@ -67,7 +67,8 @@ export function addBraceletToCart(opts: {
   crystalNames: string[]
   price?: number
 }) {
-  const cart = getCart().filter(i => i.type !== 'bracelet')
+  // Remove only the same bracelet (same resultId) — other bracelets stay in cart
+  const cart = getCart().filter(i => !(i.type === 'bracelet' && i.resultId === opts.resultId))
   const label = opts.crystalNames.length ? opts.crystalNames.join(' · ') : 'Custom Crystal Bracelet'
   cart.push({
     productId: `bracelet-${opts.resultId}`,
