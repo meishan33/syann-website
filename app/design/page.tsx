@@ -242,11 +242,8 @@ export default function DesignPage() {
                 )}
               </div>
 
-              {/* Footer — mirrors results page footer text */}
+              {/* Footer */}
               <div className="mt-6 px-2 text-center" style={BODY}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B08B57] mb-1">
-                  Your Design · 21 Beads · Handcrafted
-                </p>
                 <p className="text-[11px] leading-relaxed text-[#C5B8AD]">
                   Each crystal bead is a genuine natural gemstone. Your handcrafted bracelet may have slight variations in colour and texture, making it beautifully one-of-a-kind.
                 </p>
@@ -373,15 +370,14 @@ export default function DesignPage() {
                   </span>
                   <div className="flex flex-col gap-3">
                     {[
-                      <span key="a">All SYANN bracelets use <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> for a consistent, premium finish.</span>,
+                      <span key="a">Handcrafted with <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> to a standard length of <strong className="font-medium text-[#4A3A32]">16 cm</strong>. To customise the fit, simply note your wrist size in the remarks.{' '}
+                        <button type="button" onClick={() => setMeasureOpen(true)} style={{ fontFamily: 'inherit', fontSize: 'inherit' }} className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer hover:opacity-70">
+                          How to measure your wrist
+                        </button>
+                      </span>,
                       <span key="b">Every order arrives in a <strong className="font-medium text-[#4A3A32]">premium gift box</strong> with a crystal care card.{' '}
                         <button type="button" onClick={() => setPackagingOpen(true)} style={{ fontFamily: 'inherit', fontSize: 'inherit' }} className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer hover:opacity-70">
                           See packaging example
-                        </button>
-                      </span>,
-                      <span key="c">The default bracelet size is <strong className="font-medium text-[#4A3A32]">16 cm</strong>. Please include your wrist size in the remarks if you&apos;d like it larger or smaller.{' '}
-                        <button type="button" onClick={() => setMeasureOpen(true)} style={{ fontFamily: 'inherit', fontSize: 'inherit' }} className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer hover:opacity-70">
-                          How to measure your wrist
                         </button>
                       </span>,
                     ].map((text, i) => (
