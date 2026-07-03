@@ -204,7 +204,16 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
             </span>
             <div className="flex flex-col gap-3">
               {[
-                <>All SYANN bracelets use <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> for a consistent, premium finish.</>,
+                <>Handcrafted with <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> to a standard length of <strong className="font-medium text-[#4A3A32]">16 cm</strong>. To customise the fit, simply note your wrist size in the remarks.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setMeasureOpen(true)}
+                    className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer transition-opacity hover:opacity-70"
+                    style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
+                  >
+                    How to measure your wrist
+                  </button>
+                </>,
                 <>Every order arrives in a <strong className="font-medium text-[#4A3A32]">premium gift box</strong> with a crystal care card.{' '}
                   <button
                     type="button"
@@ -213,16 +222,6 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
                     style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
                   >
                     See packaging example
-                  </button>
-                </>,
-                <>The default bracelet size is <strong className="font-medium text-[#4A3A32]">16 cm</strong>. Please include your wrist size in the remarks if you&apos;d like it larger or smaller.{' '}
-                  <button
-                    type="button"
-                    onClick={() => setMeasureOpen(true)}
-                    className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer transition-opacity hover:opacity-70"
-                    style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
-                  >
-                    How to measure your wrist
                   </button>
                 </>,
               ].map((text, i) => (
@@ -235,6 +234,15 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
               ))}
             </div>
           </div>
+        </div>
+
+        {/* PRICE */}
+        <div style={BODY}>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#B08B57]">Your Quiz Bracelet</p>
+            <p style={SERIF} className="text-[22px] font-light text-[#4A3A32] leading-none shrink-0">S$59.00</p>
+          </div>
+          <p className="text-[11px] text-[#9A8573] mt-1">Free local delivery</p>
         </div>
 
         {/* PURCHASE / ADD TO CART BUTTONS */}
