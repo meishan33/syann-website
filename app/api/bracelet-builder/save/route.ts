@@ -64,9 +64,10 @@ export async function POST(req: NextRequest) {
       const pngBuffer = await generateBraceletImage(beadSequence, imageMap)
 
       const fileName = `bracelet-${resultId}.png`
+      const pngBlob = new Blob([new Uint8Array(pngBuffer)], { type: 'image/png' })
       const { error: uploadError } = await supabaseAdmin.storage
         .from('generated-bracelets')
-        .upload(fileName, pngBuffer, { contentType: 'image/png', upsert: true })
+        .upload(fileName, pngBlob, { contentType: 'image/png', upsert: true })
 
       if (!uploadError) {
         const { data: urlData } = supabaseAdmin.storage
