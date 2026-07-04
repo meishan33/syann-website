@@ -242,7 +242,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#B08B57]">Your Quiz Bracelet</p>
             <p style={SERIF} className="text-[22px] font-light text-[#4A3A32] leading-none shrink-0">S$59.00</p>
           </div>
-          <p className="text-[11px] text-[#9A8573] mt-1">Free local delivery</p>
+          <p className="text-[11px] text-[#9A8573] mt-1">Free SG/MY delivery</p>
         </div>
 
         {/* PURCHASE / ADD TO CART BUTTONS */}
