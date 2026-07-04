@@ -870,89 +870,72 @@ export default function AdminPage() {
                                       </select>
                                     </td>
                                   </tr>
-                                  {expandedOrder === o.id && (
+                                  {expandedOrder === o.id && (() => {
+                                    const shopTotal = o.shop_items?.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0) ?? 0
+                                    const braceletPrice = Number(o.total_amount) + (o.discount_amount ?? 0) - shopTotal - (o.shipping_fee ?? 0)
+                                    return (
                                     <tr>
                                       <td colSpan={8} style={{ ...TD, background: '#F9F6F2', borderBottom: '2px solid #E5DDD5', padding: '16px 20px' }}>
                                         <div style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '24px 28px' }}>
 
-                                          {/* Top row: image + bracelet info + total/badges */}
-                                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                                          {/* Header: badges + order total */}
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                              <Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} />
+                                              <Badge label={o.fulfillment_status} color={o.fulfillment_status === 'delivered' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : o.fulfillment_status === 'cancelled' ? '#C0392B' : '#9A8573'} />
+                                            </div>
+                                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: DARK, margin: 0 }}>
+                                              S${Number(o.total_amount).toFixed(2)}
+                                            </p>
+                                          </div>
 
-                                            {/* Left: image + bracelet details */}
-                                            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                                              {o.generated_image_url
-                                                ? <button onClick={e => { e.stopPropagation(); setLightboxUrl(o.generated_image_url) }} style={{ background: 'none', border: '1px solid #E5DDD5', borderRadius: 12, padding: 0, cursor: 'zoom-in', overflow: 'hidden', width: 72, height: 72, flexShrink: 0 }} title="Click to enlarge">
-                                                    <img src={o.generated_image_url} alt="" style={{ width: 72, height: 72, objectFit: 'cover', display: 'block' }} />
-                                                  </button>
-                                                : <div style={{ width: 72, height: 72, borderRadius: 12, border: '1px solid #E5DDD5', background: '#F5F0EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                    <span style={{ color: GOLD, fontSize: 18, opacity: 0.4 }}>✦</span>
-                                                  </div>}
-                                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 300, color: DARK, margin: 0 }}>
-                                                  Crystal Bracelet
-                                                </p>
-                                                <p style={{ ...BODY, fontSize: 12, fontWeight: 300, color: '#7A6355', margin: 0, lineHeight: 1.6 }}>
-                                                  {o.recommended_crystal_names?.join(' · ') || '—'}
-                                                </p>
+                                          {/* Unified items list */}
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                                            {/* Bracelet row */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                              <div style={{ flexShrink: 0 }}>
+                                                {o.generated_image_url
+                                                  ? <button onClick={e => { e.stopPropagation(); setLightboxUrl(o.generated_image_url) }} style={{ background: 'none', border: '1px solid #E5DDD5', borderRadius: 10, padding: 0, cursor: 'zoom-in', overflow: 'hidden', width: 64, height: 64, display: 'block' }} title="Click to enlarge">
+                                                      <img src={o.generated_image_url} alt="" style={{ width: 64, height: 64, objectFit: 'cover', display: 'block' }} />
+                                                    </button>
+                                                  : <div style={{ width: 64, height: 64, borderRadius: 10, border: '1px solid #E5DDD5', background: '#F5F0EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                      <span style={{ color: GOLD, fontSize: 16, opacity: 0.4 }}>✦</span>
+                                                    </div>}
+                                              </div>
+                                              <div style={{ flex: 1 }}>
+                                                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 300, color: DARK, margin: '0 0 3px' }}>Crystal Bracelet</p>
+                                                <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: '0 0 2px', lineHeight: 1.5 }}>{o.recommended_crystal_names?.join(' · ') || '—'}</p>
                                                 {(o.weak_element || o.strong_element) && o.weak_element !== 'custom' && (
-                                                  <p style={{ ...BODY, fontSize: 11, color: '#B08B57', margin: 0, letterSpacing: '0.04em' }}>
-                                                    Weak: {o.weak_element || '—'} · Strong: {o.strong_element || '—'}
-                                                  </p>
+                                                  <p style={{ ...BODY, fontSize: 10, color: '#B08B57', margin: '0 0 2px' }}>Weak: {o.weak_element} · Strong: {o.strong_element}</p>
                                                 )}
-                                                <p style={{ ...BODY, fontSize: 11, color: '#7A6355', margin: 0, letterSpacing: '0.04em' }}>
-                                                  {o.spacer_choice && <span style={{ textTransform: 'capitalize' }}>Spacer: {o.spacer_choice}</span>}
-                                                  {o.spacer_choice && ' · '}
+                                                <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>
+                                                  {o.spacer_choice && <span style={{ textTransform: 'capitalize' }}>Spacer: {o.spacer_choice} · </span>}
                                                   Logo Charm: {o.logo_charm === false ? 'Excluded' : 'Included'}
                                                 </p>
                                               </div>
+                                              <p style={{ ...BODY, fontSize: 13, color: DARK, margin: 0, flexShrink: 0 }}>S${braceletPrice.toFixed(2)}</p>
                                             </div>
 
-                                            {/* Right: total + badges */}
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
-                                              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 400, color: DARK, margin: 0 }}>
-                                                S${Number(o.total_amount).toFixed(2)}
-                                              </p>
-                                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                                                <Badge label={o.payment_status} color={o.payment_status === 'paid' ? '#7CB98A' : '#C0392B'} />
-                                                <Badge label={o.fulfillment_status} color={o.fulfillment_status === 'delivered' ? '#7CB98A' : o.fulfillment_status === 'processing' ? GOLD : o.fulfillment_status === 'cancelled' ? '#C0392B' : '#9A8573'} />
+                                            {/* Shop item rows — same design */}
+                                            {o.shop_items?.map((item: { image_url?: string | null; name: string; quantity: number; price: number }, idx: number) => (
+                                              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 16, paddingTop: 12, borderTop: '1px solid #EDE8DF' }}>
+                                                <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0, background: '#F8F4EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                  {item.image_url
+                                                    ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    : <span style={{ color: GOLD, fontSize: 14, opacity: 0.4 }}>◇</span>}
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 300, color: DARK, margin: '0 0 3px' }}>{item.name}</p>
+                                                  <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>Qty: {item.quantity}</p>
+                                                </div>
+                                                <p style={{ ...BODY, fontSize: 13, color: DARK, margin: 0, flexShrink: 0 }}>S${(item.price * item.quantity).toFixed(2)}</p>
                                               </div>
-                                            </div>
+                                            ))}
                                           </div>
-
-                                          {/* Add-on items */}
-                                          {o.shop_items?.length > 0 && (
-                                            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EDE8DF' }}>
-                                              <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 8px' }}>Add-on Items</p>
-                                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                                {o.shop_items.map((item: { image_url?: string | null; name: string; quantity: number; price: number }, idx: number) => (
-                                                  <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                                                    <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0, background: '#F8F4EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                      {item.image_url
-                                                        ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        : <span style={{ color: GOLD, fontSize: 14, opacity: 0.4 }}>◇</span>}
-                                                    </div>
-                                                    <div style={{ flex: 1 }}>
-                                                      <p style={{ ...BODY, fontSize: 12, fontWeight: 500, color: DARK, margin: '0 0 2px' }}>{item.name}</p>
-                                                      <p style={{ ...BODY, fontSize: 10, color: '#9A8573', margin: 0 }}>Qty: {item.quantity} · S${(item.price * item.quantity).toFixed(2)}</p>
-                                                    </div>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          )}
 
                                           {/* Pricing breakdown */}
                                           <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EDE8DF', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                              <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Crystal Bracelet</span>
-                                              <span style={{ ...BODY, fontSize: 11, color: DARK }}>S${(Number(o.total_amount) - (o.shop_items?.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0) ?? 0) - (o.shipping_fee ?? 0) + (o.discount_amount ?? 0)).toFixed(2)}</span>
-                                            </div>
-                                            {o.shop_items?.map((item: { name: string; quantity: number; price: number }, idx: number) => (
-                                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>{item.name} × {item.quantity}</span>
-                                                <span style={{ ...BODY, fontSize: 11, color: DARK }}>S${(item.price * item.quantity).toFixed(2)}</span>
-                                              </div>
-                                            ))}
                                             {o.shipping_fee != null && o.shipping_fee > 0 && (
                                               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                                 <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Shipping</span>
@@ -1038,7 +1021,8 @@ export default function AdminPage() {
                                         </div>
                                       </td>
                                     </tr>
-                                  )}
+                                  )
+                                  })()}
                                 </React.Fragment>
                               ))}
                             </tbody>
