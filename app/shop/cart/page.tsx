@@ -349,7 +349,10 @@ export default function CartPage() {
             </div>
           )}
           <div style={{ borderTop: '1px solid #F0E8DF', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <span style={{ ...SERIF, fontSize: 16, color: '#3D2B1F' }}>Total (excl. shipping)</span>
+            <div>
+              <span style={{ ...SERIF, fontSize: 16, color: '#3D2B1F' }}>Total</span>
+              <p style={{ ...BODY, fontSize: 10, color: '#9A8573', marginTop: 3 }}>Free local delivery · Int&apos;l shipping calculated at checkout</p>
+            </div>
             <div style={{ textAlign: 'right' }}>
               <span style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: '#3D2B1F', display: 'block' }}>{format(displayTotalCents / 100)}</span>
               {currency !== 'SGD' && <span style={{ ...BODY, fontSize: 10, color: '#B0A090' }}>Billed in SGD at checkout</span>}
