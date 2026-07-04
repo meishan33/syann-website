@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'About SYANN.CO — Our Story & Mission',
-  description: 'SYANN combines ancient Five Elements wisdom with AI to create crystal bracelets uniquely aligned to your energy. Learn about our story, values, and commitment to natural gemstones.',
-  openGraph: { title: 'About SYANN.CO', description: 'Where Five Elements wisdom meets AI — discover the story behind every personalized crystal bracelet.' },
+  title: 'About SYANN.CO | Handcrafted Crystal Bracelets Singapore',
+  description: 'SYANN handcrafts personalized natural crystal bracelets in Singapore, combining Five Elements wisdom with AI. Each gemstone bracelet is uniquely designed for your zodiac, energy & intentions.',
+  openGraph: { title: 'About SYANN.CO | Crystal Bracelets Singapore', description: 'Handcrafted natural gemstone bracelets personalized by Five Elements wisdom and AI. Made in Singapore, delivered free to SG & MY.' },
 }
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
@@ -106,9 +106,9 @@ export default function AboutPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               'SYANN was created with a simple belief: energy should feel personal.',
-              'In a world filled with mass-produced jewelry, we wanted to create something more intentional — bracelets designed uniquely for each individual.',
-              'By combining traditional five element principles with AI-powered personalization, SYANN creates crystal combinations inspired by your birthdate, energy balance, and intentions.',
-              'Every bracelet is thoughtfully assembled to bring together beauty, meaning, and emotional connection.',
+              'In a world filled with mass-produced jewelry, we wanted to create something more intentional — handcrafted crystal bracelets designed uniquely for each individual, right here in Singapore.',
+              'By combining traditional Five Elements principles with AI-powered personalization, SYANN curates natural gemstone combinations inspired by your birthdate, zodiac sign, elemental balance, and intentions.',
+              'Every bracelet is thoughtfully assembled to bring together beauty, meaning, and emotional connection — a wearable piece of your energy.',
             ].map((p, i) => (
               <p key={i} style={{ ...BODY, fontSize: 13, fontWeight: 300, lineHeight: 1.85, color: '#7A6355', margin: 0 }}>{p}</p>
             ))}

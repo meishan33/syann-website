@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import EnergyQuizForm from '@/components/EnergyQuizForm'
 
 export const metadata: Metadata = {
-  title: 'Crystal Energy Quiz — Discover Your Bracelet',
-  description: 'Answer a few questions about your birth date and intentions. Our AI analyzes your Five Elements profile and curates the perfect crystal bracelet for your energy.',
-  openGraph: { title: 'Take the Crystal Energy Quiz | SYANN.CO', description: 'Discover the crystals aligned with your energy — powered by Five Elements wisdom and AI.' },
+  title: 'Free Crystal Energy Quiz | Find Your Perfect Gemstone Bracelet | SYANN.CO',
+  description: 'Take our free crystal quiz to discover which natural gemstones match your energy. Personalized by your zodiac sign, Five Elements & intentions. Handcrafted in Singapore, free SG/MY delivery.',
+  openGraph: { title: 'Free Crystal Quiz — Find Your Perfect Bracelet | SYANN.CO', description: 'Discover which crystals are aligned to your zodiac and Five Elements energy profile. Get a personalized gemstone bracelet handcrafted in Singapore.' },
 }
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }

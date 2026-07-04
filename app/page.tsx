@@ -2,16 +2,16 @@ import type { Metadata } from 'next'
 import EnergyQuizForm from '@/components/EnergyQuizForm'
 
 export const metadata: Metadata = {
-  title: 'Personalized Crystal Bracelets Crafted for Your Energy',
-  description: 'Take the free Energy Quiz and receive a crystal bracelet uniquely curated for your Five Elements profile, intentions, and energy. Handcrafted with natural gemstones.',
-  openGraph: { title: 'SYANN.CO — Personalized Crystal Bracelets', description: 'Discover the crystals aligned with your energy through Five Elements wisdom and AI-powered curation.', url: 'https://syann.co' },
+  title: 'Crystal Bracelets Singapore | Personalized Natural Gemstone Bracelets | SYANN.CO',
+  description: 'Shop handcrafted natural crystal bracelets in Singapore. Take our free Energy Quiz for a personalized gemstone bracelet aligned to your Five Elements, zodiac & intentions. Free SG & MY delivery.',
+  openGraph: { title: 'SYANN.CO — Personalized Crystal Bracelets Singapore', description: 'Handcrafted natural crystal bracelets personalized by your zodiac, Five Elements & intentions. Free delivery in Singapore & Malaysia.', url: 'https://syann.co' },
 }
 
 const SELLING_POINTS = [
   {
-    label: 'Natural Crystal',
+    label: 'Natural Crystal Beads',
     description:
-      'Hand-selected genuine gemstones, ethically sourced and energetically cleansed.',
+      'Hand-selected 8 mm genuine gemstones — ethically sourced, energetically cleansed, and never synthetic.',
     icon: (
       <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
         {/* Outer gem outline */}
@@ -30,7 +30,7 @@ const SELLING_POINTS = [
   {
     label: 'AI Energy Analysis',
     description:
-      'Your zodiac, five elements, and intentions translated into a bespoke crystal blueprint.',
+      'Your zodiac sign, Five Elements balance, and intentions translated into a bespoke crystal bracelet blueprint.',
     icon: (
       <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 5 L18 14 L27 16 L18 18 L16 27 L14 18 L5 16 L14 14 Z" />
@@ -66,22 +66,22 @@ const BRACELETS = [
   {
     image: '/LoveAndHarmony.webp',
     title: 'Love & Harmony',
-    description: 'Open the heart, soften connection, invite tender devotion.',
+    description: 'Crystals for love, self-worth, and deepening emotional connection — open the heart and invite tender devotion.',
   },
   {
     image: '/WealthAndAbundance.webp',
     title: 'Wealth & Abundance',
-    description: 'Magnetize opportunity, prosperity, and creative flow.',
+    description: 'Gemstones for prosperity, opportunity, and creative flow — attract abundance and unlock your potential.',
   },
   {
     image: '/ProtectionAndGrounding.webp',
     title: 'Protection & Grounding',
-    description: 'Shield your aura, root your energy, walk in steady calm.',
+    description: 'Crystals for protection, calm, and inner steadiness — shield your aura and root your energy.',
   },
   {
     image: '/CalmAndBalance.webp',
     title: 'Calm & Balance',
-    description: 'Quiet the noise, restore balance, return to inner stillness.',
+    description: 'Stones for anxiety relief, stress reduction, and mental clarity — quiet the noise and restore inner stillness.',
   },
 ]
 
@@ -188,13 +188,12 @@ export default function Home() {
       <section id="energy-quiz" className="home-quiz">
 
         <div className="home-quiz-header">
-          <p className="home-quiz-eyebrow">✦ Personalized Energy Analysis</p>
+          <p className="home-quiz-eyebrow">✦ Free Personalized Energy Quiz</p>
           <h2 className="home-quiz-title">
-            Discover The Bracelet Designed For You
+            Find Your Perfect Crystal Bracelet
           </h2>
           <p className="home-quiz-description">
-            Share a little about yourself and let our AI craft a bracelet
-            tuned to your zodiac, intentions, and energetic balance.
+            Share your birth date, zodiac sign, and intentions — our AI analyzes your Five Elements profile and handpicks the natural gemstones best aligned to your energy. Free delivery in Singapore & Malaysia.
           </p>
         </div>
 

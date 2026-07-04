@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Crystal Encyclopedia — Natural Gemstone Guide',
-  description: 'Explore our guide to natural crystals and gemstones. Learn about the healing properties, elemental associations, and energy of each crystal used in SYANN bracelets.',
+  title: 'Natural Crystal & Gemstone Guide Singapore | Crystal Healing Properties | SYANN.CO',
+  description: 'Explore our guide to natural crystals and gemstones — rose quartz, amethyst, citrine, obsidian & more. Learn their healing properties, elemental associations, and how they are used in personalized crystal bracelets.',
   openGraph: {
-    title: 'Crystal Encyclopedia | SYANN.CO',
-    description: 'Discover the healing properties and elemental energy of natural crystals and gemstones.',
+    title: 'Natural Crystal & Gemstone Guide | SYANN.CO',
+    description: 'Discover the healing properties of rose quartz, amethyst, citrine, and more — the natural gemstones used in SYANN personalized crystal bracelets.',
   },
 }
 

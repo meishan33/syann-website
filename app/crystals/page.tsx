@@ -61,12 +61,11 @@ export default function CrystalsPage() {
             style={SERIF}
             className="text-4xl lg:text-5xl font-light leading-tight text-[#4A3A32]"
           >
-            The SYANN Crystal Collection
+            Natural Crystal & Gemstone Library
           </h1>
 
           <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-[#6F625B]">
-            Each stone is hand-selected for its purity, energetic signature,
-            and quiet beauty — curated to align with the rhythm of your intention.
+            Every stone in our collection is a genuine natural gemstone — hand-selected for purity, energetic resonance, and quiet beauty. Discover the crystals used in our personalized bracelets and find the ones aligned to your intention.
           </p>
 
         </header>

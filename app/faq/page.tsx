@@ -51,6 +51,22 @@ const FAQS = [
     q: 'Can I return or exchange my bracelet?',
     a: 'As every bracelet is personally curated and handcrafted for you, we are unable to accept returns or exchanges. However, if your bracelet arrives damaged or defective, please contact us within 7 days and we will make it right.',
   },
+  {
+    q: 'Which crystals are good for anxiety, stress, and calm?',
+    a: 'Crystals commonly used for anxiety relief and stress reduction include Amethyst (calming, promotes restful sleep), Blue Lace Agate (soothing communication energy), Lepidolite (emotional balance), and Aquamarine (mental clarity and calm). Our AI energy quiz selects the crystals best suited to your specific Five Elements profile and intention — so your bracelet is personalized for your anxiety or stress concern, not a generic recommendation.',
+  },
+  {
+    q: 'Which crystals are best for love, relationships, and self-worth?',
+    a: 'Popular crystals for love include Rose Quartz (unconditional love, self-worth), Rhodonite (emotional healing), Green Aventurine (heart-opening, new beginnings), and Morganite (compassion and romance). When you choose Love & Harmony as your intention in our Energy Quiz, our AI selects the most resonant love crystals for your unique elemental energy.',
+  },
+  {
+    q: 'Do you deliver to Malaysia? What are the shipping fees?',
+    a: 'Yes! We offer free delivery to both Singapore and Malaysia. For international destinations outside SG and MY, shipping fees are calculated at checkout based on your location.',
+  },
+  {
+    q: 'Are SYANN crystal bracelets suitable as gifts?',
+    a: 'Absolutely. Every SYANN bracelet comes in a premium gift box with a crystal care card and a degaussing crystal — no extra wrapping needed. You can also use our Build Your Own Bracelet feature to hand-pick the crystals yourself, or let the recipient take the Energy Quiz for a truly personalized gift experience.',
+  },
 ]
 
 function AccordionItem({
