@@ -258,9 +258,14 @@ export default function DesignPage() {
 
               {/* CRYSTAL PALETTE — replaces "Your Elemental Analysis" */}
               <div>
-                <p style={BODY} className="mb-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#4A3A32]">
-                  Crystal Palette
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <p style={BODY} className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#4A3A32] m-0">
+                    Crystal Palette
+                  </p>
+                  <Link href="/crystals" target="_blank" style={BODY} className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#B08B57] no-underline hover:opacity-70 transition-opacity">
+                    Crystal Guide →
+                  </Link>
+                </div>
                 {uniqueCrystals.length > 0 ? (
                   <p style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45] mb-3">
                     <strong style={{ color: GOLD }}>{filledCount}</strong> / {N} beads filled · {uniqueCrystals.join(' · ')}
