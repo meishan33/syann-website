@@ -157,37 +157,65 @@ export async function POST(req: NextRequest) {
         .from('orders').select('id').eq('stripe_payment_intent_id', paymentIntent.id).maybeSingle()
       if (existingCombined) return NextResponse.json({ received: true })
 
-      const { data: result } = await supabaseAdmin
-        .from('energy_quiz_results')
-        .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, current_feelings')
-        .eq('id', resultId).single()
+      // Parse bracelet details (new multi-bracelet format)
+      let braceletList: { resultId: string; priceCents: number; spacer: string; includeCharm: boolean; remark: string }[] = []
+      try {
+        if (paymentIntent.metadata?.braceletDetails) {
+          braceletList = JSON.parse(paymentIntent.metadata.braceletDetails)
+        }
+      } catch {}
+      // Fallback to legacy single-bracelet metadata fields
+      if (!braceletList.length && resultId) {
+        braceletList = [{ resultId, priceCents: 0, spacer: spacer || 'silver', includeCharm: includeCharm !== 'false', remark: remark || '' }]
+      }
 
       const shippingAddress = addr
         ? [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ')
         : null
       const totalAmount = (paymentIntent.amount ?? 0) / 100
 
-      const { data: insertedOrder } = await supabaseAdmin.from('orders').insert({
-        customer_name: addr?.name || result?.user_name || null,
-        customer_email: paymentIntent.receipt_email || null,
-        customer_phone: addr?.phone || null,
-        shipping_address: shippingAddress,
-        generated_image_url: result?.cached_image_url || null,
-        weak_element: result?.calculated_weak_element || null,
-        strong_element: result?.calculated_strong_element || null,
-        analysis_summary: result?.analysis_summary || null,
-        current_feelings: result?.current_feelings || null,
-        recommended_crystal_names: result?.crystal_names ?? [],
-        total_amount: totalAmount,
-        payment_status: 'paid',
-        fulfillment_status: 'processing',
-        stripe_payment_intent_id: paymentIntent.id,
-        result_id: resultId || null,
-        spacer_choice: spacer || null,
-        remark: remark || null,
-        logo_charm: includeCharm !== 'false',
-        ...promoFields,
-      }).select('order_number').single()
+      // Create one order record per bracelet
+      let firstOrderNumber: number | null = null
+      let customerName: string | null = addr?.name || null
+      const braceletEmailLines: string[] = []
+
+      for (let i = 0; i < braceletList.length; i++) {
+        const bd = braceletList[i]
+        const { data: result } = await supabaseAdmin
+          .from('energy_quiz_results')
+          .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, current_feelings')
+          .eq('id', bd.resultId).single()
+
+        const crystalNames: string[] = result?.crystal_names ?? []
+        braceletEmailLines.push(`Custom Crystal Bracelet (${crystalNames.join(', ') || 'Crystal'})`)
+
+        if (i === 0 && !customerName) customerName = result?.user_name || null
+
+        const { data: insertedOrder } = await supabaseAdmin.from('orders').insert({
+          customer_name: addr?.name || result?.user_name || null,
+          customer_email: paymentIntent.receipt_email || null,
+          customer_phone: addr?.phone || null,
+          shipping_address: shippingAddress,
+          generated_image_url: result?.cached_image_url || null,
+          weak_element: result?.calculated_weak_element || null,
+          strong_element: result?.calculated_strong_element || null,
+          analysis_summary: result?.analysis_summary || null,
+          current_feelings: result?.current_feelings || null,
+          recommended_crystal_names: crystalNames,
+          total_amount: totalAmount,
+          payment_status: 'paid',
+          fulfillment_status: 'processing',
+          // Use the main PI id for first bracelet; suffix subsequent ones to keep rows unique
+          stripe_payment_intent_id: i === 0 ? paymentIntent.id : `${paymentIntent.id}_b${i}`,
+          result_id: bd.resultId,
+          spacer_choice: bd.spacer || null,
+          remark: bd.remark || null,
+          logo_charm: bd.includeCharm,
+          ...(i === 0 ? promoFields : {}),
+        }).select('order_number').single()
+
+        if (i === 0) firstOrderNumber = insertedOrder?.order_number ?? null
+      }
 
       const parsedItems: { productId?: string; name: string; quantity: number; price: number }[] = itemsJson ? JSON.parse(itemsJson) : []
       if (parsedItems.length > 0) {
@@ -207,12 +235,12 @@ export async function POST(req: NextRequest) {
       }
 
       if (paymentIntent.receipt_email) {
-        const braceletLine = `Custom Crystal Bracelet (${result?.crystal_names?.join(', ') || 'Crystal'})`
         const shopLines = parsedItems.map(i => `${i.name} × ${i.quantity}`).join(', ')
+        const allItems = [...braceletEmailLines, shopLines].filter(Boolean).join(' + ')
         const { subject, html } = orderConfirmationEmail({
-          orderNumber: insertedOrder?.order_number ?? null,
-          customerName: addr?.name || result?.user_name || null,
-          items: [braceletLine, shopLines].filter(Boolean).join(' + '),
+          orderNumber: firstOrderNumber,
+          customerName,
+          items: allItems,
           totalAmount,
           shippingAddress,
         })
@@ -221,14 +249,15 @@ export async function POST(req: NextRequest) {
 
       const { subject: adminSubject, html: adminHtml } = newOrderAdminEmail({
         orderType: 'bracelet',
-        orderNumber: insertedOrder?.order_number ?? null,
+        orderNumber: firstOrderNumber,
         customerName: addr?.name || null,
         customerEmail: paymentIntent.receipt_email || null,
-        items: `Bracelet + ${parsedItems.length} shop item(s)`,
+        items: `${braceletList.length} bracelet(s)${parsedItems.length > 0 ? ` + ${parsedItems.length} shop item(s)` : ''}`,
         totalAmount,
       })
       await notifyAdmins({ subject: adminSubject, html: adminHtml })
       if (parsedItems.length > 0) await decrementShopStock(parsedItems)
+      await recordDiscountRedemption(paymentIntent)
 
       return NextResponse.json({ received: true })
     }

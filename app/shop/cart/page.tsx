@@ -73,7 +73,8 @@ export default function CartPage() {
   }, [])
 
   const selectedItems = items.filter(i => checked[i.productId])
-  const selectedBracelet = selectedItems.find(i => i.type === 'bracelet')
+  const selectedBracelets = selectedItems.filter(i => i.type === 'bracelet')
+  const selectedBracelet = selectedBracelets[0] ?? null
   const selectedShopItems = selectedItems.filter(i => i.type !== 'bracelet')
   const selectedSubtotalCents = Math.round(selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0) * 100)
   const selectedCount = selectedItems.reduce((sum, i) => sum + i.quantity, 0)
@@ -159,27 +160,33 @@ export default function CartPage() {
         postal_code: defaultAddress.postal_code, country: defaultAddress.country || 'SG',
       } : null
 
-      // Bracelet only → route to dedicated payment page
-      if (selectedBracelet && selectedShopItems.length === 0) {
+      // Single bracelet, no shop items → route to dedicated payment page
+      if (selectedBracelets.length === 1 && selectedShopItems.length === 0) {
+        const b = selectedBracelets[0]
         const params = new URLSearchParams({
-          result: selectedBracelet.resultId!,
-          spacer: selectedBracelet.spacer ?? 'silver',
-          includeCharm: String(selectedBracelet.includeCharm !== false),
+          result: b.resultId!,
+          spacer: b.spacer ?? 'silver',
+          includeCharm: String(b.includeCharm !== false),
         })
-        if (selectedBracelet.remark) params.set('remark', selectedBracelet.remark)
+        if (b.remark) params.set('remark', b.remark)
         router.push(`/payment?${params.toString()}`)
         return
       }
 
-      // Shop only or combined → create intent and show inline form
+      // Multiple bracelets OR bracelets + shop → combined intent
+      // Shop only → shop intent
       let endpoint = '/api/shop/checkout/intent'
       let body: Record<string, unknown> = { items: selectedShopItems, email, userId, savedAddress: addrPayload }
 
-      if (selectedBracelet && selectedShopItems.length > 0) {
+      if (selectedBracelets.length > 0) {
         endpoint = '/api/checkout/combined/intent'
         body = {
-          resultId: selectedBracelet.resultId, spacer: selectedBracelet.spacer ?? 'silver',
-          includeCharm: selectedBracelet.includeCharm !== false, remark: selectedBracelet.remark ?? '',
+          bracelets: selectedBracelets.map(b => ({
+            resultId: b.resultId,
+            spacer: b.spacer ?? 'silver',
+            includeCharm: b.includeCharm !== false,
+            remark: b.remark ?? '',
+          })),
           shopItems: selectedShopItems, email, userId, savedAddress: addrPayload,
         }
       }
