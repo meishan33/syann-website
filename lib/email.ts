@@ -269,6 +269,11 @@ export function shippedOrderEmail({
       <a href="${trackingUrl}" style="display:inline-block;padding:10px 20px;background:${DARK};color:#fff;text-decoration:none;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">
         Track My Order →
       </a>` : ''}
+      <div style="margin-top:10px;">
+        <a href="https://syann.co/orders" style="display:inline-block;padding:10px 20px;background:transparent;color:${DARK};text-decoration:none;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;border:1px solid ${DARK};">
+          View Order
+        </a>
+      </div>
     </div>
     <p style="margin:0 0 4px;font-size:12px;color:#9A8573;line-height:1.7;">
       Estimated delivery: 2–3 business days (SG/MY) · 5–10 business days (international)
