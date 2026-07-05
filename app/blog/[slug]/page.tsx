@@ -5,12 +5,12 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export const revalidate = 3600
 
-type Post = { id: string; title: string; slug: string; date: string; excerpt: string; content: string }
+type Post = { id: string; title: string; slug: string; date: string; excerpt: string; content: string; cover_image_url: string | null }
 
 async function getPost(slug: string): Promise<Post | null> {
   const { data } = await supabaseAdmin
     .from('blog_posts')
-    .select('id, title, slug, date, excerpt, content')
+    .select('id, title, slug, date, excerpt, content, cover_image_url')
     .eq('slug', slug)
     .eq('status', 'published')
     .single()
@@ -70,6 +70,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Content */}
       <article style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px 80px' }}>
+        {post.cover_image_url && (
+          <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderRadius: 12, marginBottom: 40 }}>
+            <img src={post.cover_image_url} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </div>
+        )}
         <div className="blog-content" dangerouslySetInnerHTML={{ __html: post.content }} />
 
         {/* CTA */}

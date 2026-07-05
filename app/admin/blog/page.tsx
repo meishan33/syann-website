@@ -11,7 +11,7 @@ const DARK   = '#4A3A32'
 const BG     = '#F6F1EB'
 const BORDER = '#E5DDD5'
 
-type Post = { id: string; title: string; slug: string; date: string; excerpt: string; content: string; status: 'draft' | 'published'; created_at: string }
+type Post = { id: string; title: string; slug: string; date: string; excerpt: string; content: string; cover_image_url: string | null; status: 'draft' | 'published'; created_at: string }
 
 function toSlug(t: string) {
   return t.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 80)
@@ -38,11 +38,13 @@ export default function AdminBlogPage() {
   const [editTitle, setEditTitle]   = useState('')
   const [editSlug, setEditSlug]     = useState('')
   const [editExcerpt, setEditExcerpt] = useState('')
+  const [editCover, setEditCover]   = useState<string | null>(null)
   const [saving, setSaving]         = useState(false)
   const [deleting, setDeleting]     = useState(false)
   const [msg, setMsg]               = useState('')
   const editorRef = useRef<HTMLDivElement>(null)
   const imgInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
   const colorInputRef = useRef<HTMLInputElement>(null)
 
   /* ── auth ── */
@@ -66,6 +68,7 @@ export default function AdminBlogPage() {
     setEditTitle(selected.title)
     setEditSlug(selected.slug)
     setEditExcerpt(selected.excerpt)
+    setEditCover(selected.cover_image_url ?? null)
     if (editorRef.current) editorRef.current.innerHTML = selected.content
   }, [selected?.id])
 
@@ -80,8 +83,8 @@ export default function AdminBlogPage() {
 
   /* ── new blank post ── */
   function newPost() {
-    setSelected({ id: '', title: '', slug: '', date: new Date().toISOString().split('T')[0], excerpt: '', content: '', status: 'draft', created_at: '' })
-    setEditTitle(''); setEditSlug(''); setEditExcerpt('')
+    setSelected({ id: '', title: '', slug: '', date: new Date().toISOString().split('T')[0], excerpt: '', content: '', cover_image_url: null, status: 'draft', created_at: '' })
+    setEditTitle(''); setEditSlug(''); setEditExcerpt(''); setEditCover(null)
     if (editorRef.current) editorRef.current.innerHTML = ''
   }
 
@@ -90,7 +93,7 @@ export default function AdminBlogPage() {
     if (!token) return
     const content = editorRef.current?.innerHTML ?? ''
     const status = statusOverride ?? selected?.status ?? 'draft'
-    const body = { title: editTitle, slug: editSlug, excerpt: editExcerpt, content, status, date: selected?.date ?? new Date().toISOString().split('T')[0] }
+    const body = { title: editTitle, slug: editSlug, excerpt: editExcerpt, content, cover_image_url: editCover, status, date: selected?.date ?? new Date().toISOString().split('T')[0] }
     setSaving(true)
     try {
       if (selected?.id) {
@@ -153,7 +156,7 @@ export default function AdminBlogPage() {
     sel.removeAllRanges()
   }
 
-  /* ── image upload ── */
+  /* ── inline image upload (inside content) ── */
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !token) return
@@ -165,6 +168,19 @@ export default function AdminBlogPage() {
     if (error) { flash('Upload failed: ' + error); return }
     editorRef.current?.focus()
     document.execCommand('insertHTML', false, `<img src="${url}" alt="" style="max-width:100%;border-radius:8px;margin:16px 0;display:block;" />`)
+  }
+
+  /* ── cover image upload ── */
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !token) return
+    e.target.value = ''
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/admin/blog/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })
+    const { url, error } = await res.json()
+    if (error) { flash('Upload failed: ' + error); return }
+    setEditCover(url)
   }
 
   if (!token) {
@@ -272,14 +288,39 @@ export default function AdminBlogPage() {
                   />
                 </div>
               </div>
-              <div>
-                <label style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 4 }}>Excerpt (shown in blog listing + Google description)</label>
-                <input
-                  value={editExcerpt}
-                  onChange={e => setEditExcerpt(e.target.value)}
-                  placeholder="One-sentence summary…"
-                  style={{ ...BODY, width: '100%', fontSize: 12, padding: '8px 12px', border: `1px solid ${BORDER}`, borderRadius: 7, background: '#fff', color: DARK, outline: 'none', boxSizing: 'border-box' }}
-                />
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 240 }}>
+                  <label style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 4 }}>Excerpt (shown in blog listing + Google description)</label>
+                  <input
+                    value={editExcerpt}
+                    onChange={e => setEditExcerpt(e.target.value)}
+                    placeholder="One-sentence summary…"
+                    style={{ ...BODY, width: '100%', fontSize: 12, padding: '8px 12px', border: `1px solid ${BORDER}`, borderRadius: 7, background: '#fff', color: DARK, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+                {/* Cover image */}
+                <div style={{ flexShrink: 0 }}>
+                  <label style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 4 }}>Cover Image</label>
+                  <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleCoverUpload} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {editCover
+                      ? <img src={editCover} alt="Cover" style={{ width: 80, height: 54, objectFit: 'cover', borderRadius: 7, border: `1px solid ${BORDER}` }} />
+                      : <div style={{ width: 80, height: 54, borderRadius: 7, border: `1px dashed ${BORDER}`, background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4B5A8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        </div>
+                    }
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <button type="button" onClick={() => coverInputRef.current?.click()} style={{ ...BODY, fontSize: 10, fontWeight: 600, padding: '5px 12px', border: `1px solid ${BORDER}`, borderRadius: 6, background: '#fff', color: '#7A6355', cursor: 'pointer' }}>
+                        {editCover ? 'Change' : 'Upload'}
+                      </button>
+                      {editCover && (
+                        <button type="button" onClick={() => setEditCover(null)} style={{ ...BODY, fontSize: 10, padding: '5px 12px', border: `1px solid #f5c6c6`, borderRadius: 6, background: '#fff', color: '#C0392B', cursor: 'pointer' }}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
