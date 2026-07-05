@@ -1,38 +1,33 @@
 import type { Metadata } from 'next'
-import { readdir, readFile } from 'fs/promises'
-import { join } from 'path'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
-type Post = { title: string; slug: string; date: string; excerpt: string; content: string }
+export const revalidate = 3600
 
-const BLOG_DIR = join(process.cwd(), 'content/blog')
+type Post = { id: string; title: string; slug: string; date: string; excerpt: string; content: string }
 
 async function getPost(slug: string): Promise<Post | null> {
-  try {
-    const files = await readdir(BLOG_DIR)
-    const file = files.find(f => f.endsWith('.json') && f.includes(slug))
-    if (!file) return null
-    const raw = await readFile(join(BLOG_DIR, file), 'utf-8')
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
+  const { data } = await supabaseAdmin
+    .from('blog_posts')
+    .select('id, title, slug, date, excerpt, content')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single()
+  return data ?? null
+}
+
+async function getAllSlugs(): Promise<string[]> {
+  const { data } = await supabaseAdmin
+    .from('blog_posts')
+    .select('slug')
+    .eq('status', 'published')
+  return (data ?? []).map(r => r.slug)
 }
 
 export async function generateStaticParams() {
-  try {
-    const files = await readdir(BLOG_DIR)
-    const slugs = await Promise.all(
-      files.filter(f => f.endsWith('.json')).map(async f => {
-        const raw = await readFile(join(BLOG_DIR, f), 'utf-8')
-        return { slug: JSON.parse(raw).slug as string }
-      })
-    )
-    return slugs
-  } catch {
-    return []
-  }
+  const slugs = await getAllSlugs()
+  return slugs.map(slug => ({ slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -75,10 +70,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Content */}
       <article style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px 80px' }}>
-        <div
-          className="blog-content"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
+        <div className="blog-content" dangerouslySetInnerHTML={{ __html: post.content }} />
 
         {/* CTA */}
         <div style={{ marginTop: 56, padding: '32px 28px', background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, textAlign: 'center' }}>

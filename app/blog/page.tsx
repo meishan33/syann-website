@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { readdir, readFile } from 'fs/promises'
-import { join } from 'path'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Crystal Blog | Gemstone Guides & Healing Tips | SYANN.CO',
@@ -9,23 +10,15 @@ export const metadata: Metadata = {
   openGraph: { title: 'The Crystal Journal | SYANN.CO', description: 'Guides on crystal healing, gemstone meanings, and harnessing natural energy — from SYANN Singapore.' },
 }
 
-type Post = { title: string; slug: string; date: string; excerpt: string }
+type Post = { id: string; title: string; slug: string; date: string; excerpt: string }
 
 async function getPosts(): Promise<Post[]> {
-  const dir = join(process.cwd(), 'content/blog')
-  try {
-    const files = await readdir(dir)
-    const posts = await Promise.all(
-      files.filter(f => f.endsWith('.json')).map(async f => {
-        const raw = await readFile(join(dir, f), 'utf-8')
-        const { title, slug, date, excerpt } = JSON.parse(raw)
-        return { title, slug, date, excerpt } as Post
-      })
-    )
-    return posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  } catch {
-    return []
-  }
+  const { data } = await supabaseAdmin
+    .from('blog_posts')
+    .select('id, title, slug, date, excerpt')
+    .eq('status', 'published')
+    .order('date', { ascending: false })
+  return (data ?? []) as Post[]
 }
 
 const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
@@ -58,7 +51,7 @@ export default async function BlogPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
             {posts.map(post => (
-              <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none' }}>
+              <Link key={post.id} href={`/blog/${post.slug}`} style={{ textDecoration: 'none' }}>
                 <article style={{ background: '#FDFAF7', border: '1px solid #E5DDD5', borderRadius: 16, padding: '28px 24px', height: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <p style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.2em', color: '#B0A090', textTransform: 'uppercase', margin: 0 }}>
                     {new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}

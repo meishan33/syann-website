@@ -13,6 +13,16 @@
 .blog-content li::before { content: '✦'; position: absolute; left: 0; color: #B08B57; font-size: 8px; top: 6px; }
 .blog-content strong { font-weight: 600; color: #4A3A32; }
 .blog-content em { font-style: italic; }
+.blog-content img { max-width: 100%; border-radius: 8px; margin: 16px 0; display: block; }
+
+/* ── Blog editor (admin) ──────────────────────────────────── */
+.blog-editor h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: #3D2B1F; margin: 32px 0 12px; }
+.blog-editor h3 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: #3D2B1F; margin: 24px 0 8px; }
+.blog-editor p  { font-size: 14px; font-weight: 300; color: #7A6355; margin: 0 0 16px; line-height: 1.85; }
+.blog-editor ul { margin: 0 0 16px 20px; padding: 0; }
+.blog-editor li { font-size: 14px; font-weight: 300; color: #7A6355; margin-bottom: 6px; line-height: 1.75; }
+.blog-editor img { max-width: 100%; border-radius: 8px; margin: 16px 0; }
+.blog-editor:empty::before { content: 'Start writing your blog post here…'; color: #C4B5A8; pointer-events: none; }
 
 
 

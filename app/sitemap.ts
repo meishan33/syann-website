@@ -1,18 +1,13 @@
 import type { MetadataRoute } from 'next'
-import { readdir, readFile } from 'fs/promises'
-import { join } from 'path'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 async function getBlogPosts(): Promise<{ slug: string; date: string }[]> {
   try {
-    const dir = join(process.cwd(), 'content/blog')
-    const files = await readdir(dir)
-    return Promise.all(
-      files.filter(f => f.endsWith('.json')).map(async f => {
-        const raw = await readFile(join(dir, f), 'utf-8')
-        const { slug, date } = JSON.parse(raw)
-        return { slug, date }
-      })
-    )
+    const { data } = await supabaseAdmin
+      .from('blog_posts')
+      .select('slug, date')
+      .eq('status', 'published')
+    return (data ?? []) as { slug: string; date: string }[]
   } catch {
     return []
   }

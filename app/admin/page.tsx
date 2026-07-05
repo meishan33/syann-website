@@ -688,8 +688,16 @@ export default function AdminPage() {
           })}
         </nav>
 
-        {/* Back to site */}
-        <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        {/* Blog Manager + Back to site */}
+        <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <button
+            onClick={() => router.push('/admin/blog')}
+            title={!sidebarOpen ? 'Blog Manager' : undefined}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: sidebarOpen ? '10px 14px' : '10px', justifyContent: sidebarOpen ? 'flex-start' : 'center', background: 'transparent', border: 'none', borderRadius: 8, color: '#C4B5A8', cursor: 'pointer', width: '100%' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            {sidebarOpen && <span style={{ ...BODY, fontSize: 11, letterSpacing: '0.1em' }}>Blog Manager</span>}
+          </button>
           <button
             onClick={() => router.push('/')}
             title={!sidebarOpen ? 'Back to Site' : undefined}

@@ -5,9 +5,6 @@ on:
     - cron: '0 1 * * 1'   # Every Monday at 1am UTC = 9am Singapore time
   workflow_dispatch:        # Allow manual trigger from GitHub Actions UI
 
-permissions:
-  contents: write
-
 jobs:
   generate-post:
     runs-on: ubuntu-latest
@@ -21,19 +18,9 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Generate crystal blog post
+      - name: Generate crystal blog post (saves to Supabase as draft)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/generate-blog-post.mjs
-
-      - name: Commit and push new post
-        run: |
-          git config user.name "SYANN Blog Bot"
-          git config user.email "bot@syann.co"
-          git add content/blog/
-          if git diff --staged --quiet; then
-            echo "No new post generated — skipping commit"
-          else
-            git commit -m "blog: weekly crystal post $(date +%Y-%m-%d)"
-            git push
-          fi
