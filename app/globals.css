@@ -3,6 +3,17 @@
 
 @tailwind utilities;
 
+/* ── Blog content styles ─────────────────────────────────── */
+.blog-content { font-family: 'Montserrat', sans-serif; color: #4A3A32; line-height: 1.85; }
+.blog-content p  { font-size: 14px; font-weight: 300; color: #7A6355; margin: 0 0 20px; line-height: 1.85; }
+.blog-content h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: #3D2B1F; margin: 40px 0 14px; line-height: 1.2; }
+.blog-content h3 { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 400; color: #3D2B1F; margin: 32px 0 10px; }
+.blog-content ul { margin: 0 0 20px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.blog-content li { font-size: 14px; font-weight: 300; color: #7A6355; padding-left: 18px; position: relative; line-height: 1.75; }
+.blog-content li::before { content: '✦'; position: absolute; left: 0; color: #B08B57; font-size: 8px; top: 6px; }
+.blog-content strong { font-weight: 600; color: #4A3A32; }
+.blog-content em { font-style: italic; }
+
 
 
 

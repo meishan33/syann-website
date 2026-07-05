@@ -11,6 +11,7 @@ import MobileMenu from './MobileMenu'
 const BASE_NAV_LINKS = [
   { href: '/energy-quiz', label: 'Energy Quiz' },
   { href: '/design',      label: 'Build Your Own' },
+  { href: '/blog',        label: 'Blog' },
   { href: '/about',       label: 'About' },
   { href: '/faq',         label: 'FAQ' },
   { href: '/contact',     label: 'Contact' },
