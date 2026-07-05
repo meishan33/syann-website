@@ -12,6 +12,8 @@ const BODY: React.CSSProperties  = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 const DARK = '#4A3A32'
 
+type ShopItem = { name: string; quantity: number; price: number; image_url?: string | null; type?: string; crystalNames?: string[] }
+
 type Order = {
   id: string
   order_number: number | null
@@ -31,6 +33,11 @@ type Order = {
   remark: string | null
   analysis_summary: string | null
   current_feelings: string | null
+  shop_items: ShopItem[]
+  promo_code: string | null
+  discount_amount: number | null
+  shipping_fee: number | null
+  original_amount: number | null
 }
 
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -150,6 +157,49 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Additional items (extra bracelets + shop items) */}
+                {order.shop_items?.length > 0 && (
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #EDE8DF', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {order.shop_items.map((item, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                        {item.image_url && (
+                          <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 8, overflow: 'hidden', border: '1px solid #E5DDD5', flexShrink: 0 }}>
+                            <Image src={item.image_url} alt={item.name} fill sizes="52px" style={{ objectFit: 'cover' }} />
+                          </div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                          {item.type === 'bracelet' && (
+                            <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, margin: '0 0 2px' }}>Custom Crystal Bracelet</p>
+                          )}
+                          <p style={{ ...BODY, fontSize: 13, fontWeight: 300, color: DARK, margin: 0 }}>{item.crystalNames?.join(' · ') || item.name}</p>
+                          {item.type !== 'bracelet' && item.quantity > 1 && (
+                            <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: '2px 0 0' }}>Qty: {item.quantity}</p>
+                          )}
+                        </div>
+                        <p style={{ ...SERIF, fontSize: 16, fontWeight: 300, color: DARK, margin: 0, flexShrink: 0 }}>{format(item.price * item.quantity)}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Pricing breakdown if promo or shipping */}
+                {(order.promo_code || (order.shipping_fee && order.shipping_fee > 0)) && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #EDE8DF', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {order.promo_code && order.discount_amount && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ ...BODY, fontSize: 11, color: '#7A9A7A' }}>Promo ({order.promo_code})</span>
+                        <span style={{ ...BODY, fontSize: 11, color: '#7A9A7A', fontWeight: 600 }}>−{format(order.discount_amount)}</span>
+                      </div>
+                    )}
+                    {order.shipping_fee && order.shipping_fee > 0 ? (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Shipping</span>
+                        <span style={{ ...BODY, fontSize: 11, color: DARK }}>{format(order.shipping_fee)}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
 
                 {/* Delivery + remarks */}
                 {(order.shipping_address || order.customer_phone || order.remark) && (

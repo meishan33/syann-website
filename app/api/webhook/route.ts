@@ -174,51 +174,62 @@ export async function POST(req: NextRequest) {
         : null
       const totalAmount = (paymentIntent.amount ?? 0) / 100
 
-      // Create one order record per bracelet
-      let firstOrderNumber: number | null = null
-      let customerName: string | null = addr?.name || null
-      const braceletEmailLines: string[] = []
+      // ONE orders record for the first (primary) bracelet
+      const bd0 = braceletList[0]
+      const { data: result0 } = await supabaseAdmin
+        .from('energy_quiz_results')
+        .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, current_feelings')
+        .eq('id', bd0.resultId).single()
 
-      for (let i = 0; i < braceletList.length; i++) {
+      const { data: insertedOrder } = await supabaseAdmin.from('orders').insert({
+        customer_name: addr?.name || result0?.user_name || null,
+        customer_email: paymentIntent.receipt_email || null,
+        customer_phone: addr?.phone || null,
+        shipping_address: shippingAddress,
+        generated_image_url: result0?.cached_image_url || null,
+        weak_element: result0?.calculated_weak_element || null,
+        strong_element: result0?.calculated_strong_element || null,
+        analysis_summary: result0?.analysis_summary || null,
+        current_feelings: result0?.current_feelings || null,
+        recommended_crystal_names: result0?.crystal_names ?? [],
+        total_amount: totalAmount,
+        payment_status: 'paid',
+        fulfillment_status: 'processing',
+        stripe_payment_intent_id: paymentIntent.id,
+        result_id: bd0.resultId,
+        spacer_choice: bd0.spacer || null,
+        remark: bd0.remark || null,
+        logo_charm: bd0.includeCharm,
+        ...promoFields,
+      }).select('order_number').single()
+
+      // Additional bracelets (beyond the first) become shop_orders items so
+      // everything appears under ONE order number in the admin and user pages
+      const additionalBraceletItems: { name: string; price: number; quantity: number; type: string; resultId: string; crystalNames: string[]; spacer: string; includeCharm: boolean }[] = []
+      const emailBraceletLines: string[] = [`Custom Crystal Bracelet (${result0?.crystal_names?.join(', ') || 'Crystal'})`]
+
+      for (let i = 1; i < braceletList.length; i++) {
         const bd = braceletList[i]
-        const { data: result } = await supabaseAdmin
-          .from('energy_quiz_results')
-          .select('crystal_names, user_name, cached_image_url, calculated_weak_element, calculated_strong_element, analysis_summary, current_feelings')
-          .eq('id', bd.resultId).single()
-
-        const crystalNames: string[] = result?.crystal_names ?? []
-        braceletEmailLines.push(`Custom Crystal Bracelet (${crystalNames.join(', ') || 'Crystal'})`)
-
-        if (i === 0 && !customerName) customerName = result?.user_name || null
-
-        const { data: insertedOrder } = await supabaseAdmin.from('orders').insert({
-          customer_name: addr?.name || result?.user_name || null,
-          customer_email: paymentIntent.receipt_email || null,
-          customer_phone: addr?.phone || null,
-          shipping_address: shippingAddress,
-          generated_image_url: result?.cached_image_url || null,
-          weak_element: result?.calculated_weak_element || null,
-          strong_element: result?.calculated_strong_element || null,
-          analysis_summary: result?.analysis_summary || null,
-          current_feelings: result?.current_feelings || null,
-          recommended_crystal_names: crystalNames,
-          total_amount: totalAmount,
-          payment_status: 'paid',
-          fulfillment_status: 'processing',
-          // Use the main PI id for first bracelet; suffix subsequent ones to keep rows unique
-          stripe_payment_intent_id: i === 0 ? paymentIntent.id : `${paymentIntent.id}_b${i}`,
-          result_id: bd.resultId,
-          spacer_choice: bd.spacer || null,
-          remark: bd.remark || null,
-          logo_charm: bd.includeCharm,
-          ...(i === 0 ? promoFields : {}),
-        }).select('order_number').single()
-
-        if (i === 0) firstOrderNumber = insertedOrder?.order_number ?? null
+        const { data: resultN } = await supabaseAdmin
+          .from('energy_quiz_results').select('crystal_names').eq('id', bd.resultId).single()
+        const crystalNames: string[] = resultN?.crystal_names ?? []
+        emailBraceletLines.push(`Custom Crystal Bracelet (${crystalNames.join(', ') || 'Crystal'})`)
+        additionalBraceletItems.push({
+          name: `Custom Crystal Bracelet — ${crystalNames.join(' · ')}`,
+          price: bd.priceCents / 100,
+          quantity: 1,
+          type: 'bracelet',
+          resultId: bd.resultId,
+          crystalNames,
+          spacer: bd.spacer,
+          includeCharm: bd.includeCharm,
+        })
       }
 
       const parsedItems: { productId?: string; name: string; quantity: number; price: number }[] = itemsJson ? JSON.parse(itemsJson) : []
-      if (parsedItems.length > 0) {
+      const allShopItems = [...additionalBraceletItems, ...parsedItems]
+
+      if (allShopItems.length > 0) {
         const shopOrderNumber = await supabaseAdmin.rpc('nextval', { seq: 'shop_order_number_seq' }).then(r => r.data, () => null)
         await supabaseAdmin.from('shop_orders').insert({
           order_number: shopOrderNumber,
@@ -226,8 +237,8 @@ export async function POST(req: NextRequest) {
           customer_email: paymentIntent.receipt_email || null,
           customer_phone: addr?.phone || null,
           shipping_address: addr ?? null,
-          items: parsedItems,
-          total_amount: parsedItems.reduce((s, i) => s + i.price * i.quantity, 0),
+          items: allShopItems,
+          total_amount: allShopItems.reduce((s, i) => s + i.price * i.quantity, 0),
           payment_status: 'paid',
           fulfillment_status: 'unfulfilled',
           stripe_payment_intent_id: paymentIntent.id + '_shop',
@@ -236,10 +247,10 @@ export async function POST(req: NextRequest) {
 
       if (paymentIntent.receipt_email) {
         const shopLines = parsedItems.map(i => `${i.name} × ${i.quantity}`).join(', ')
-        const allItems = [...braceletEmailLines, shopLines].filter(Boolean).join(' + ')
+        const allItems = [...emailBraceletLines, shopLines].filter(Boolean).join(' + ')
         const { subject, html } = orderConfirmationEmail({
-          orderNumber: firstOrderNumber,
-          customerName,
+          orderNumber: insertedOrder?.order_number ?? null,
+          customerName: addr?.name || result0?.user_name || null,
           items: allItems,
           totalAmount,
           shippingAddress,
@@ -249,7 +260,7 @@ export async function POST(req: NextRequest) {
 
       const { subject: adminSubject, html: adminHtml } = newOrderAdminEmail({
         orderType: 'bracelet',
-        orderNumber: firstOrderNumber,
+        orderNumber: insertedOrder?.order_number ?? null,
         customerName: addr?.name || null,
         customerEmail: paymentIntent.receipt_email || null,
         items: `${braceletList.length} bracelet(s)${parsedItems.length > 0 ? ` + ${parsedItems.length} shop item(s)` : ''}`,
