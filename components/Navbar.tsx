@@ -9,12 +9,11 @@ import CartDrawer from './CartDrawer'
 import MobileMenu from './MobileMenu'
 
 const BASE_NAV_LINKS = [
+  { href: '/about',       label: 'About' },
   { href: '/energy-quiz', label: 'Energy Quiz' },
   { href: '/design',      label: 'Build Your Own' },
-  { href: '/blog',        label: 'Blog' },
-  { href: '/about',       label: 'About' },
   { href: '/faq',         label: 'FAQ' },
-  { href: '/contact',     label: 'Contact' },
+  { href: '/blog',        label: 'Blog' },
 ]
 
 export default function Navbar({ shopEnabled }: { shopEnabled: boolean }) {
@@ -27,7 +26,7 @@ export default function Navbar({ shopEnabled }: { shopEnabled: boolean }) {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const navLinks = shopEnabled
-    ? [BASE_NAV_LINKS[0], { href: '/shop', label: 'Shop' }, ...BASE_NAV_LINKS.slice(1)]
+    ? [...BASE_NAV_LINKS.slice(0, 3), { href: '/shop', label: 'Shop' }, ...BASE_NAV_LINKS.slice(3)]
     : BASE_NAV_LINKS
 
   useEffect(() => {
