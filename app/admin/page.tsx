@@ -2049,166 +2049,20 @@ export default function AdminPage() {
                 )
               })()}
 
-              {tab === 'instagram' && (() => {
-                const PILLARS = [
-                  { key: 'product',      label: 'Product Showcase',    desc: 'Highlight a crystal or bracelet' },
-                  { key: 'education',    label: 'Crystal Education',   desc: 'Teach about crystal energy / Five Elements' },
-                  { key: 'quiz',         label: 'AI Quiz CTA',         desc: 'Drive traffic to the energy quiz' },
-                  { key: 'social_proof', label: 'Social Proof',        desc: 'Customer journey or transformation' },
-                  { key: 'brand',        label: 'Behind the Brand',    desc: 'SYANN story, values, process' },
-                ]
-                const TONES = [
-                  { key: 'warm',        label: 'Warm & Personal' },
-                  { key: 'luxury',      label: 'Luxury & Refined' },
-                  { key: 'mystical',    label: 'Mystical & Poetic' },
-                  { key: 'educational', label: 'Educational' },
-                ]
-                const copy = async (text: string, type: 'caption' | 'hashtags') => {
-                  await navigator.clipboard.writeText(text)
-                  setIgCopied(type)
-                  setTimeout(() => setIgCopied(null), 2000)
-                }
-                const generate = async () => {
-                  setIgLoading(true); setIgError(null); setIgResult(null)
-                  try {
-                    const res = await fetch('/api/admin/instagram', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                      body: JSON.stringify({ pillar: igPillar, crystalFocus: igCrystal, context: igContext, tone: igTone }),
-                    })
-                    const data = await res.json()
-                    if (!res.ok) throw new Error(data.error || 'Generation failed')
-                    setIgResult(data)
-                  } catch (err) {
-                    setIgError(err instanceof Error ? err.message : 'Something went wrong')
-                  } finally {
-                    setIgLoading(false)
-                  }
-                }
-
-                return (
-                  <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 20, alignItems: 'start' }}>
-
-                    {/* Controls */}
-                    <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '24px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-                      {/* Content Pillar */}
-                      <div>
-                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 10px' }}>Content Pillar</p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {PILLARS.map(p => (
-                            <button key={p.key} onClick={() => setIgPillar(p.key as typeof igPillar)}
-                              style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 8, border: `1px solid ${igPillar === p.key ? GOLD : '#E5DDD5'}`, background: igPillar === p.key ? '#FBF6EE' : '#FAFAF8', cursor: 'pointer', textAlign: 'left' }}>
-                              <div style={{ width: 6, height: 6, borderRadius: '50%', background: igPillar === p.key ? GOLD : '#C4B5A8', marginTop: 5, flexShrink: 0 }} />
-                              <div>
-                                <p style={{ ...BODY, fontSize: 11, fontWeight: 600, color: igPillar === p.key ? DARK : '#7A6355', margin: '0 0 1px' }}>{p.label}</p>
-                                <p style={{ ...BODY, fontSize: 10, color: '#B0A090', margin: 0 }}>{p.desc}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Tone */}
-                      <div>
-                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 10px' }}>Tone</p>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                          {TONES.map(t => (
-                            <button key={t.key} onClick={() => setIgTone(t.key as typeof igTone)}
-                              style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${igTone === t.key ? GOLD : '#E5DDD5'}`, background: igTone === t.key ? '#FBF6EE' : '#FAFAF8', cursor: 'pointer', ...BODY, fontSize: 11, fontWeight: igTone === t.key ? 600 : 400, color: igTone === t.key ? DARK : '#7A6355' }}>
-                              {t.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Crystal focus */}
-                      <div>
-                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 8px' }}>Crystal Focus <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#B0A090' }}>(optional)</span></p>
-                        <select value={igCrystal} onChange={e => setIgCrystal(e.target.value)}
-                          style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 8, color: igCrystal ? DARK : '#B0A090', background: '#FAFAF8', outline: 'none' }}>
-                          <option value="">Any / AI decides</option>
-                          {crystals.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                        </select>
-                      </div>
-
-                      {/* Extra context */}
-                      <div>
-                        <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 8px' }}>Extra Notes <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#B0A090' }}>(optional)</span></p>
-                        <textarea value={igContext} onChange={e => setIgContext(e.target.value)} rows={3}
-                          placeholder="e.g. promotion for Chinese New Year, focus on wealth energy..."
-                          style={{ ...BODY, width: '100%', fontSize: 12, padding: '9px 12px', border: '1px solid #E5DDD5', borderRadius: 8, color: DARK, background: '#FAFAF8', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
-                      </div>
-
-                      <button onClick={generate} disabled={igLoading}
-                        style={{ ...BODY, padding: '12px', borderRadius: 999, background: igLoading ? '#C9A96E' : DARK, border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase', cursor: igLoading ? 'not-allowed' : 'pointer' }}>
-                        {igLoading ? 'Generating…' : '✦ Generate Post'}
-                      </button>
-
-                      {igError && <p style={{ ...BODY, fontSize: 11, color: '#C0392B', margin: 0, textAlign: 'center' }}>{igError}</p>}
-                    </div>
-
-                    {/* Output */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      {!igResult && !igLoading && (
-                        <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '60px 40px', textAlign: 'center' }}>
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D9C4A8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 16 }}>
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                          </svg>
-                          <p style={{ ...SERIF, fontSize: 20, fontWeight: 300, color: DARK, margin: '0 0 6px' }}>Ready to Generate</p>
-                          <p style={{ ...BODY, fontSize: 11, color: '#9A8573', margin: 0 }}>Select a pillar and tone, then click Generate Post.</p>
-                        </div>
-                      )}
-
-                      {igLoading && (
-                        <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '60px 40px', textAlign: 'center' }}>
-                          <p style={{ ...BODY, fontSize: 11, letterSpacing: '0.28em', color: GOLD, textTransform: 'uppercase', margin: 0 }}>Writing your post…</p>
-                        </div>
-                      )}
-
-                      {igResult && (
-                        <>
-                          {/* Caption */}
-                          <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '24px 28px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>Caption</p>
-                              <button onClick={() => copy(igResult.caption, 'caption')}
-                                style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', padding: '5px 14px', borderRadius: 999, border: '1px solid #E5DDD5', background: igCopied === 'caption' ? '#F0F8F0' : '#FAFAF8', color: igCopied === 'caption' ? '#5A9B6A' : '#7A6355', cursor: 'pointer' }}>
-                                {igCopied === 'caption' ? '✓ Copied' : 'Copy'}
-                              </button>
-                            </div>
-                            <p style={{ ...BODY, fontSize: 13, color: DARK, lineHeight: 1.85, margin: 0, whiteSpace: 'pre-wrap' }}>{igResult.caption}</p>
-                          </div>
-
-                          {/* Hashtags */}
-                          <div style={{ background: '#fff', border: '1px solid #E5DDD5', borderRadius: 12, padding: '24px 28px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                              <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>Hashtags</p>
-                              <button onClick={() => copy(igResult.hashtags, 'hashtags')}
-                                style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', padding: '5px 14px', borderRadius: 999, border: '1px solid #E5DDD5', background: igCopied === 'hashtags' ? '#F0F8F0' : '#FAFAF8', color: igCopied === 'hashtags' ? '#5A9B6A' : '#7A6355', cursor: 'pointer' }}>
-                                {igCopied === 'hashtags' ? '✓ Copied' : 'Copy'}
-                              </button>
-                            </div>
-                            <p style={{ ...BODY, fontSize: 12, color: '#7A5B45', lineHeight: 2, margin: 0 }}>{igResult.hashtags}</p>
-                          </div>
-
-                          {/* Image suggestion */}
-                          <div style={{ background: '#FBF6EE', border: '1px solid #E8D9C0', borderRadius: 12, padding: '16px 20px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            <p style={{ ...BODY, fontSize: 12, color: '#7A5B45', margin: 0, lineHeight: 1.7 }}><strong>Image idea:</strong> {igResult.imageNote}</p>
-                          </div>
-
-                          {/* Regenerate */}
-                          <button onClick={generate} disabled={igLoading}
-                            style={{ ...BODY, padding: '10px', borderRadius: 999, background: 'transparent', border: `1px solid ${GOLD}`, color: GOLD, fontSize: 10, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase', cursor: 'pointer' }}>
-                            ↻ Regenerate
-                          </button>
-                        </>
-                      )}
-                    </div>
+              {tab === 'instagram' && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 20 }}>
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D9C4A8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ ...SERIF, fontSize: 26, fontWeight: 300, color: DARK, margin: '0 0 8px' }}>Instagram Posts</p>
+                    <p style={{ ...BODY, fontSize: 12, color: '#9A8573', margin: '0 0 28px', lineHeight: 1.7 }}>Daily posts are generated automatically each morning and emailed to you.<br />Review captions, copy hashtags, upload images, and mark posts as done.</p>
                   </div>
-                )
-              })()}
+                  <a href="/admin/instagram" style={{ ...BODY, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', background: DARK, color: '#F6F1EB', textDecoration: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase' }}>
+                    Open Instagram Posts →
+                  </a>
+                </div>
+              )}
 
               {/* ── DESIGNS ── */}
               {tab === 'designs' && (
