@@ -41,7 +41,7 @@ const TOPIC_POOL = [
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY
+const OPENAI_KEY   = process.env.OPENAI_API_KEY
 
 async function getExistingTitles() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=title`, {
@@ -94,14 +94,14 @@ Return ONLY a valid JSON object with exactly these fields:
   "content": "Full HTML content as a single JSON string"
 }`
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2500, messages: [{ role: 'user', content: prompt }] }),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_KEY}` },
+    body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 2500, messages: [{ role: 'user', content: prompt }] }),
   })
-  if (!res.ok) throw new Error(`Anthropic API error ${res.status}: ${await res.text()}`)
+  if (!res.ok) throw new Error(`OpenAI API error ${res.status}: ${await res.text()}`)
   const data = await res.json()
-  const text = data.content[0].text.trim()
+  const text = data.choices[0].message.content.trim()
   const match = text.match(/\{[\s\S]*\}/)
   if (!match) throw new Error('No JSON found in response')
   return JSON.parse(match[0])
@@ -109,7 +109,7 @@ Return ONLY a valid JSON object with exactly these fields:
 
 async function main() {
   if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-  if (!ANTHROPIC_KEY) throw new Error('Missing ANTHROPIC_API_KEY')
+  if (!OPENAI_KEY) throw new Error('Missing OPENAI_API_KEY')
 
   const existingTitles = await getExistingTitles()
   console.log(`Existing posts: ${existingTitles.length}`)
