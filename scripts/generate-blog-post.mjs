@@ -103,40 +103,6 @@ Return ONLY a valid JSON object with exactly these fields:
   return JSON.parse(match[0])
 }
 
-async function generateCoverImage(topic) {
-  const crystalName = topic.split(':')[0].trim()
-  const prompt = `Elegant flat-lay photography of ${crystalName} crystals and gemstone beads on a cream linen surface. Soft natural window light, warm gold and stone tones, minimalist luxury aesthetic. No text, no people, no bracelets on wrists. Wide landscape composition.`
-
-  const res = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_KEY}` },
-    body: JSON.stringify({ model: 'dall-e-2', prompt, n: 1, size: '1024x1024' }),
-  })
-  if (!res.ok) throw new Error(`DALL-E error ${res.status}: ${await res.text()}`)
-  const data = await res.json()
-  return data.data[0].url
-}
-
-async function uploadCoverImage(imageUrl, slug) {
-  const imgRes = await fetch(imageUrl)
-  if (!imgRes.ok) throw new Error('Failed to download generated image')
-  const buffer = await imgRes.arrayBuffer()
-
-  const fileName = `blog-covers/${slug}-${Date.now()}.png`
-  const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/generated-bracelets/${fileName}`, {
-    method: 'POST',
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      'Content-Type': 'image/png',
-    },
-    body: buffer,
-  })
-  if (!uploadRes.ok) throw new Error(`Storage upload failed: ${uploadRes.status} ${await uploadRes.text()}`)
-
-  return `${SUPABASE_URL}/storage/v1/object/public/generated-bracelets/${fileName}`
-}
-
 async function main() {
   if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
   if (!OPENAI_KEY) throw new Error('Missing OPENAI_API_KEY')
@@ -154,15 +120,6 @@ async function main() {
 
   const post = await generatePost(topic)
   console.log(`Generated: "${post.title}"`)
-
-  // Generate cover image (non-blocking — post still saves if image fails)
-  try {
-    const tempUrl = await generateCoverImage(topic)
-    post.cover_image_url = await uploadCoverImage(tempUrl, post.slug)
-    console.log(`Cover image uploaded: ${post.cover_image_url}`)
-  } catch (err) {
-    console.warn(`Cover image generation failed (non-fatal): ${err.message}`)
-  }
 
   await saveToSupabase(post)
   console.log(`Saved to Supabase as draft — review at /admin/blog`)
