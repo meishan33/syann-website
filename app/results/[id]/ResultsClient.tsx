@@ -1,13 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Image from 'next/image'
 import BraceletRenderer from '@/components/BraceletRenderer'
 import PurchasePanel from './PurchasePanel'
 
 const BEAD_MM = 8
-const DEFAULT_WRIST = 16.0
-
 function calcN(wristCm: number): number {
   return Math.round((wristCm + 0.8) * 10 / BEAD_MM)
 }
@@ -29,10 +26,9 @@ export default function ResultsClient({
   analysisSummary, crystalNames, userName,
   resultId, weakElement, strongElement,
 }: Props) {
-  const [wristCm, setWristCm] = useState(DEFAULT_WRIST)
+  const [wristCm, setWristCm] = useState(16.0)
 
   const N = calcN(wristCm)
-  const isDefault = wristCm === DEFAULT_WRIST
 
   const adjustedSequence = useMemo(() => {
     if (!beadSequence.length) return []
@@ -47,19 +43,7 @@ export default function ResultsClient({
         <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
 
           <div className="w-full lg:flex-1">
-            {cachedImageUrl && isDefault ? (
-              <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: 1 }}>
-                <Image
-                  src={cachedImageUrl}
-                  alt="Your crystal bracelet"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-contain"
-                />
-              </div>
-            ) : (
-              <BraceletRenderer sequence={adjustedSequence} imageMap={imageMap} />
-            )}
+            <BraceletRenderer sequence={adjustedSequence} imageMap={imageMap} />
           </div>
 
           <div className="mt-3 px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
