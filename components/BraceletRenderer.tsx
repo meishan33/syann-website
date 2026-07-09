@@ -88,7 +88,7 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
       }}>
         <span style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: '5cqw',
+          fontSize: '3cqw',
           fontWeight: 400, letterSpacing: '0.22em',
           color: 'rgba(74,46,20,0.22)', textTransform: 'uppercase',
         }}>
@@ -96,7 +96,7 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
         </span>
         <span style={{
           fontFamily: "'Montserrat', sans-serif",
-          fontSize: '2cqw',
+          fontSize: '1.2cqw',
           fontWeight: 500, letterSpacing: '0.3em',
           color: 'rgba(74,46,20,0.16)', textTransform: 'uppercase',
         }}>
