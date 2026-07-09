@@ -11,17 +11,24 @@ const BODY:  React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 
 const DESIGN_PRICE = 79
-const N       = 21
-const BEAD_R  = 15
-const RING_R  = 100
-const CANVAS  = 280
-const CX      = CANVAS / 2
+const BEAD_MM  = 8
+const MIN_N    = 16
+const MAX_N    = 26
+const RING_R   = 100
+const CANVAS   = 280
+const CX       = CANVAS / 2
 
 type Crystal = { id: number; name: string; bead_image_url: string | null }
 
-function slotPos(i: number) {
-  const a = (i / N) * 2 * Math.PI - Math.PI / 2
-  return { left: CX + RING_R * Math.cos(a) - BEAD_R, top: CX + RING_R * Math.sin(a) - BEAD_R }
+function calcN(wristCm: number) {
+  return Math.min(MAX_N, Math.max(MIN_N, Math.round((wristCm + 0.8) * 10 / BEAD_MM)))
+}
+function calcBeadR(n: number) {
+  return Math.max(9, Math.min(16, Math.floor(Math.PI * RING_R / n) - 2))
+}
+function slotPos(i: number, n: number, beadR: number) {
+  const a = (i / n) * 2 * Math.PI - Math.PI / 2
+  return { left: CX + RING_R * Math.cos(a) - beadR, top: CX + RING_R * Math.sin(a) - beadR }
 }
 
 // Mirrors the focus-trap used in PurchasePanel
@@ -47,7 +54,10 @@ function useFocusTrap(active: boolean) {
 export default function DesignPage() {
   const router = useRouter()
   const [crystals, setCrystals]         = useState<Crystal[]>([])
-  const [beads, setBeads]               = useState<(string | null)[]>(Array(N).fill(null))
+  const [wristCm, setWristCm]           = useState<number>(16.0)
+  const N      = calcN(wristCm)
+  const BEAD_R = calcBeadR(N)
+  const [beads, setBeads]               = useState<(string | null)[]>(Array(calcN(16.0)).fill(null))
   const [activeSlot, setActiveSlot]     = useState<number>(0)
   const [spacer, setSpacer]             = useState<'silver' | 'gold' | 'exclude'>('silver')
   const [includeCharm, setIncludeCharm] = useState(true)
@@ -78,6 +88,15 @@ export default function DesignPage() {
       .then(data => setCrystals(Array.isArray(data) ? data : []))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    setBeads(prev => {
+      if (prev.length === N) return prev
+      if (prev.length < N) return [...prev, ...Array(N - prev.length).fill(null)]
+      return prev.slice(0, N)
+    })
+    setActiveSlot(prev => Math.min(prev, N - 1))
+  }, [N])
 
   const filledCount    = beads.filter(Boolean).length
   const uniqueCrystals = [...new Set(beads.filter(Boolean) as string[])]
@@ -186,7 +205,7 @@ export default function DesignPage() {
                     <text x={CX} y={CX + 8} textAnchor="middle" fontFamily="'Montserrat', Arial, sans-serif" fontSize="5" fontWeight="500" letterSpacing="2" fill="rgba(154,133,115,0.18)">CRYSTAL · ENERGY · YOU</text>
                   </svg>
                   {beads.map((bead, i) => {
-                    const { left, top } = slotPos(i)
+                    const { left, top } = slotPos(i, N, BEAD_R)
                     const isActive = activeSlot === i
                     const img = bead ? crystalMap[bead]?.bead_image_url : null
                     return (
@@ -233,7 +252,7 @@ export default function DesignPage() {
                 </p>
                 {filledCount > 0 && (
                   <button
-                    onClick={() => { setBeads(Array(N).fill(null)); setActiveSlot(0); setAddedToCart(false) }}
+                    onClick={() => { setBeads(Array(N).fill(null)); setActiveSlot(0); setAddedToCart(false); setSaveError(null) }}
                     style={BODY}
                     className="mt-2 text-[10px] uppercase tracking-[0.1em] text-[#C5B8AD] underline underline-offset-2 bg-transparent border-none cursor-pointer"
                   >
@@ -375,7 +394,7 @@ export default function DesignPage() {
                   </span>
                   <div className="flex flex-col gap-3">
                     {[
-                      <span key="a">Handcrafted with <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> to a standard length of <strong className="font-medium text-[#4A3A32]">16 cm</strong>. To customise the fit, simply note your wrist size in the remarks.{' '}
+                      <span key="a">Handcrafted with <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong>. Enter your wrist size above — the bead count adjusts automatically for a perfect elastic fit.{' '}
                         <button type="button" onClick={() => setMeasureOpen(true)} style={{ fontFamily: 'inherit', fontSize: 'inherit' }} className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer hover:opacity-70">
                           How to measure your wrist
                         </button>
@@ -396,6 +415,47 @@ export default function DesignPage() {
                   </div>
                 </div>
               </div>
+
+              {/* WRIST SIZE */}
+              <div style={{ ...BODY, background: '#F8F4EF', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <p style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573', margin: 0 }}>Wrist Size</p>
+                  <button type="button" onClick={() => setMeasureOpen(true)} style={{ ...BODY, fontSize: 10, color: GOLD, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}>
+                    How to measure →
+                  </button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 10, padding: '6px 10px', flex: 1 }}>
+                    <button onClick={() => setWristCm(w => Math.max(12, parseFloat((w - 0.5).toFixed(1))))}
+                      style={{ ...BODY, width: 24, height: 24, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 14, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>−</button>
+                    <input
+                      type="number" value={wristCm} min={12} max={22} step={0.5}
+                      onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= 12 && v <= 22) setWristCm(v) }}
+                      style={{ ...BODY, width: '100%', textAlign: 'center', fontSize: 18, fontWeight: 600, color: '#4A3A32', border: 'none', outline: 'none', background: 'transparent' }}
+                    />
+                    <span style={{ ...BODY, fontSize: 11, color: '#9A8573', flexShrink: 0 }}>cm</span>
+                    <button onClick={() => setWristCm(w => Math.min(22, parseFloat((w + 0.5).toFixed(1))))}
+                      style={{ ...BODY, width: 24, height: 24, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 14, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</button>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#B0A090', margin: '0 0 2px' }}>Fits Wrist (Elastic)</p>
+                    <p style={{ ...SERIF, fontSize: 15, fontWeight: 400, color: '#4A3A32', margin: 0 }}>
+                      {((N * BEAD_MM - 15) / 10).toFixed(1)} – {((N * BEAD_MM + 10) / 10).toFixed(1)} cm
+                      <span style={{ ...BODY, fontSize: 10, color: '#9A8573', marginLeft: 6 }}>
+                        ({(((N * BEAD_MM - 15) / 10) / 2.54).toFixed(2)}″ – {(((N * BEAD_MM + 10) / 10) / 2.54).toFixed(2)}″)
+                      </span>
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#B0A090', margin: '0 0 2px' }}>Beads</p>
+                    <p style={{ ...SERIF, fontSize: 15, color: '#4A3A32', margin: 0 }}>{N} × {BEAD_MM}mm</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-px bg-[#E5DDD5]" />
 
               {/* PRICE */}
               <div style={BODY}>
@@ -458,7 +518,7 @@ export default function DesignPage() {
                 { n: '01', text: 'Wrap a thin strip of paper or a flexible tape measure around your wrist, just below the wrist bone.' },
                 { n: '02', text: 'Mark where the paper meets — this is your wrist circumference.' },
                 { n: '03', text: 'Lay the strip flat and measure the length in centimetres.' },
-                { n: '04', text: "Add your wrist measurement to the Remarks field. The default size is 16 cm — let us know if you'd like it larger or smaller." },
+                { n: '04', text: 'Enter your wrist measurement into the Wrist Size field on the design page. The bead count will adjust automatically to give you a perfect elastic fit.' },
               ].map(({ n, text }) => (
                 <li key={n} className="flex gap-4">
                   <span style={SERIF} className="shrink-0 text-2xl font-light text-[#B08B57] leading-tight">{n}</span>
