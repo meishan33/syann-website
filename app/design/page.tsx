@@ -24,7 +24,7 @@ function calcN(wristCm: number) {
   return Math.min(MAX_N, Math.max(MIN_N, Math.round((wristCm + 0.8) * 10 / BEAD_MM)))
 }
 function calcBeadR(n: number) {
-  return Math.max(9, Math.min(18, Math.round(RING_R * Math.sin(Math.PI / n)) - 1))
+  return Math.max(9, Math.min(18, Math.floor(RING_R * Math.sin(Math.PI / n))))
 }
 function slotPos(i: number, n: number, beadR: number) {
   const a = (i / n) * 2 * Math.PI - Math.PI / 2
