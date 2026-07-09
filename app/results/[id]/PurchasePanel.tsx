@@ -38,9 +38,10 @@ type Props = {
   wristCm: number
   onWristChange: (v: number) => void
   beadCount: number
+  adjustedSequence: string[]
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence }: Props) {
   const router = useRouter()
   const [spacerColor, setSpacerColor] = useState<'silver' | 'gold' | 'exclude'>('silver')
   const [includeCharm, setIncludeCharm] = useState(true)
@@ -52,16 +53,33 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
   const measureRef = useFocusTrap(measureOpen)
   const packagingRef = useFocusTrap(packagingOpen)
 
-  function handlePurchase() {
+  async function generateWristImage(): Promise<string | null> {
+    try {
+      const res = await fetch('/api/results/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resultId, beadSequence: adjustedSequence }),
+      })
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.imageUrl ?? null
+    } catch {
+      return null
+    }
+  }
+
+  async function handlePurchase() {
     setLoading(true)
     const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
+    await generateWristImage()
     const params = new URLSearchParams({ result: resultId, spacer: spacerColor, includeCharm: String(includeCharm), remark: fullRemark })
     router.push(`/payment?${params.toString()}`)
   }
 
-  function handleAddToCart() {
+  async function handleAddToCart() {
     const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
-    addBraceletToCart({ resultId, spacer: spacerColor, includeCharm, remark: fullRemark, imageUrl: imageUrl ?? null, crystalNames })
+    const generatedUrl = await generateWristImage()
+    addBraceletToCart({ resultId, spacer: spacerColor, includeCharm, remark: fullRemark, imageUrl: generatedUrl ?? imageUrl ?? null, crystalNames })
     setAddedToCart(true)
     setTimeout(() => router.push('/shop/cart'), 600)
   }

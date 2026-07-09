@@ -71,6 +71,7 @@ export default function ResultsClient({
           wristCm={wristCm}
           onWristChange={setWristCm}
           beadCount={N}
+          adjustedSequence={adjustedSequence}
         />
       </div>
 
