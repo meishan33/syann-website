@@ -201,8 +201,8 @@ export default function DesignPage() {
                   <svg width={CANVAS} height={CANVAS} viewBox={`0 0 ${CANVAS} ${CANVAS}`} style={{ position: 'absolute', inset: 0 }}>
                     <rect width={CANVAS} height={CANVAS} fill="#FBF8F4" />
                     <circle cx={CX} cy={CX} r={RING_R} fill="none" stroke="rgba(140,100,60,0.18)" strokeWidth="1.5" strokeDasharray="3.5 3" />
-                    <text x={CX} y={CX - 7} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="11" fontWeight="400" letterSpacing="3" fill="rgba(176,139,87,0.22)">SYANN.CO</text>
-                    <text x={CX} y={CX + 8} textAnchor="middle" fontFamily="'Montserrat', Arial, sans-serif" fontSize="5" fontWeight="500" letterSpacing="2" fill="rgba(154,133,115,0.18)">CRYSTAL · ENERGY · YOU</text>
+                    <text x={CX} y={CX - 6} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="14" fontWeight="400" letterSpacing="3" fill="rgba(74,46,20,0.45)">SYANN.CO</text>
+                    <text x={CX} y={CX + 8} textAnchor="middle" fontFamily="'Montserrat', Arial, sans-serif" fontSize="5.5" fontWeight="500" letterSpacing="2.5" fill="rgba(74,46,20,0.35)">CRYSTALS · ENERGY · YOU</text>
                   </svg>
                   {beads.map((bead, i) => {
                     const { left, top } = slotPos(i, N, BEAD_R)
