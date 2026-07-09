@@ -35,9 +35,12 @@ type Props = {
   imageUrl?: string | null
   weakElement?: string | null
   strongElement?: string | null
+  wristCm: number
+  onWristChange: (v: number) => void
+  beadCount: number
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount }: Props) {
   const router = useRouter()
   const [spacerColor, setSpacerColor] = useState<'silver' | 'gold' | 'exclude'>('silver')
   const [includeCharm, setIncludeCharm] = useState(true)
@@ -51,13 +54,14 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
 
   function handlePurchase() {
     setLoading(true)
-    const params = new URLSearchParams({ result: resultId, spacer: spacerColor, includeCharm: String(includeCharm) })
-    if (remark) params.set('remark', remark)
+    const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
+    const params = new URLSearchParams({ result: resultId, spacer: spacerColor, includeCharm: String(includeCharm), remark: fullRemark })
     router.push(`/payment?${params.toString()}`)
   }
 
   function handleAddToCart() {
-    addBraceletToCart({ resultId, spacer: spacerColor, includeCharm, remark, imageUrl: imageUrl ?? null, crystalNames })
+    const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
+    addBraceletToCart({ resultId, spacer: spacerColor, includeCharm, remark: fullRemark, imageUrl: imageUrl ?? null, crystalNames })
     setAddedToCart(true)
     setTimeout(() => router.push('/shop/cart'), 600)
   }
@@ -167,6 +171,49 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
               ))}
             </div>
           </div>
+
+          {/* Wrist Size */}
+          <div style={{ background: '#F8F4EF', borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: '#9A8573' }}>Wrist Size</span>
+              <button type="button" onClick={() => setMeasureOpen(true)} style={{ ...BODY, fontSize: 10, color: GOLD, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}>
+                How to measure →
+              </button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 10, padding: '6px 10px' }}>
+              <button
+                type="button"
+                onClick={() => onWristChange(Math.max(12, parseFloat((wristCm - 0.5).toFixed(1))))}
+                style={{ ...BODY, width: 24, height: 24, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 14, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >−</button>
+              <input
+                type="number"
+                value={wristCm}
+                min={12} max={22} step={0.5}
+                onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= 12 && v <= 22) onWristChange(v) }}
+                style={{ ...BODY, width: '100%', textAlign: 'center', fontSize: 18, fontWeight: 600, color: '#4A3A32', border: 'none', outline: 'none', background: 'transparent' }}
+              />
+              <span style={{ ...BODY, fontSize: 11, color: '#9A8573', flexShrink: 0 }}>cm</span>
+              <button
+                type="button"
+                onClick={() => onWristChange(Math.min(22, parseFloat((wristCm + 0.5).toFixed(1))))}
+                style={{ ...BODY, width: 24, height: 24, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 14, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >+</button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#B0A090', margin: '0 0 2px' }}>Elastic Fit Range</p>
+                <p style={{ ...SERIF, fontSize: 14, fontWeight: 400, color: '#4A3A32', margin: 0 }}>
+                  {((beadCount * 8 - 15) / 10).toFixed(1)} – {((beadCount * 8 + 10) / 10).toFixed(1)} cm
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#B0A090', margin: '0 0 2px' }}>Beads</p>
+                <p style={{ ...SERIF, fontSize: 14, color: '#4A3A32', margin: 0 }}>{beadCount} × 8mm</p>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div className="h-px bg-[#E5DDD5]" />
@@ -204,16 +251,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
             </span>
             <div className="flex flex-col gap-3">
               {[
-                <>Handcrafted with <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong> to a standard length of <strong className="font-medium text-[#4A3A32]">16 cm</strong>. To customise the fit, simply note your wrist size in the remarks.{' '}
-                  <button
-                    type="button"
-                    onClick={() => setMeasureOpen(true)}
-                    className="text-[#B08B57] underline underline-offset-2 bg-transparent border-none cursor-pointer transition-opacity hover:opacity-70"
-                    style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
-                  >
-                    How to measure your wrist
-                  </button>
-                </>,
+                <>Handcrafted with <strong className="font-medium text-[#4A3A32]">8 mm natural crystal beads</strong>. Your selected wrist size (<strong className="font-medium text-[#4A3A32]">{wristCm.toFixed(1)} cm · {beadCount} beads</strong>) will be noted for your order.</>,
                 <>Every order arrives in a <strong className="font-medium text-[#4A3A32]">premium gift box</strong> with a crystal care card.{' '}
                   <button
                     type="button"
@@ -304,7 +342,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
                 { n: '01', text: 'Wrap a thin strip of paper or a flexible tape measure around your wrist, just below the wrist bone.' },
                 { n: '02', text: 'Mark where the paper meets — this is your wrist circumference.' },
                 { n: '03', text: 'Lay the strip flat and measure the length in centimetres.' },
-                { n: '04', text: "Add your wrist measurement to the Remarks field. The default size is 16 cm — let us know if you'd like it larger or smaller." },
+                { n: '04', text: "Enter your wrist measurement into the Wrist Size field in the options panel. The bracelet bead count will adjust automatically for a perfect elastic fit." },
               ].map(({ n, text }) => (
                 <li key={n} className="flex gap-4">
                   <span style={SERIF} className="shrink-0 text-2xl font-light text-[#B08B57] leading-tight">{n}</span>

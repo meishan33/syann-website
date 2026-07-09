@@ -1,8 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import Image from "next/image";
 import Link from "next/link";
-import PurchasePanel from "./PurchasePanel";
-import BraceletRenderer from "@/components/BraceletRenderer";
+import ResultsClient from "./ResultsClient";
 import { generateBeadSequence } from "@/lib/design-engine";
 
 type Props = {
@@ -101,54 +100,17 @@ export default async function ResultsPage({ params }: Props) {
 
       {/* TWO-COLUMN LAYOUT */}
       <section className="mx-auto max-w-[1280px] px-6 pb-24">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-stretch">
-
-
-          {/* ── LEFT: BRACELET IMAGE (3/5) ── */}
-          <div className="lg:col-span-3 lg:h-full">
-
-            <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
-
-              <div className="w-full lg:flex-1">
-                {data.cached_image_url ? (
-                  <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: 1 }}>
-                    <Image src={data.cached_image_url} alt="Your crystal bracelet" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-contain" />
-                  </div>
-                ) : (
-                  <BraceletRenderer sequence={beadSequence} imageMap={imageMap} />
-                )}
-              </div>
-
-              <div className="mt-3 px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B08B57] mb-1">AI-curated · Five Elements · Handcrafted</p>
-                <p className="text-[11px] leading-relaxed text-[#C5B8AD]">
-                  Every crystal bead is a genuine natural gemstone — no two are exactly alike. Your actual handcrafted bracelet may have slight variations in color, tone, and texture, making it beautifully one-of-a-kind.
-                </p>
-              </div>
-
-
-            </div>
-
-          </div>
-
-
-          {/* ── RIGHT: ANALYSIS + SIZE + PURCHASE (2/5) ── */}
-          <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-2">
-
-            <PurchasePanel
-              analysisSummary={data.analysis_summary ?? ""}
-              crystalNames={crystalNames}
-              userName={data.user_name ?? null}
-              resultId={id}
-              imageUrl={data.cached_image_url ?? null}
-              weakElement={data.calculated_weak_element ?? null}
-              strongElement={data.calculated_strong_element ?? null}
-            />
-
-          </div>
-
-
-        </div>
+        <ResultsClient
+          beadSequence={beadSequence}
+          imageMap={imageMap}
+          cachedImageUrl={data.cached_image_url ?? null}
+          analysisSummary={data.analysis_summary ?? ""}
+          crystalNames={crystalNames}
+          userName={data.user_name ?? null}
+          resultId={id}
+          weakElement={data.calculated_weak_element ?? null}
+          strongElement={data.calculated_strong_element ?? null}
+        />
       </section>
 
 
