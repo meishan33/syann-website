@@ -503,9 +503,9 @@ async function sendEmail(dayNumber, contentType, theme, caption, hashtags, image
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_KEY}` },
     body: JSON.stringify({
-      from: 'SYANN.CO <hello@syann.co>',
+      from: 'SYANN Admin <hello@syann.co>',
       to: ADMIN_EMAIL,
-      subject: `✨ SYANN Instagram Day ${dayNumber} — ${label}: ${theme}`,
+      subject: `[SYANN] Instagram Day ${dayNumber} - ${label}: ${theme}`,
       html,
     }),
   })
