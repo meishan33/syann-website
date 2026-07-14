@@ -408,12 +408,36 @@ Return ONLY valid JSON:
   const data = await res.json()
   const post = JSON.parse(data.choices[0].message.content)
 
-  // Validate all required fields — OpenAI occasionally omits one
-  const missing = ['theme', 'caption', 'hashtags', 'image_prompt'].filter(k => !post[k])
-  if (missing.length) throw new Error(`OpenAI response missing fields: ${missing.join(', ')}. Raw: ${JSON.stringify(post)}`)
-
   // Ensure hashtags is a string (model sometimes returns an array)
   if (Array.isArray(post.hashtags)) post.hashtags = post.hashtags.join(' ')
+
+  // Validate all required fields — retry once with an explicit repair prompt if any are missing
+  const REQUIRED = ['theme', 'caption', 'hashtags', 'image_prompt']
+  const missing = REQUIRED.filter(k => !post[k])
+  if (missing.length) {
+    console.warn(`First attempt missing fields: ${missing.join(', ')} — retrying with repair prompt`)
+    const repairRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_KEY}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 1200,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: data.choices[0].message.content },
+          { role: 'user', content: `Your response is missing these required fields: ${missing.join(', ')}. Return the COMPLETE JSON again with ALL four fields filled in: theme, caption, hashtags (exactly 5 hashtags space-separated), image_prompt.` },
+        ],
+      }),
+    })
+    if (repairRes.ok) {
+      const repairData = await repairRes.json()
+      const repaired = JSON.parse(repairData.choices[0].message.content)
+      if (Array.isArray(repaired.hashtags)) repaired.hashtags = repaired.hashtags.join(' ')
+      Object.assign(post, repaired)
+    }
+    const stillMissing = REQUIRED.filter(k => !post[k])
+    if (stillMissing.length) throw new Error(`OpenAI response still missing after retry: ${stillMissing.join(', ')}`)
+  }
 
   return post
 }
