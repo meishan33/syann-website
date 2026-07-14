@@ -61,7 +61,7 @@ type Inquiry = {
 }
 type InquirySortKey = 'submitted_at' | 'name' | 'email'
 
-const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode; href?: string }[] = [
   {
     key: 'orders', label: 'Orders',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>,
@@ -87,7 +87,7 @@ const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>,
   },
   {
-    key: 'instagram', label: 'Instagram',
+    key: 'instagram', label: 'Instagram', href: '/admin/instagram',
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
   },
   {
@@ -658,12 +658,12 @@ export default function AdminPage() {
 
         {/* Nav items */}
         <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {NAV_ITEMS.filter(({ key }) => key !== 'shop' || shopEnabled).map(({ key, label, icon }) => {
+          {NAV_ITEMS.filter(({ key }) => key !== 'shop' || shopEnabled).map(({ key, label, icon, href }) => {
             const active = tab === key
             return (
               <button
                 key={key}
-                onClick={() => { setTab(key); setCurrentPage(1) }}
+                onClick={() => { if (href) { router.push(href); return } setTab(key); setCurrentPage(1) }}
                 title={!sidebarOpen ? label : undefined}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
