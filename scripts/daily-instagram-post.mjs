@@ -406,7 +406,16 @@ Return ONLY valid JSON:
   })
   if (!res.ok) throw new Error(`OpenAI error ${res.status}: ${await res.text()}`)
   const data = await res.json()
-  return JSON.parse(data.choices[0].message.content)
+  const post = JSON.parse(data.choices[0].message.content)
+
+  // Validate all required fields — OpenAI occasionally omits one
+  const missing = ['theme', 'caption', 'hashtags', 'image_prompt'].filter(k => !post[k])
+  if (missing.length) throw new Error(`OpenAI response missing fields: ${missing.join(', ')}. Raw: ${JSON.stringify(post)}`)
+
+  // Ensure hashtags is a string (model sometimes returns an array)
+  if (Array.isArray(post.hashtags)) post.hashtags = post.hashtags.join(' ')
+
+  return post
 }
 
 async function saveToSupabase(record) {
