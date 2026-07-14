@@ -548,8 +548,12 @@ async function main() {
   console.log('Saved to Supabase')
 
   if (RESEND_KEY) {
-    await sendEmail(dayNumber, contentType, post.theme, post.caption, post.hashtags, post.image_prompt, dateStr)
-    console.log(`Email sent — Day ${dayNumber}: ${label} — ${post.theme}`)
+    try {
+      await sendEmail(dayNumber, contentType, post.theme, post.caption, post.hashtags, post.image_prompt, dateStr)
+      console.log(`Email sent to ${ADMIN_EMAIL} — Day ${dayNumber}: ${label} — ${post.theme}`)
+    } catch (emailErr) {
+      console.error(`Email failed (non-fatal): ${emailErr.message}`)
+    }
   } else {
     console.log('Email skipped (no RESEND_API_KEY)')
   }
