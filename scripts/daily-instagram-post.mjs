@@ -482,7 +482,7 @@ async function sendEmail(dayNumber, contentType, theme, caption, hashtags, image
 async function main() {
   if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
   if (!OPENAI_KEY)  throw new Error('Missing OPENAI_API_KEY')
-  if (!RESEND_KEY)  throw new Error('Missing RESEND_API_KEY')
+  if (!RESEND_KEY)  console.warn('⚠️  RESEND_API_KEY not set — email will be skipped')
 
   const dayNumber = await getDayNumber()
   console.log(`Day ${dayNumber}`)
@@ -504,19 +504,22 @@ async function main() {
   const dateOnly = today.toISOString().split('T')[0]
 
   await saveToSupabase({
-    day_number:    dayNumber,
-    content_type:  contentType,
-    theme:         post.theme,
-    caption:       post.caption,
-    hashtags:      post.hashtags,
-    image_prompt:  post.image_prompt,
-    status:        'draft',
-    scheduled_date: dateOnly,
+    day_number:   dayNumber,
+    content_type: contentType,
+    theme:        post.theme,
+    caption:      post.caption,
+    hashtags:     post.hashtags,
+    image_prompt: post.image_prompt,
+    status:       'draft',
   })
   console.log('Saved to Supabase')
 
-  await sendEmail(dayNumber, contentType, post.theme, post.caption, post.hashtags, post.image_prompt, dateStr)
-  console.log(`Email sent — Day ${dayNumber}: ${label} — ${post.theme}`)
+  if (RESEND_KEY) {
+    await sendEmail(dayNumber, contentType, post.theme, post.caption, post.hashtags, post.image_prompt, dateStr)
+    console.log(`Email sent — Day ${dayNumber}: ${label} — ${post.theme}`)
+  } else {
+    console.log('Email skipped (no RESEND_API_KEY)')
+  }
 }
 
 main().catch(err => { console.error(err); process.exit(1) })
