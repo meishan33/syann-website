@@ -57,7 +57,7 @@ async function saveToSupabase(post) {
       Authorization: `Bearer ${SERVICE_KEY}`,
       Prefer: 'return=representation',
     },
-    body: JSON.stringify({ ...post, status: 'draft' }),
+    body: JSON.stringify({ ...post, status: 'published' }),
   })
   if (!res.ok) {
     const err = await res.text()
@@ -122,7 +122,7 @@ async function main() {
   console.log(`Generated: "${post.title}"`)
 
   await saveToSupabase(post)
-  console.log(`Saved to Supabase as draft — review at /admin/blog`)
+  console.log(`Published to Supabase — live at /crystals/blog`)
 }
 
 main().catch(err => { console.error(err); process.exit(1) })
