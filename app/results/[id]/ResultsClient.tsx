@@ -77,14 +77,13 @@ export default function ResultsClient({
   }, [imageMap, spacers])
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8 lg:items-stretch">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-start">
 
-      {/* ── LEFT: BRACELET IMAGE ── */}
-      <div className="lg:h-full">
-        <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
+      {/* ── LEFT: BRACELET IMAGE + ANALYSIS ── */}
+      <div className="lg:col-span-3">
+        <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 flex flex-col gap-6">
 
-          <div className="w-full lg:flex-1">
+          <div className="w-full">
             <BraceletRenderer
               sequence={adjustedSequence}
               spacerGaps={spacerGaps}
@@ -94,7 +93,53 @@ export default function ResultsClient({
             />
           </div>
 
-          <div className="mt-3 px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+          {/* ELEMENTAL ANALYSIS — inside left card, above caption */}
+          {analysisSummary && (() => {
+            const parts = analysisSummary.split('\n\n')
+            const bulletIdx = parts.findIndex(p => p.trim().startsWith('•'))
+            const paragraphs = bulletIdx === -1 ? parts : parts.slice(0, bulletIdx)
+            const bulletBlock = bulletIdx === -1 ? '' : parts[bulletIdx]
+            const bullets = bulletBlock
+              ? bulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
+              : []
+            return (
+              <div className="rounded-2xl bg-[#F8F4EF] px-5 py-5" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#B08B57]">
+                  Your Elemental Analysis
+                </p>
+                <div className="flex flex-col gap-3">
+                  {paragraphs.map((para, i) => (
+                    <p key={i} className="text-[12px] leading-[1.85] text-[#7A5B45] m-0">
+                      {i === 0 && userName && para.startsWith(userName)
+                        ? <>Dear <strong className="font-semibold text-[#4A3A32]">{userName}</strong>{para.slice(userName.length)}</>
+                        : para}
+                    </p>
+                  ))}
+                  {bullets.length > 0 && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      {bullets.map((point, i) => {
+                        const match = crystalNames.find(n => point.startsWith(n))
+                        return (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className="mt-[5px] shrink-0 text-[#B08B57]">
+                              <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
+                            </span>
+                            <p className="text-[12px] leading-[1.8] text-[#7A5B45] m-0">
+                              {match
+                                ? <><strong className="font-semibold text-[#4A3A32]">{match}</strong>{point.slice(match.length)}</>
+                                : point}
+                            </p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
+          <div className="px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B08B57] mb-1">
               AI-curated · Five Elements · Handcrafted
             </p>
@@ -106,8 +151,8 @@ export default function ResultsClient({
         </div>
       </div>
 
-      {/* ── RIGHT: OPTIONS + PURCHASE ── */}
-      <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6">
+      {/* ── RIGHT: OPTIONS + PURCHASE (narrower) ── */}
+      <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-2">
         <PurchasePanel
           crystalNames={crystalNames}
           resultId={resultId}
@@ -125,56 +170,6 @@ export default function ResultsClient({
           onClearSpacers={() => { setSpacerGaps(Array(N).fill(null)); setSelectedSpacer(null) }}
         />
       </div>
-
-    </div>
-
-    {/* ── ELEMENTAL ANALYSIS (full-width below) ── */}
-    {analysisSummary && (() => {
-      const parts = analysisSummary.split('\n\n')
-      const bulletIdx = parts.findIndex(p => p.trim().startsWith('•'))
-      const paragraphs = bulletIdx === -1 ? parts : parts.slice(0, bulletIdx)
-      const bulletBlock = bulletIdx === -1 ? '' : parts[bulletIdx]
-      const bullets = bulletBlock
-        ? bulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
-        : []
-      return (
-        <div className="rounded-[28px] bg-[#F8F4EF] px-8 py-7 sm:px-10 sm:py-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.32em] text-[#B08B57]">
-            Your Elemental Analysis
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-            <div className="flex flex-col gap-3">
-              {paragraphs.map((para, i) => (
-                <p key={i} className="text-[13px] leading-[1.85] text-[#7A5B45]">
-                  {i === 0 && userName && para.startsWith(userName)
-                    ? <>Dear <strong className="font-semibold text-[#4A3A32]">{userName}</strong>{para.slice(userName.length)}</>
-                    : para}
-                </p>
-              ))}
-            </div>
-            {bullets.length > 0 && (
-              <div className="flex flex-col gap-3">
-                {bullets.map((point, i) => {
-                  const match = crystalNames.find(n => point.startsWith(n))
-                  return (
-                    <div key={i} className="flex items-start gap-3">
-                      <span className="mt-[6px] shrink-0 text-[#B08B57]">
-                        <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
-                      </span>
-                      <p className="text-[13px] leading-[1.8] text-[#7A5B45] m-0">
-                        {match
-                          ? <><strong className="font-semibold text-[#4A3A32]">{match}</strong>{point.slice(match.length)}</>
-                          : point}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    })()}
 
     </div>
   )
