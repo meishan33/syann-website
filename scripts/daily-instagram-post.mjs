@@ -473,15 +473,13 @@ async function sendEmail(dayNumber, contentType, theme, caption, hashtags, image
   </div>
 
   <div style="background:#FDFAF7;padding:24px 32px;border-bottom:1px solid #EDE8DF;">
-    <p style="margin:0 0 12px;font-size:9px;font-weight:700;letter-spacing:0.26em;text-transform:uppercase;color:#9A8573;">Ready-to-Post Caption</p>
-    <div style="background:#F6F1EB;border-radius:8px;padding:18px 20px;">
-      <p style="margin:0;font-size:13px;line-height:1.9;color:${DARK};white-space:pre-line;">${caption}</p>
-    </div>
-  </div>
+    <p style="margin:0 0 6px;font-size:9px;font-weight:700;letter-spacing:0.26em;text-transform:uppercase;color:#9A8573;">Copy &amp; Paste to Instagram</p>
+    <p style="margin:0 0 12px;font-size:10px;color:#B0A090;">Select all text in the box below and paste directly into Instagram.</p>
+    <div style="background:#F6F1EB;border-radius:8px;padding:18px 20px;border:1.5px dashed #D9C4A8;">
+      <p style="margin:0;font-size:13px;line-height:1.9;color:${DARK};white-space:pre-line;">${caption}
 
-  <div style="background:#FDFAF7;padding:20px 32px;border-bottom:1px solid #EDE8DF;">
-    <p style="margin:0 0 10px;font-size:9px;font-weight:700;letter-spacing:0.26em;text-transform:uppercase;color:#9A8573;">Hashtags (5)</p>
-    <p style="margin:0;font-size:14px;color:${GOLD};font-weight:500;letter-spacing:0.04em;">${hashtags}</p>
+${hashtags}</p>
+    </div>
   </div>
 
   <div style="background:#FDFAF7;padding:20px 32px;border-bottom:1px solid #EDE8DF;">

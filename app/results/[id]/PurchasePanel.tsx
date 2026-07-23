@@ -27,6 +27,12 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" }
 const GOLD = '#B08B57'
 
+type SpacerOption = {
+  name: string
+  bead_image_url: string | null
+  bead_image_urls: string[] | null
+}
+
 type Props = {
   analysisSummary: string
   crystalNames?: string[]
@@ -38,12 +44,14 @@ type Props = {
   wristCm: number
   onWristChange: (v: number) => void
   beadCount: number
-  adjustedSequence: string[]
+  finalSequence: string[]
+  spacers: SpacerOption[]
+  selectedSpacer: string | null
+  onSpacerChange: (name: string | null) => void
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, finalSequence, spacers, selectedSpacer, onSpacerChange }: Props) {
   const router = useRouter()
-  const [spacerColor, setSpacerColor] = useState<'silver' | 'gold' | 'exclude'>('silver')
   const [includeCharm, setIncludeCharm] = useState(true)
   const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
@@ -58,7 +66,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
       const res = await fetch('/api/results/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultId, beadSequence: adjustedSequence }),
+        body: JSON.stringify({ resultId, beadSequence: finalSequence }),
       })
       if (!res.ok) return null
       const data = await res.json()
@@ -72,14 +80,14 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
     setLoading(true)
     const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
     await generateWristImage()
-    const params = new URLSearchParams({ result: resultId, spacer: spacerColor, includeCharm: String(includeCharm), remark: fullRemark })
+    const params = new URLSearchParams({ result: resultId, spacer: selectedSpacer ?? 'exclude', includeCharm: String(includeCharm), remark: fullRemark })
     router.push(`/payment?${params.toString()}`)
   }
 
   async function handleAddToCart() {
     const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
     const generatedUrl = await generateWristImage()
-    addBraceletToCart({ resultId, spacer: spacerColor, includeCharm, remark: fullRemark, imageUrl: generatedUrl ?? imageUrl ?? null, crystalNames })
+    addBraceletToCart({ resultId, spacer: selectedSpacer ?? 'exclude', includeCharm, remark: fullRemark, imageUrl: generatedUrl ?? imageUrl ?? null, crystalNames })
     setAddedToCart(true)
     setTimeout(() => router.push('/shop/cart'), 600)
   }
@@ -137,30 +145,59 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
             Bracelet Options
           </p>
 
-          {/* Spacer Colour */}
-          <div className="flex items-center gap-3">
-            <span style={{ ...BODY, fontSize: 11, color: '#9A8573', flexShrink: 0, width: 80 }}>Spacer</span>
-            <div className="flex gap-2">
-              {(['silver', 'gold', 'exclude'] as const).map(option => (
+          {/* Spacer */}
+          {spacers.length > 0 && (
+            <div>
+              <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }}>Spacer</span>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                {spacers.map(spacer => {
+                  const imgUrl = spacer.bead_image_urls?.[0] ?? spacer.bead_image_url
+                  const isSelected = selectedSpacer === spacer.name
+                  return (
+                    <button
+                      key={spacer.name}
+                      type="button"
+                      onClick={() => onSpacerChange(isSelected ? null : spacer.name)}
+                      title={spacer.name}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                      <div style={{
+                        width: 44, height: 44, borderRadius: '50%', overflow: 'hidden',
+                        border: `2px solid ${isSelected ? GOLD : '#E5DDD5'}`,
+                        boxShadow: isSelected ? `0 0 0 3px #F5E8D0` : 'none',
+                        background: '#F6F1EB', transition: 'all 0.15s',
+                      }}>
+                        {imgUrl
+                          ? <img src={imgUrl} alt={spacer.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(2.2)', display: 'block' }} />
+                          : <div style={{ width: '100%', height: '100%', background: '#DDD0C4' }} />
+                        }
+                      </div>
+                      <span style={{ ...BODY, fontSize: 9, letterSpacing: '0.08em', color: isSelected ? '#4A3A32' : '#9A8573' }}>
+                        {spacer.name.replace(' Spacer', '')}
+                      </span>
+                    </button>
+                  )
+                })}
+                {/* None option */}
                 <button
-                  key={option}
                   type="button"
-                  onClick={() => setSpacerColor(option)}
-                  style={{
-                    ...BODY,
-                    width: 72, padding: '5px 0', borderRadius: 999, cursor: 'pointer',
-                    border: `1.5px solid ${spacerColor === option ? GOLD : '#E5DDD5'}`,
-                    background: spacerColor === option ? '#FEF9F2' : '#fff',
-                    fontSize: 11, textAlign: 'center', textTransform: 'capitalize',
-                    color: spacerColor === option ? '#4A3A32' : '#9A8573',
-                    transition: 'all 0.15s',
-                  }}
+                  onClick={() => onSpacerChange(null)}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
-                  {option}
+                  <div style={{
+                    width: 44, height: 44, borderRadius: '50%',
+                    border: `2px solid ${selectedSpacer === null ? GOLD : '#E5DDD5'}`,
+                    boxShadow: selectedSpacer === null ? `0 0 0 3px #F5E8D0` : 'none',
+                    background: '#F6F1EB', transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 14, color: '#B0A090', lineHeight: 1 }}>—</span>
+                  </div>
+                  <span style={{ ...BODY, fontSize: 9, letterSpacing: '0.08em', color: selectedSpacer === null ? '#4A3A32' : '#9A8573' }}>None</span>
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Logo Charm */}
           <div className="flex items-center gap-3">

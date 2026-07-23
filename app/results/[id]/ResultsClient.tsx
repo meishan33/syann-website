@@ -9,6 +9,12 @@ function calcN(wristCm: number): number {
   return Math.round((wristCm + 0.8) * 10 / BEAD_MM)
 }
 
+type SpacerOption = {
+  name: string
+  bead_image_url: string | null
+  bead_image_urls: string[] | null
+}
+
 type Props = {
   beadSequence: string[]
   imageMap: Record<string, string[]>
@@ -19,14 +25,16 @@ type Props = {
   resultId: string
   weakElement: string | null
   strongElement: string | null
+  spacers: SpacerOption[]
 }
 
 export default function ResultsClient({
   beadSequence, imageMap, cachedImageUrl,
   analysisSummary, crystalNames, userName,
-  resultId, weakElement, strongElement,
+  resultId, weakElement, strongElement, spacers,
 }: Props) {
   const [wristCm, setWristCm] = useState(16.0)
+  const [selectedSpacer, setSelectedSpacer] = useState<string | null>(null)
 
   const N = calcN(wristCm)
 
@@ -34,6 +42,22 @@ export default function ResultsClient({
     if (!beadSequence.length) return []
     return Array.from({ length: N }, (_, i) => beadSequence[i % beadSequence.length])
   }, [beadSequence, N])
+
+  // Inject spacer bead every 4th position in the sequence
+  const finalSequence = useMemo(() => {
+    if (!selectedSpacer || !adjustedSequence.length) return adjustedSequence
+    return adjustedSequence.map((bead, i) => ((i + 1) % 4 === 0 ? selectedSpacer : bead))
+  }, [selectedSpacer, adjustedSequence])
+
+  // Merge spacer images into the imageMap so BraceletRenderer can look them up
+  const imageMapWithSpacer = useMemo(() => {
+    const extra: Record<string, string[]> = {}
+    for (const s of spacers) {
+      const urls = s.bead_image_urls?.length ? s.bead_image_urls : s.bead_image_url ? [s.bead_image_url] : []
+      if (urls.length) extra[s.name] = urls
+    }
+    return { ...imageMap, ...extra }
+  }, [imageMap, spacers])
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-stretch">
@@ -43,7 +67,7 @@ export default function ResultsClient({
         <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
 
           <div className="w-full lg:flex-1">
-            <BraceletRenderer sequence={adjustedSequence} imageMap={imageMap} />
+            <BraceletRenderer sequence={finalSequence} imageMap={imageMapWithSpacer} />
           </div>
 
           <div className="mt-3 px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
@@ -71,7 +95,10 @@ export default function ResultsClient({
           wristCm={wristCm}
           onWristChange={setWristCm}
           beadCount={N}
-          adjustedSequence={adjustedSequence}
+          finalSequence={finalSequence}
+          spacers={spacers}
+          selectedSpacer={selectedSpacer}
+          onSpacerChange={setSelectedSpacer}
         />
       </div>
 
