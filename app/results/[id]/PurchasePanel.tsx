@@ -46,12 +46,18 @@ type Props = {
   beadCount: number
   adjustedSequence: string[]
   spacers: SpacerOption[]
+  spacerGaps: (string | null)[]
   selectedSpacer: string | null
   onSpacerChange: (name: string | null) => void
+  onClearSpacers: () => void
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence, spacers, selectedSpacer, onSpacerChange }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence, spacers, spacerGaps, selectedSpacer, onSpacerChange, onClearSpacers }: Props) {
   const router = useRouter()
+  const spacerCount = spacerGaps.filter(Boolean).length
+  const spacerForOrder = spacerGaps.some(g => g?.toLowerCase().includes('gold')) ? 'gold'
+    : spacerGaps.some(g => g?.toLowerCase().includes('silver')) ? 'silver'
+    : ('exclude' as const)
   const [includeCharm, setIncludeCharm] = useState(true)
   const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
@@ -80,14 +86,14 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
     setLoading(true)
     const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
     await generateWristImage()
-    const params = new URLSearchParams({ result: resultId, spacer: selectedSpacer ?? 'exclude', includeCharm: String(includeCharm), remark: fullRemark })
+    const params = new URLSearchParams({ result: resultId, spacer: spacerForOrder, includeCharm: String(includeCharm), remark: fullRemark })
     router.push(`/payment?${params.toString()}`)
   }
 
   async function handleAddToCart() {
     const fullRemark = `Wrist: ${wristCm.toFixed(1)} cm${remark ? ` | ${remark}` : ''}`
     const generatedUrl = await generateWristImage()
-    addBraceletToCart({ resultId, spacer: selectedSpacer ?? 'exclude', includeCharm, remark: fullRemark, imageUrl: generatedUrl ?? imageUrl ?? null, crystalNames })
+    addBraceletToCart({ resultId, spacer: spacerForOrder, includeCharm, remark: fullRemark, imageUrl: generatedUrl ?? imageUrl ?? null, crystalNames })
     setAddedToCart(true)
     setTimeout(() => router.push('/shop/cart'), 600)
   }
@@ -148,53 +154,50 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
           {/* Spacer */}
           {spacers.length > 0 && (
             <div>
-              <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573', display: 'block', marginBottom: 8 }}>Spacer</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573' }}>Spacer</span>
+                {spacerCount > 0 && (
+                  <button type="button" onClick={onClearSpacers}
+                    style={{ ...BODY, fontSize: 9, color: '#B0A090', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0, letterSpacing: '0.06em' }}>
+                    Clear {spacerCount} spacer{spacerCount > 1 ? 's' : ''}
+                  </button>
+                )}
+              </div>
+              <p style={{ ...BODY, fontSize: 9, color: '#B0A090', margin: '0 0 8px', lineHeight: 1.5 }}>
+                {selectedSpacer
+                  ? `Tap between beads on the bracelet to place · tap here to deselect`
+                  : 'Select a spacer type, then tap the gaps between beads'}
+              </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                {spacers.map(spacer => {
-                  const imgUrl = spacer.bead_image_urls?.[0] ?? spacer.bead_image_url
-                  const isSelected = selectedSpacer === spacer.name
+                {spacers.map(s => {
+                  const imgUrl = s.bead_image_urls?.[0] ?? s.bead_image_url
+                  const isSelected = selectedSpacer === s.name
+                  const hasPlaced = spacerGaps.some(g => g === s.name)
                   return (
                     <button
-                      key={spacer.name}
+                      key={s.name}
                       type="button"
-                      onClick={() => onSpacerChange(isSelected ? null : spacer.name)}
-                      title={spacer.name}
+                      onClick={() => onSpacerChange(isSelected ? null : s.name)}
+                      title={isSelected ? `${s.name} selected — tap gaps on bracelet` : s.name}
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
                       <div style={{
                         width: 44, height: 44, borderRadius: '50%', overflow: 'hidden',
-                        border: `2px solid ${isSelected ? GOLD : '#E5DDD5'}`,
+                        border: `2px solid ${isSelected ? GOLD : hasPlaced ? '#C8B89A' : '#E5DDD5'}`,
                         boxShadow: isSelected ? `0 0 0 3px #F5E8D0` : 'none',
                         background: '#F6F1EB', transition: 'all 0.15s',
                       }}>
                         {imgUrl
-                          ? <img src={imgUrl} alt={spacer.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(2.2)', display: 'block' }} />
+                          ? <img src={imgUrl} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(2.2)', display: 'block' }} />
                           : <div style={{ width: '100%', height: '100%', background: '#DDD0C4' }} />
                         }
                       </div>
-                      <span style={{ ...BODY, fontSize: 9, letterSpacing: '0.08em', color: isSelected ? '#4A3A32' : '#9A8573' }}>
-                        {spacer.name.replace(' Spacer', '')}
+                      <span style={{ ...BODY, fontSize: 9, letterSpacing: '0.08em', color: isSelected ? GOLD : hasPlaced ? '#4A3A32' : '#9A8573', fontWeight: isSelected ? 700 : 400 }}>
+                        {s.name.replace(' Spacer', '')}
                       </span>
                     </button>
                   )
                 })}
-                {/* None option */}
-                <button
-                  type="button"
-                  onClick={() => onSpacerChange(null)}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                >
-                  <div style={{
-                    width: 44, height: 44, borderRadius: '50%',
-                    border: `2px solid ${selectedSpacer === null ? GOLD : '#E5DDD5'}`,
-                    boxShadow: selectedSpacer === null ? `0 0 0 3px #F5E8D0` : 'none',
-                    background: '#F6F1EB', transition: 'all 0.15s',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <span style={{ fontSize: 14, color: '#B0A090', lineHeight: 1 }}>—</span>
-                  </div>
-                  <span style={{ ...BODY, fontSize: 9, letterSpacing: '0.08em', color: selectedSpacer === null ? '#4A3A32' : '#9A8573' }}>None</span>
-                </button>
               </div>
             </div>
           )}

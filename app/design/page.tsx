@@ -294,7 +294,7 @@ export default function DesignPage() {
                           cursor: isClickable ? 'pointer' : 'default',
                           background: gap ? '#C8B89A' : 'transparent',
                           border: gap
-                            ? '1px solid rgba(140,100,60,0.25)'
+                            ? 'none'
                             : selectedSpacerName ? `1.5px dashed ${GOLD}` : 'none',
                           boxShadow: gap ? '0 1px 3px rgba(50,30,10,0.30)' : undefined,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',

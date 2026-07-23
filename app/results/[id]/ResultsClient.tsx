@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import BraceletRenderer from '@/components/BraceletRenderer'
 import PurchasePanel from './PurchasePanel'
 
@@ -38,7 +38,26 @@ export default function ResultsClient({
 
   const N = calcN(wristCm)
 
-  // Crystal-only sequence — spacers are handled by BraceletRenderer directly
+  const [spacerGaps, setSpacerGaps] = useState<(string | null)[]>(Array(calcN(16.0)).fill(null))
+
+  useEffect(() => {
+    setSpacerGaps(prev => {
+      if (prev.length === N) return prev
+      if (prev.length < N) return [...prev, ...Array(N - prev.length).fill(null)]
+      return prev.slice(0, N)
+    })
+  }, [N])
+
+  function handleGapClick(idx: number) {
+    if (!selectedSpacer) return
+    setSpacerGaps(prev => {
+      const next = [...prev]
+      next[idx] = next[idx] ? null : selectedSpacer
+      return next
+    })
+  }
+
+  // Crystal-only sequence — spacers rendered by BraceletRenderer via spacerGaps
   const adjustedSequence = useMemo(() => {
     if (!beadSequence.length) return []
     return Array.from({ length: N }, (_, i) => beadSequence[i % beadSequence.length])
@@ -64,7 +83,9 @@ export default function ResultsClient({
           <div className="w-full lg:flex-1">
             <BraceletRenderer
               sequence={adjustedSequence}
-              spacerName={selectedSpacer}
+              spacerGaps={spacerGaps}
+              selectedSpacerName={selectedSpacer}
+              onGapClick={handleGapClick}
               imageMap={imageMapWithSpacer}
             />
           </div>
@@ -96,8 +117,10 @@ export default function ResultsClient({
           beadCount={N}
           adjustedSequence={adjustedSequence}
           spacers={spacers}
+          spacerGaps={spacerGaps}
           selectedSpacer={selectedSpacer}
           onSpacerChange={setSelectedSpacer}
+          onClearSpacers={() => { setSpacerGaps(Array(N).fill(null)); setSelectedSpacer(null) }}
         />
       </div>
 
