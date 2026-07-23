@@ -19,9 +19,12 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
   if (N === 0) return <div className={className} style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#F5F0EB', borderRadius: 20 }} />
 
   const gaps = spacerGaps ?? []
+  const hasSpacers = gaps.some(Boolean)
 
-  // Crystals: full touching size, equidistant
-  const CRYSTAL_PCT = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N)).toFixed(4))
+  // Shrink crystals slightly when spacers are placed so the spacer beads are visible.
+  // Without shrink, touching crystals cover the spacers entirely.
+  const crystalFill = (hasSpacers || !!selectedSpacerName) ? 0.85 : 1.0
+  const CRYSTAL_PCT = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N) * crystalFill).toFixed(4))
   const SPACER_PCT  = Number((CRYSTAL_PCT * SPACER_RATIO).toFixed(4))
 
   function crystalAngle(i: number) {
