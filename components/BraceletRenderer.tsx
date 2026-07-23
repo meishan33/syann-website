@@ -1,11 +1,5 @@
-const RADIUS_PCT = 28
-
-// Placement mode: small spacer at z:1 so dashed hint circles are visible in the gaps.
-// Viewing mode: larger spacer at z:4 (above crystals) so it visually sits on top of/overlays adjacent beads.
-const PLACEMENT_FILL   = 0.85
-const PLACEMENT_SPACER = 0.32
-const VIEW_FILL        = 0.93
-const VIEW_SPACER      = 0.48
+const RADIUS_PCT   = 28
+const SPACER_RATIO = 0.32
 
 type Props = {
   sequence: string[]
@@ -24,13 +18,11 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
   const hasSpacers  = gaps.some(Boolean)
   const inPlacement = !!selectedSpacerName
 
-  const crystalFill  = inPlacement ? PLACEMENT_FILL : (hasSpacers ? VIEW_FILL : 1.0)
-  const spacerRatio  = inPlacement ? PLACEMENT_SPACER : VIEW_SPACER
-  const spacerZIndex = inPlacement ? 1 : 4   // above crystals (z:2) in viewing mode
+  const crystalFill = (hasSpacers || inPlacement) ? 0.85 : 1.0
 
   const ARC_PCT     = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N)).toFixed(4))
   const CRYSTAL_PCT = Number((ARC_PCT * crystalFill).toFixed(4))
-  const SPACER_PCT  = Number((ARC_PCT * spacerRatio).toFixed(4))
+  const SPACER_PCT  = Number((ARC_PCT * SPACER_RATIO).toFixed(4))
 
   function crystalAngle(i: number): number {
     return (i / N) * 2 * Math.PI - Math.PI / 2
@@ -81,10 +73,10 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
               background: gap ? '#C8B89A' : 'transparent',
               cursor: active ? 'pointer' : 'default',
               border: !gap && inPlacement ? '0.5px dashed rgba(176,139,87,0.7)' : 'none',
-              boxShadow: gap && !inPlacement ? '0 1px 4px rgba(50,30,10,0.35)' : gap ? '0 1px 3px rgba(50,30,10,0.30)' : undefined,
+              boxShadow: gap ? '0 1px 3px rgba(50,30,10,0.30)' : undefined,
               opacity: visible ? 1 : 0,
-              transition: 'opacity 0.2s, left 0.4s, top 0.4s, width 0.4s, height 0.4s',
-              zIndex: spacerZIndex,
+              transition: 'opacity 0.2s, left 0.4s, top 0.4s',
+              zIndex: 1,
             }}
           >
             {url && <img src={url} alt={gap!} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(2.2)' }} />}
