@@ -19,11 +19,15 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
   const spacerCount = gaps.filter(Boolean).length
 
   // Angular slot model: each crystal + each placed spacer gets one equal slot.
-  // Adjacent crystals with no spacer between them share adjacent slots → they touch.
-  // A placed spacer sits in its own slot between the flanking crystals.
+  // Adjacent crystals with no spacer between them are 1 slot apart → they visually touch.
+  // Crystals adjacent to a spacer are also 1 slot apart from the spacer → small visible gap.
+  //
+  // Crystal SIZE is based on N (not N+K) so crystals don't shrink as spacers are added.
+  // At N+K total slots, crystal diameter ≈ slot chord → adjacent crystals slightly overlap
+  // (looks touching). Crystal+spacer gap = slot chord − crystal_r − spacer_r → small gap
+  // that reveals the spacer bead between them.
   const totalSlots = N + spacerCount
-  const slotArc = 2 * RADIUS_PCT * Math.sin(Math.PI / totalSlots)
-  const CRYSTAL_PCT = Number((slotArc * CRYSTAL_FILL).toFixed(4))
+  const CRYSTAL_PCT = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N) * CRYSTAL_FILL).toFixed(4))
   const SPACER_PCT  = Number((CRYSTAL_PCT * SPACER_RATIO).toFixed(4))
 
   // Crystal i's slot index = i + number of spacers in gaps 0..i-1
