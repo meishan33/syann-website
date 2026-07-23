@@ -38,16 +38,11 @@ export default function ResultsClient({
 
   const N = calcN(wristCm)
 
+  // Crystal-only sequence — spacers are handled by BraceletRenderer directly
   const adjustedSequence = useMemo(() => {
     if (!beadSequence.length) return []
     return Array.from({ length: N }, (_, i) => beadSequence[i % beadSequence.length])
   }, [beadSequence, N])
-
-  // Inject spacer bead every 4th position in the sequence
-  const finalSequence = useMemo(() => {
-    if (!selectedSpacer || !adjustedSequence.length) return adjustedSequence
-    return adjustedSequence.map((bead, i) => ((i + 1) % 4 === 0 ? selectedSpacer : bead))
-  }, [selectedSpacer, adjustedSequence])
 
   // Merge spacer images into the imageMap so BraceletRenderer can look them up
   const imageMapWithSpacer = useMemo(() => {
@@ -67,7 +62,11 @@ export default function ResultsClient({
         <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
 
           <div className="w-full lg:flex-1">
-            <BraceletRenderer sequence={finalSequence} imageMap={imageMapWithSpacer} />
+            <BraceletRenderer
+              sequence={adjustedSequence}
+              spacerName={selectedSpacer}
+              imageMap={imageMapWithSpacer}
+            />
           </div>
 
           <div className="mt-3 px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
@@ -95,7 +94,7 @@ export default function ResultsClient({
           wristCm={wristCm}
           onWristChange={setWristCm}
           beadCount={N}
-          finalSequence={finalSequence}
+          adjustedSequence={adjustedSequence}
           spacers={spacers}
           selectedSpacer={selectedSpacer}
           onSpacerChange={setSelectedSpacer}

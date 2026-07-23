@@ -44,13 +44,13 @@ type Props = {
   wristCm: number
   onWristChange: (v: number) => void
   beadCount: number
-  finalSequence: string[]
+  adjustedSequence: string[]
   spacers: SpacerOption[]
   selectedSpacer: string | null
   onSpacerChange: (name: string | null) => void
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, finalSequence, spacers, selectedSpacer, onSpacerChange }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence, spacers, selectedSpacer, onSpacerChange }: Props) {
   const router = useRouter()
   const [includeCharm, setIncludeCharm] = useState(true)
   const [remark, setRemark] = useState<string>('')
@@ -66,7 +66,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
       const res = await fetch('/api/results/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultId, beadSequence: finalSequence }),
+        body: JSON.stringify({ resultId, beadSequence: adjustedSequence }),
       })
       if (!res.ok) return null
       const data = await res.json()
