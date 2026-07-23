@@ -83,7 +83,7 @@ export default function ResultsClient({
       <div className="lg:col-span-3">
         <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 flex flex-col gap-6">
 
-          <div className="w-full max-w-sm mx-auto">
+          <div className="w-full">
             <BraceletRenderer
               sequence={adjustedSequence}
               spacerGaps={spacerGaps}
