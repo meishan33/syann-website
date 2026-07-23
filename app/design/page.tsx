@@ -51,22 +51,27 @@ function useFocusTrap(active: boolean) {
   return ref
 }
 
+const SPACER_MM = 3  // physical width of a spacer bead in mm
+
 export default function DesignPage() {
   const router = useRouter()
-  const [crystals, setCrystals]         = useState<Crystal[]>([])
-  const [wristCm, setWristCm]           = useState<number>(16.0)
+  const [crystals, setCrystals]               = useState<Crystal[]>([])
+  const [wristCm, setWristCm]                 = useState<number>(16.0)
   const N      = calcN(wristCm)
   const BEAD_R = calcBeadR(N)
-  const [beads, setBeads]               = useState<(string | null)[]>(Array(calcN(16.0)).fill(null))
-  const [activeSlot, setActiveSlot]     = useState<number>(0)
-  const [spacer, setSpacer]             = useState<'silver' | 'gold' | 'exclude'>('silver')
-  const [includeCharm, setIncludeCharm] = useState(true)
-  const [notes, setNotes]               = useState('')
-  const [saving, setSaving]             = useState(false)
-  const [saveError, setSaveError]       = useState<string | null>(null)
-  const [addedToCart, setAddedToCart]   = useState(false)
-  const [measureOpen, setMeasureOpen]   = useState(false)
-  const [packagingOpen, setPackagingOpen] = useState(false)
+  const SPACER_R = Math.round(BEAD_R * 0.40)
+  const [beads, setBeads]                     = useState<(string | null)[]>(Array(calcN(16.0)).fill(null))
+  // One gap per adjacent bead pair (gap[i] = spacer between bead i and bead i+1)
+  const [spacerGaps, setSpacerGaps]           = useState<(string | null)[]>(Array(calcN(16.0)).fill(null))
+  const [selectedSpacerName, setSelectedSpacerName] = useState<string | null>(null)
+  const [activeSlot, setActiveSlot]           = useState<number>(0)
+  const [includeCharm, setIncludeCharm]       = useState(true)
+  const [notes, setNotes]                     = useState('')
+  const [saving, setSaving]                   = useState(false)
+  const [saveError, setSaveError]             = useState<string | null>(null)
+  const [addedToCart, setAddedToCart]         = useState(false)
+  const [measureOpen, setMeasureOpen]         = useState(false)
+  const [packagingOpen, setPackagingOpen]     = useState(false)
   const measureRef    = useFocusTrap(measureOpen)
   const packagingRef  = useFocusTrap(packagingOpen)
   const containerRef  = useRef<HTMLDivElement>(null)
@@ -95,22 +100,31 @@ export default function DesignPage() {
       if (prev.length < N) return [...prev, ...Array(N - prev.length).fill(null)]
       return prev.slice(0, N)
     })
+    setSpacerGaps(prev => {
+      if (prev.length === N) return prev
+      if (prev.length < N) return [...prev, ...Array(N - prev.length).fill(null)]
+      return prev.slice(0, N)
+    })
     setActiveSlot(prev => Math.min(prev, N - 1))
   }, [N])
 
   const filledCount    = beads.filter(Boolean).length
+  const spacerCount    = spacerGaps.filter(Boolean).length
   const uniqueCrystals = [...new Set(beads.filter(Boolean) as string[])]
   const crystalMap     = Object.fromEntries(crystals.map(c => [c.name, c]))
-
   const spacerOptions  = crystals.filter(c => c.name.toLowerCase().includes('spacer'))
   const crystalOptions = crystals.filter(c => !c.name.toLowerCase().includes('spacer'))
 
-  function isSpacerBead(name: string | null): boolean {
-    return name?.toLowerCase().includes('spacer') ?? false
-  }
-  const SPACER_R = Math.round(BEAD_R * 0.40)
+  // Total physical bracelet length for measurement
+  const totalMm = N * BEAD_MM + spacerCount * SPACER_MM
+
+  // Derive cart spacer value from what's actually placed on the bracelet
+  const spacerForCart = spacerGaps.some(g => g?.toLowerCase().includes('gold')) ? 'gold'
+    : spacerGaps.some(g => g?.toLowerCase().includes('silver')) ? 'silver'
+    : ('exclude' as const)
 
   function handleBeadClick(i: number) {
+    setSelectedSpacerName(null)  // exit spacer placement mode
     if (activeSlot === i && beads[i]) {
       const next = [...beads]; next[i] = null; setBeads(next)
     } else {
@@ -118,7 +132,22 @@ export default function DesignPage() {
     }
   }
 
+  function handleGapClick(gapIdx: number) {
+    if (!selectedSpacerName) return
+    setSpacerGaps(prev => {
+      const next = [...prev]
+      // Toggle: clicking an already-placed spacer removes it
+      next[gapIdx] = next[gapIdx] ? null : selectedSpacerName
+      return next
+    })
+  }
+
+  function selectSpacer(name: string) {
+    setSelectedSpacerName(prev => prev === name ? null : name)
+  }
+
   function assignCrystal(name: string) {
+    setSelectedSpacerName(null)  // exit spacer placement mode
     const next = [...beads]
     next[activeSlot] = name
     setBeads(next)
@@ -144,8 +173,8 @@ export default function DesignPage() {
     if (filledCount === 0 || saving) return
     try {
       const { resultId, imageUrl } = await saveDesign()
-      addBraceletToCart({ resultId, spacer, includeCharm, remark: notes, imageUrl, crystalNames: uniqueCrystals, price: DESIGN_PRICE })
-      const p = new URLSearchParams({ result: resultId, spacer, includeCharm: String(includeCharm) })
+      addBraceletToCart({ resultId, spacer: spacerForCart, includeCharm, remark: notes, imageUrl, crystalNames: uniqueCrystals, price: DESIGN_PRICE })
+      const p = new URLSearchParams({ result: resultId, spacer: spacerForCart, includeCharm: String(includeCharm) })
       if (notes) p.set('remark', notes)
       router.push(`/payment?${p.toString()}`)
     } catch (err) {
@@ -158,7 +187,7 @@ export default function DesignPage() {
     if (filledCount === 0 || saving) return
     try {
       const { resultId, imageUrl } = await saveDesign()
-      addBraceletToCart({ resultId, spacer, includeCharm, remark: notes, imageUrl, crystalNames: uniqueCrystals, price: DESIGN_PRICE })
+      addBraceletToCart({ resultId, spacer: spacerForCart, includeCharm, remark: notes, imageUrl, crystalNames: uniqueCrystals, price: DESIGN_PRICE })
       setAddedToCart(true)
       setTimeout(() => router.push('/shop/cart'), 600)
     } catch (err) {
@@ -212,12 +241,10 @@ export default function DesignPage() {
                     <text x={CX} y={CX - 4} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="9" fontWeight="400" letterSpacing="2.5" fill="rgba(74,46,20,0.45)">SYANN.CO</text>
                     <text x={CX} y={CX + 6} textAnchor="middle" fontFamily="'Montserrat', Arial, sans-serif" fontSize="3.5" fontWeight="500" letterSpacing="1.8" fill="rgba(74,46,20,0.35)">CRYSTALS · ENERGY · YOU</text>
                   </svg>
+                  {/* Crystal bead slots — always BEAD_R, crystals only */}
                   {beads.map((bead, i) => {
-                    const isActive = activeSlot === i
-                    const isSpacer = isSpacerBead(bead)
-                    // Spacer beads render smaller; empty slots always full-size for easy clicking
-                    const R = bead && isSpacer ? SPACER_R : BEAD_R
-                    const { left, top } = slotPos(i, N, R)
+                    const isActive = activeSlot === i && !selectedSpacerName
+                    const { left, top } = slotPos(i, N, BEAD_R)
                     const img = bead ? crystalMap[bead]?.bead_image_url : null
                     return (
                       <div
@@ -226,14 +253,14 @@ export default function DesignPage() {
                         title={bead ? `Slot ${i + 1}: ${bead} — tap to clear` : `Slot ${i + 1}`}
                         style={{
                           position: 'absolute', left, top,
-                          width: R * 2, height: R * 2,
+                          width: BEAD_R * 2, height: BEAD_R * 2,
                           borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
                           background: bead ? '#D8CCB8' : '#EDE6DD',
-                          border: isActive && !bead ? `2px solid ${GOLD}` : bead ? (isSpacer ? '1px solid rgba(140,100,60,0.25)' : 'none') : '1.5px dashed rgba(140,100,60,0.3)',
-                          boxShadow: isActive && !bead ? `0 0 0 3px ${GOLD}44` : isSpacer ? '0 1px 3px rgba(50,30,10,0.30)' : bead ? '0 1px 4px rgba(50,30,10,0.22)' : undefined,
+                          border: isActive && !bead ? `2px solid ${GOLD}` : bead ? 'none' : '1.5px dashed rgba(140,100,60,0.3)',
+                          boxShadow: isActive && !bead ? `0 0 0 3px ${GOLD}44` : bead ? '0 1px 4px rgba(50,30,10,0.22)' : undefined,
                           transition: 'border 0.15s, box-shadow 0.15s',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          userSelect: 'none', zIndex: isActive ? 3 : isSpacer ? 1 : 2,
+                          userSelect: 'none', zIndex: isActive ? 3 : 2,
                         }}
                       >
                         {img && <Image src={img} alt={bead!} fill sizes="30px" style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }} />}
@@ -241,8 +268,44 @@ export default function DesignPage() {
                         {!bead && <span style={{ fontSize: 8, fontWeight: 700, color: isActive ? GOLD : 'rgba(140,100,60,0.3)', position: 'relative', zIndex: 1 }}>{i + 1}</span>}
                         {isActive && bead && (
                           <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,33,24,0.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4 }}>
-                            <span style={{ color: '#fff', fontSize: isSpacer ? 8 : 14, fontWeight: 700, lineHeight: 1 }}>×</span>
+                            <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, lineHeight: 1 }}>×</span>
                           </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {/* Spacer gap targets — midpoints between each adjacent bead pair */}
+                  {spacerGaps.map((gap, i) => {
+                    const midAngle = ((i + 0.5) / N) * 2 * Math.PI - Math.PI / 2
+                    const gx = CX + RING_R * Math.cos(midAngle) - SPACER_R
+                    const gy = CX + RING_R * Math.sin(midAngle) - SPACER_R
+                    const img = gap ? crystalMap[gap]?.bead_image_url : null
+                    const isClickable = !!selectedSpacerName || !!gap
+                    const isVisible = !!gap || !!selectedSpacerName
+                    return (
+                      <div
+                        key={`g${i}`}
+                        onClick={() => handleGapClick(i)}
+                        title={gap ? `${gap} — tap to remove` : selectedSpacerName ? `Place ${selectedSpacerName} here` : undefined}
+                        style={{
+                          position: 'absolute', left: gx, top: gy,
+                          width: SPACER_R * 2, height: SPACER_R * 2,
+                          borderRadius: '50%', overflow: 'hidden',
+                          cursor: isClickable ? 'pointer' : 'default',
+                          background: gap ? '#C8B89A' : 'transparent',
+                          border: gap
+                            ? '1px solid rgba(140,100,60,0.25)'
+                            : selectedSpacerName ? `1.5px dashed ${GOLD}` : 'none',
+                          boxShadow: gap ? '0 1px 3px rgba(50,30,10,0.30)' : undefined,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          userSelect: 'none', zIndex: 1,
+                          opacity: isVisible ? 1 : 0,
+                          transition: 'opacity 0.2s, border 0.15s',
+                        }}
+                      >
+                        {img && <Image src={img} alt={gap!} fill sizes="20px" style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }} />}
+                        {!gap && selectedSpacerName && (
+                          <span style={{ fontSize: 6, color: GOLD, opacity: 0.7, fontWeight: 700 }}>+</span>
                         )}
                       </div>
                     )
@@ -254,22 +317,21 @@ export default function DesignPage() {
               <div className="mt-4 text-center" style={BODY}>
                 <p className="text-[13px] text-[#7A5B45]">
                   <strong style={{ color: filledCount === N ? GOLD : '#3D2B1F' }}>{filledCount}</strong>
-                  <span className="text-[#9A8573]"> / {N} beads</span>
-                  {(() => {
-                    const nSpacer = beads.filter(b => isSpacerBead(b)).length
-                    const nCrystal = filledCount - nSpacer
-                    if (!filledCount) return null
-                    return <span className="text-[#9A8573]"> · {nCrystal > 0 ? `${nCrystal} crystal${nCrystal > 1 ? 's' : ''}` : ''}{nCrystal > 0 && nSpacer > 0 ? ', ' : ''}{nSpacer > 0 ? `${nSpacer} spacer${nSpacer > 1 ? 's' : ''}` : ''}</span>
-                  })()}
+                  <span className="text-[#9A8573]"> / {N} crystals</span>
+                  {spacerCount > 0 && (
+                    <span className="text-[#9A8573]"> · {spacerCount} spacer{spacerCount > 1 ? 's' : ''}</span>
+                  )}
                 </p>
                 <p className="text-[11px] text-[#9A8573] mt-1">
-                  {beads[activeSlot]
+                  {selectedSpacerName
+                    ? `Tap a gap between beads to place ${selectedSpacerName.replace(' Spacer', '')} spacer`
+                    : beads[activeSlot]
                     ? `Slot ${activeSlot + 1} — tap again to clear`
-                    : `Slot ${activeSlot + 1} active — pick a crystal or spacer →`}
+                    : `Slot ${activeSlot + 1} active — pick a crystal below →`}
                 </p>
-                {filledCount > 0 && (
+                {(filledCount > 0 || spacerCount > 0) && (
                   <button
-                    onClick={() => { setBeads(Array(N).fill(null)); setActiveSlot(0); setAddedToCart(false); setSaveError(null) }}
+                    onClick={() => { setBeads(Array(N).fill(null)); setSpacerGaps(Array(N).fill(null)); setActiveSlot(0); setSelectedSpacerName(null); setAddedToCart(false); setSaveError(null) }}
                     style={BODY}
                     className="mt-2 text-[10px] uppercase tracking-[0.1em] text-[#C5B8AD] underline underline-offset-2 bg-transparent border-none cursor-pointer"
                   >
@@ -312,24 +374,30 @@ export default function DesignPage() {
                   </p>
                 )}
 
-                {/* Spacer beads — shown separately, smaller thumbnails */}
+                {/* Spacer beads — click to activate placement mode, then tap gaps on bracelet */}
                 {spacerOptions.length > 0 && (
                   <div style={{ marginBottom: 10 }}>
-                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>Spacer Beads</p>
+                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 4px' }}>Spacer Beads</p>
+                    <p style={{ ...BODY, fontSize: 9, color: '#B0A090', margin: '0 0 7px', lineHeight: 1.5 }}>
+                      {selectedSpacerName
+                        ? `Tap between beads on the bracelet to place · tap here to deselect`
+                        : 'Select a spacer, then tap between beads to place it'}
+                    </p>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {spacerOptions.map(c => {
-                        const inUse = uniqueCrystals.includes(c.name)
+                        const isSelected = selectedSpacerName === c.name
+                        const hasPlaced = spacerGaps.some(g => g === c.name)
                         return (
                           <button
                             key={c.id}
-                            onClick={() => assignCrystal(c.name)}
-                            title={c.name}
+                            onClick={() => selectSpacer(c.name)}
+                            title={isSelected ? `${c.name} selected — tap gaps to place` : c.name}
                             style={{ ...BODY, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
                           >
                             <div style={{
                               width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: '#F0EBE4', position: 'relative', flexShrink: 0,
-                              border: `2px solid ${inUse ? GOLD : '#E5DDD5'}`,
-                              boxShadow: inUse ? `0 0 0 3px #F5E8D0` : 'none',
+                              border: `2px solid ${isSelected ? GOLD : hasPlaced ? '#C8B89A' : '#E5DDD5'}`,
+                              boxShadow: isSelected ? `0 0 0 3px ${GOLD}44` : 'none',
                               transition: 'all 0.15s',
                             }}>
                               {c.bead_image_url
@@ -337,7 +405,7 @@ export default function DesignPage() {
                                 : <div style={{ width: '100%', height: '100%', background: '#DDD0C4' }} />
                               }
                             </div>
-                            <span style={{ ...BODY, fontSize: 8, color: inUse ? '#4A3A32' : '#9A8573', letterSpacing: '0.06em' }}>
+                            <span style={{ ...BODY, fontSize: 8, color: isSelected ? GOLD : hasPlaced ? '#4A3A32' : '#9A8573', letterSpacing: '0.06em', fontWeight: isSelected ? 700 : 400 }}>
                               {c.name.replace(' Spacer', '')}
                             </span>
                           </button>
@@ -391,17 +459,6 @@ export default function DesignPage() {
                 <p style={BODY} className="text-[10px] font-medium uppercase tracking-[0.32em] text-[#4A3A32]">
                   Bracelet Options
                 </p>
-
-                <div className="flex items-center gap-3">
-                  <span style={{ ...BODY, fontSize: 11, color: '#9A8573', flexShrink: 0, width: 80 }}>Spacer</span>
-                  <div className="flex gap-2">
-                    {(['silver', 'gold', 'exclude'] as const).map(opt => (
-                      <button key={opt} type="button" onClick={() => setSpacer(opt)} style={pillStyle(spacer === opt)}>
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 <div className="flex items-center gap-3">
                   <span style={{ ...BODY, fontSize: 11, color: '#9A8573', flexShrink: 0, width: 80 }}>Logo Charm</span>
@@ -496,15 +553,15 @@ export default function DesignPage() {
                   <div>
                     <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#B0A090', margin: '0 0 2px' }}>Fits Wrist (Elastic)</p>
                     <p style={{ ...SERIF, fontSize: 15, fontWeight: 400, color: '#4A3A32', margin: 0 }}>
-                      {((N * BEAD_MM - 15) / 10).toFixed(1)} – {((N * BEAD_MM + 10) / 10).toFixed(1)} cm
+                      {((totalMm - 15) / 10).toFixed(1)} – {((totalMm + 10) / 10).toFixed(1)} cm
                       <span style={{ ...BODY, fontSize: 10, color: '#9A8573', marginLeft: 6 }}>
-                        ({(((N * BEAD_MM - 15) / 10) / 2.54).toFixed(2)}″ – {(((N * BEAD_MM + 10) / 10) / 2.54).toFixed(2)}″)
+                        ({(((totalMm - 15) / 10) / 2.54).toFixed(2)}″ – {(((totalMm + 10) / 10) / 2.54).toFixed(2)}″)
                       </span>
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#B0A090', margin: '0 0 2px' }}>Beads</p>
-                    <p style={{ ...SERIF, fontSize: 15, color: '#4A3A32', margin: 0 }}>{N} × {BEAD_MM}mm</p>
+                    <p style={{ ...SERIF, fontSize: 15, color: '#4A3A32', margin: 0 }}>{N} × {BEAD_MM}mm{spacerCount > 0 ? ` + ${spacerCount}sp` : ''}</p>
                   </div>
                 </div>
               </div>
