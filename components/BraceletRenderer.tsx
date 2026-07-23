@@ -25,29 +25,16 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
   const CRYSTAL_PCT = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N) * crystalFill).toFixed(4))
   const SPACER_PCT  = Number((CRYSTAL_PCT * SPACER_RATIO).toFixed(4))
 
-  // POSITION model switches based on placement mode:
-  //   - In placement mode → equidistant (N slots), uniform gaps so all hint circles look the same
-  //   - After Done placing → variable slots (N+K), non-spaced crystals move together, spaced apart
-  const totalSlots = inPlacement ? N : N + spacerCount
-
-  function crystalSlot(i: number): number {
-    if (inPlacement) return i
-    return i + gaps.slice(0, i).filter(Boolean).length
+  // Crystal and spacer positions are always equidistant (N slots).
+  // Moving non-spaced crystals closer is geometrically impossible without
+  // enlarging the spaced gaps on a circle — the two effects cancel out.
+  // After Done placing, empty hint circles simply disappear, giving a clean view.
+  function crystalAngle(i: number): number {
+    return (i / N) * 2 * Math.PI - Math.PI / 2
   }
 
-  function slotAngle(slot: number): number {
-    return (slot / totalSlots) * 2 * Math.PI - Math.PI / 2
-  }
-
-  // Spacer / hint circle position:
-  //   - In placement: midpoint between equidistant crystals i and i+1 → slot i+0.5 of N
-  //   - After done: placed spacer at its own slot; hints still at midpoint of flanking crystals
   function gapAngle(i: number): number {
-    if (inPlacement) {
-      return ((i + 0.5) / N) * 2 * Math.PI - Math.PI / 2
-    }
-    const cs = crystalSlot(i)
-    return gaps[i] ? slotAngle(cs + 1) : slotAngle(cs + 0.5)
+    return ((i + 0.5) / N) * 2 * Math.PI - Math.PI / 2
   }
 
   return (
@@ -105,7 +92,7 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
 
       {/* Crystal beads */}
       {sequence.map((name, i) => {
-        const a  = slotAngle(crystalSlot(i))
+        const a  = crystalAngle(i)
         const cx = Number((50 + RADIUS_PCT * Math.cos(a)).toFixed(4))
         const cy = Number((50 + RADIUS_PCT * Math.sin(a)).toFixed(4))
         const urls = imageMap[name] ?? []
