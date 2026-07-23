@@ -1,5 +1,5 @@
 const RADIUS_PCT   = 28
-const SPACER_RATIO = 0.38
+const SPACER_RATIO = 0.25
 
 type Props = {
   sequence: string[]
