@@ -1,7 +1,3 @@
-// Spacers sit at midpoints between equidistant crystal beads at 38% of crystal size.
-// Crystals stay full touching size — spacers overlap slightly with adjacent crystals
-// and are revealed by z-index (spacers z:1, crystals z:2), matching the design page.
-
 const RADIUS_PCT   = 28
 const SPACER_RATIO = 0.38
 
@@ -18,21 +14,40 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
   const N = sequence.length
   if (N === 0) return <div className={className} style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#F5F0EB', borderRadius: 20 }} />
 
-  const gaps = spacerGaps ?? []
-  const hasSpacers = gaps.some(Boolean)
+  const gaps         = spacerGaps ?? []
+  const spacerCount  = gaps.filter(Boolean).length
+  const hasSpacers   = spacerCount > 0
+  const inPlacement  = !!selectedSpacerName
 
-  // Shrink crystals slightly when spacers are placed so the spacer beads are visible.
-  // Without shrink, touching crystals cover the spacers entirely.
-  const crystalFill = (hasSpacers || !!selectedSpacerName) ? 0.85 : 1.0
+  // Crystal SIZE is always 85% of the N-based arc when spacers are active.
+  // This creates visible gaps around the spacers and is the look the user approved.
+  const crystalFill = (hasSpacers || inPlacement) ? 0.85 : 1.0
   const CRYSTAL_PCT = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N) * crystalFill).toFixed(4))
   const SPACER_PCT  = Number((CRYSTAL_PCT * SPACER_RATIO).toFixed(4))
 
-  function crystalAngle(i: number) {
-    return (i / N) * 2 * Math.PI - Math.PI / 2
+  // POSITION model switches based on placement mode:
+  //   - In placement mode → equidistant (N slots), uniform gaps so all hint circles look the same
+  //   - After Done placing → variable slots (N+K), non-spaced crystals move together, spaced apart
+  const totalSlots = inPlacement ? N : N + spacerCount
+
+  function crystalSlot(i: number): number {
+    if (inPlacement) return i
+    return i + gaps.slice(0, i).filter(Boolean).length
   }
-  // Midpoint between crystal i and i+1
-  function midAngle(i: number) {
-    return ((i + 0.5) / N) * 2 * Math.PI - Math.PI / 2
+
+  function slotAngle(slot: number): number {
+    return (slot / totalSlots) * 2 * Math.PI - Math.PI / 2
+  }
+
+  // Spacer / hint circle position:
+  //   - In placement: midpoint between equidistant crystals i and i+1 → slot i+0.5 of N
+  //   - After done: placed spacer at its own slot; hints still at midpoint of flanking crystals
+  function gapAngle(i: number): number {
+    if (inPlacement) {
+      return ((i + 0.5) / N) * 2 * Math.PI - Math.PI / 2
+    }
+    const cs = crystalSlot(i)
+    return gaps[i] ? slotAngle(cs + 1) : slotAngle(cs + 0.5)
   }
 
   return (
@@ -53,15 +68,15 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
           stroke="rgba(140,100,60,0.18)" strokeWidth="0.6" strokeDasharray="2.5 2" />
       </svg>
 
-      {/* Spacer gaps — at midpoints between crystals, below crystals in z-order */}
+      {/* Spacer gaps — below crystals */}
       {gaps.map((gap, i) => {
-        const a  = midAngle(i)
+        const a  = gapAngle(i)
         const cx = Number((50 + RADIUS_PCT * Math.cos(a)).toFixed(4))
         const cy = Number((50 + RADIUS_PCT * Math.sin(a)).toFixed(4))
-        const urls   = gap ? (imageMap[gap] ?? []) : []
-        const url    = urls.length ? urls[i % urls.length] : null
-        const active = !!onGapClick && (!!gap || !!selectedSpacerName)
-        const visible = !!gap || !!selectedSpacerName
+        const urls    = gap ? (imageMap[gap] ?? []) : []
+        const url     = urls.length ? urls[i % urls.length] : null
+        const active  = !!onGapClick && (!!gap || inPlacement)
+        const visible = !!gap || inPlacement
         return (
           <div
             key={`g${i}`}
@@ -75,10 +90,10 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
               borderRadius: '50%', overflow: 'hidden',
               background: gap ? '#C8B89A' : 'transparent',
               cursor: active ? 'pointer' : 'default',
-              border: !gap && selectedSpacerName ? '0.5px dashed rgba(176,139,87,0.7)' : 'none',
+              border: !gap && inPlacement ? '0.5px dashed rgba(176,139,87,0.7)' : 'none',
               boxShadow: gap ? '0 1px 3px rgba(50,30,10,0.30)' : undefined,
               opacity: visible ? 1 : 0,
-              transition: 'opacity 0.2s',
+              transition: 'opacity 0.2s, left 0.4s, top 0.4s',
               zIndex: 1,
             }}
           >
@@ -88,9 +103,9 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
         )
       })}
 
-      {/* Crystal beads — full size, equidistant */}
+      {/* Crystal beads */}
       {sequence.map((name, i) => {
-        const a  = crystalAngle(i)
+        const a  = slotAngle(crystalSlot(i))
         const cx = Number((50 + RADIUS_PCT * Math.cos(a)).toFixed(4))
         const cy = Number((50 + RADIUS_PCT * Math.sin(a)).toFixed(4))
         const urls = imageMap[name] ?? []
@@ -107,6 +122,7 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
               borderRadius: '50%', overflow: 'hidden',
               background: '#F5F0EB',
               boxShadow: '0 1px 4px rgba(50,30,10,0.22)',
+              transition: 'left 0.4s, top 0.4s, width 0.4s, height 0.4s',
               zIndex: 2,
             }}
           >
