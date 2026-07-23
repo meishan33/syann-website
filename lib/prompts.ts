@@ -70,7 +70,7 @@ EXPLANATION TONE:
 Return ONLY valid JSON in this exact structure:
 {
   "selectedCrystals": ["Name1", "Name2", "Name3"],
-  "analysisSummary": "One paragraph (2–3 sentences): acknowledge the customer's current feelings and energy with warmth and empathy, then explain what energetic shift this bracelet will bring them — make them feel truly seen. Reference their specific intention and feelings; never write something generic that could apply to anyone. If feelings or intention were not shared, open with what their elemental profile reveals instead.\\n\\n• Short key benefit point 1\\n• Short key benefit point 2\\n• Short key benefit point 3",
+  "analysisSummary": "Paragraph 1 (3–4 sentences): open by addressing the customer warmly. Acknowledge their current feelings and emotional state with genuine empathy — make them feel truly seen and understood. Then reveal what their elemental profile shows about their energy right now, referencing their weak and strong elements in plain language.\\n\\nParagraph 2 (3–4 sentences): explain the energetic shift this bracelet is designed to bring. Describe how the three selected crystals work together as a system — how their combined energy will gently realign, support, and uplift the customer. Connect this back to their specific intention and how wearing this bracelet will help them move toward it.\\n\\n• Crystal 1 key benefit for this specific customer\\n• Crystal 2 key benefit for this specific customer\\n• Crystal 3 key benefit for this specific customer",
   "crystalExplanations": {
     "Name1": "Why this crystal for them specifically (2–3 sentences)",
     "Name2": "...",
