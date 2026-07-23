@@ -103,7 +103,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
       <div className="flex flex-col gap-3">
 
         {/* ANALYSIS */}
-        <div>
+        <div className="rounded-2xl bg-[#F8F4EF] px-4 py-4">
           <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#4A3A32]" style={BODY}>
             Your Elemental Analysis
           </p>
