@@ -64,7 +64,7 @@ export default function DesignPage() {
   // One gap per adjacent bead pair (gap[i] = spacer between bead i and bead i+1)
   const [spacerGaps, setSpacerGaps]           = useState<(string | null)[]>(Array(calcN(16.0)).fill(null))
   const [selectedSpacerName, setSelectedSpacerName] = useState<string | null>(null)
-  const [activeSlot, setActiveSlot]           = useState<number>(0)
+  const [activeSlot, setActiveSlot]           = useState<number | null>(0)
   const [includeCharm, setIncludeCharm]       = useState(true)
   const [notes, setNotes]                     = useState('')
   const [saving, setSaving]                   = useState(false)
@@ -105,10 +105,15 @@ export default function DesignPage() {
       if (prev.length < N) return [...prev, ...Array(N - prev.length).fill(null)]
       return prev.slice(0, N)
     })
-    setActiveSlot(prev => Math.min(prev, N - 1))
+    setActiveSlot(prev => prev === null ? null : Math.min(prev, N - 1))
   }, [N])
 
   const filledCount    = beads.filter(Boolean).length
+
+  // Auto-deselect when all slots are filled — removes the × from the last bead
+  useEffect(() => {
+    if (filledCount === N) setActiveSlot(null)
+  }, [filledCount, N])
   const spacerCount    = spacerGaps.filter(Boolean).length
   const uniqueCrystals = [...new Set(beads.filter(Boolean) as string[])]
   const crystalMap     = Object.fromEntries(crystals.map(c => [c.name, c]))
@@ -124,9 +129,11 @@ export default function DesignPage() {
     : ('exclude' as const)
 
   function handleBeadClick(i: number) {
-    setSelectedSpacerName(null)  // exit spacer placement mode
+    setSelectedSpacerName(null)
     if (activeSlot === i && beads[i]) {
+      // Second tap on the active filled slot → clear the bead
       const next = [...beads]; next[i] = null; setBeads(next)
+      setActiveSlot(i)
     } else {
       setActiveSlot(i)
     }
@@ -147,14 +154,16 @@ export default function DesignPage() {
   }
 
   function assignCrystal(name: string) {
-    setSelectedSpacerName(null)  // exit spacer placement mode
+    setSelectedSpacerName(null)
+    const slot = activeSlot ?? 0  // default to slot 0 if none active
     const next = [...beads]
-    next[activeSlot] = name
+    next[slot] = name
     setBeads(next)
     for (let k = 1; k <= N; k++) {
-      const idx = (activeSlot + k) % N
+      const idx = (slot + k) % N
       if (!next[idx]) { setActiveSlot(idx); return }
     }
+    setActiveSlot(null)  // all filled — clear selection
   }
 
   async function saveDesign() {
@@ -243,7 +252,7 @@ export default function DesignPage() {
                   </svg>
                   {/* Crystal bead slots — always BEAD_R, crystals only */}
                   {beads.map((bead, i) => {
-                    const isActive = activeSlot === i && !selectedSpacerName
+                    const isActive = activeSlot !== null && activeSlot === i && !selectedSpacerName
                     const { left, top } = slotPos(i, N, BEAD_R)
                     const img = bead ? crystalMap[bead]?.bead_image_url : null
                     return (
@@ -325,13 +334,15 @@ export default function DesignPage() {
                 <p className="text-[11px] text-[#9A8573] mt-1">
                   {selectedSpacerName
                     ? `Tap a gap between beads to place ${selectedSpacerName.replace(' Spacer', '')} spacer`
+                    : activeSlot === null
+                    ? filledCount === N ? 'All beads placed — tap any bead to replace or clear it' : 'Tap a bead slot to select it'
                     : beads[activeSlot]
-                    ? `Slot ${activeSlot + 1} — tap again to clear`
+                    ? `Slot ${activeSlot + 1} selected — tap again to clear`
                     : `Slot ${activeSlot + 1} active — pick a crystal below →`}
                 </p>
                 {(filledCount > 0 || spacerCount > 0) && (
                   <button
-                    onClick={() => { setBeads(Array(N).fill(null)); setSpacerGaps(Array(N).fill(null)); setActiveSlot(0); setSelectedSpacerName(null); setAddedToCart(false); setSaveError(null) }}
+                    onClick={() => { setBeads(Array(N).fill(null)); setSpacerGaps(Array(N).fill(null)); setActiveSlot(0); setSelectedSpacerName(null); setAddedToCart(false); setSaveError(null); }}
                     style={BODY}
                     className="mt-2 text-[10px] uppercase tracking-[0.1em] text-[#C5B8AD] underline underline-offset-2 bg-transparent border-none cursor-pointer"
                   >

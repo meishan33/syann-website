@@ -1,6 +1,6 @@
 const RADIUS_PCT   = 28
-const SPACER_RATIO = 0.38
-const CRYSTAL_FILL = 0.90
+const SPACER_RATIO = 0.38  // spacer diameter as fraction of crystal diameter
+const CRYSTAL_FILL = 0.96  // crystals fill 96% of their arc slot (tiny gap between touching beads)
 
 type Props = {
   sequence: string[]
@@ -13,12 +13,27 @@ type Props = {
 
 export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerName, onGapClick, imageMap, className }: Props) {
   const N = sequence.length
-  const hasAnySpacerContext = !!(spacerGaps?.some(Boolean) || selectedSpacerName)
+  if (N === 0) return <div className={className} style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#F5F0EB', borderRadius: 20 }} />
 
-  const CRYSTAL_PCT = N > 0
-    ? Number((2 * RADIUS_PCT * Math.sin(Math.PI / N) * (hasAnySpacerContext ? CRYSTAL_FILL : 1)).toFixed(4))
-    : 0
-  const SPACER_PCT = Number((CRYSTAL_PCT * SPACER_RATIO).toFixed(4))
+  const gaps = spacerGaps ?? []
+  const spacerCount = gaps.filter(Boolean).length
+
+  // Angular slot model: each crystal + each placed spacer gets one equal slot.
+  // Adjacent crystals with no spacer between them share adjacent slots → they touch.
+  // A placed spacer sits in its own slot between the flanking crystals.
+  const totalSlots = N + spacerCount
+  const slotArc = 2 * RADIUS_PCT * Math.sin(Math.PI / totalSlots)
+  const CRYSTAL_PCT = Number((slotArc * CRYSTAL_FILL).toFixed(4))
+  const SPACER_PCT  = Number((CRYSTAL_PCT * SPACER_RATIO).toFixed(4))
+
+  // Crystal i's slot index = i + number of spacers in gaps 0..i-1
+  function crystalSlot(i: number) {
+    return i + gaps.slice(0, i).filter(Boolean).length
+  }
+
+  function slotAngle(slot: number) {
+    return (slot / totalSlots) * 2 * Math.PI - Math.PI / 2
+  }
 
   return (
     <div
@@ -38,19 +53,22 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
           stroke="rgba(140,100,60,0.18)" strokeWidth="0.6" strokeDasharray="2.5 2" />
       </svg>
 
-      {/* Gap circles — below crystals */}
-      {spacerGaps && spacerGaps.map((gap, i) => {
-        const angle  = (i / N) * 2 * Math.PI - Math.PI / 2
-        const mid    = angle + Math.PI / N
-        const cx     = Number((50 + RADIUS_PCT * Math.cos(mid)).toFixed(4))
-        const cy     = Number((50 + RADIUS_PCT * Math.sin(mid)).toFixed(4))
-        const urls   = gap ? (imageMap[gap] ?? []) : []
-        const url    = urls.length ? urls[i % urls.length] : null
+      {/* Gap circles (placed spacers + placement-mode hints) — rendered below crystals */}
+      {gaps.map((gap, i) => {
+        const cs = crystalSlot(i)
+        // Placed spacer occupies slot cs+1; empty gap hint sits at midpoint cs+0.5
+        const slot = gap ? cs + 1 : cs + 0.5
+        const angle = slotAngle(slot)
+        const cx = Number((50 + RADIUS_PCT * Math.cos(angle)).toFixed(4))
+        const cy = Number((50 + RADIUS_PCT * Math.sin(angle)).toFixed(4))
+        const urls  = gap ? (imageMap[gap] ?? []) : []
+        const url   = urls.length ? urls[i % urls.length] : null
         const active = !!onGapClick && (!!gap || !!selectedSpacerName)
+        const visible = !!gap || !!selectedSpacerName
         return (
           <div
             key={`g${i}`}
-            onClick={active ? () => onGapClick(i) : undefined}
+            onClick={active ? () => onGapClick!(i) : undefined}
             title={gap ? `${gap} — tap to remove` : selectedSpacerName ? `Place ${selectedSpacerName} here` : undefined}
             style={{
               position: 'absolute',
@@ -62,7 +80,7 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
               cursor: active ? 'pointer' : 'default',
               border: !gap && selectedSpacerName ? '0.5px dashed rgba(176,139,87,0.7)' : 'none',
               boxShadow: gap ? '0 1px 3px rgba(50,30,10,0.30)' : undefined,
-              opacity: (!!gap || !!selectedSpacerName) ? 1 : 0,
+              opacity: visible ? 1 : 0,
               transition: 'opacity 0.2s',
               zIndex: 1,
             }}
@@ -75,11 +93,11 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
 
       {/* Crystal beads */}
       {sequence.map((name, i) => {
-        const angle = (i / N) * 2 * Math.PI - Math.PI / 2
-        const cx    = Number((50 + RADIUS_PCT * Math.cos(angle)).toFixed(4))
-        const cy    = Number((50 + RADIUS_PCT * Math.sin(angle)).toFixed(4))
-        const urls  = imageMap[name] ?? []
-        const url   = urls.length ? urls[i % urls.length] : null
+        const angle = slotAngle(crystalSlot(i))
+        const cx = Number((50 + RADIUS_PCT * Math.cos(angle)).toFixed(4))
+        const cy = Number((50 + RADIUS_PCT * Math.sin(angle)).toFixed(4))
+        const urls = imageMap[name] ?? []
+        const url  = urls.length ? urls[i % urls.length] : null
         return (
           <div
             key={`c${i}`}
