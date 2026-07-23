@@ -62,17 +62,10 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
   const [remark, setRemark] = useState<string>('')
   const [measureOpen, setMeasureOpen] = useState(false)
   const [packagingOpen, setPackagingOpen] = useState(false)
-  const [analysisOpen, setAnalysisOpen] = useState(true)
   const [loading, setLoading] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
-  const measureRef  = useFocusTrap(measureOpen)
+  const measureRef = useFocusTrap(measureOpen)
   const packagingRef = useFocusTrap(packagingOpen)
-  const analysisRef = useFocusTrap(analysisOpen)
-
-  const [paragraph, bulletBlock] = analysisSummary.split('\n\n')
-  const bullets = bulletBlock
-    ? bulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
-    : []
 
   async function generateWristImage(): Promise<string | null> {
     try {
@@ -109,21 +102,46 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
     <>
       <div className="flex flex-col gap-3">
 
-        {/* ANALYSIS TRIGGER */}
-        <button
-          type="button"
-          onClick={() => setAnalysisOpen(true)}
-          className="flex items-center justify-between w-full rounded-2xl border border-[#E5DDD5] bg-[#F8F4EF] px-4 py-3.5 text-left transition-colors hover:border-[#B08B57]"
-          style={BODY}
-        >
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#B08B57] mb-0.5">Your Elemental Analysis</p>
-            <p className="text-[12px] text-[#9A8573]">
-              {userName ? `Curated for ${userName}` : 'View your personalised reading'}
-            </p>
-          </div>
-          <span className="text-[#B08B57] text-lg leading-none ml-3">✦</span>
-        </button>
+        {/* ANALYSIS */}
+        <div>
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#4A3A32]" style={BODY}>
+            Your Elemental Analysis
+          </p>
+          {(() => {
+            const [paragraph, bulletBlock] = analysisSummary.split('\n\n')
+            const bullets = bulletBlock
+              ? bulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
+              : []
+            return (
+              <>
+                <p className="text-[12px] leading-[1.8] text-[#7A5B45] mb-3" style={BODY}>
+                  {userName && paragraph.startsWith(userName)
+                    ? <>Dear <strong className="font-semibold text-[#4A3A32]">{userName}</strong>{paragraph.slice(userName.length)}</>
+                    : paragraph}
+                </p>
+                {bullets.length > 0 && (
+                  <div className="flex flex-col gap-2 mt-1">
+                    {bullets.map((point, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="mt-[5px] shrink-0 text-[#B08B57]">
+                          <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
+                        </span>
+                        <p className="text-[12px] leading-[1.8] text-[#7A5B45] m-0" style={BODY}>
+                          {(() => {
+                            const match = crystalNames.find(n => point.startsWith(n))
+                            return match
+                              ? <><strong className="font-semibold text-[#4A3A32]">{match}</strong>{point.slice(match.length)}</>
+                              : point
+                          })()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )
+          })()}
+        </div>
 
         <div className="h-px bg-[#E5DDD5]" />
 
@@ -407,69 +425,6 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
               style={BODY}
             >
               Got It
-            </button>
-
-          </div>
-        </div>
-      )}
-
-      {/* ELEMENTAL ANALYSIS MODAL */}
-      {analysisOpen && (
-        <div
-          ref={analysisRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Your Elemental Analysis"
-          className="fixed inset-0 z-50 flex items-center justify-center p-5"
-        >
-          <div className="absolute inset-0 bg-[#2E2118]/50 backdrop-blur-sm" onClick={() => setAnalysisOpen(false)} />
-          <div className="relative w-full max-w-lg rounded-[28px] bg-[#FBF6EE] p-8 shadow-[0_40px_100px_-30px_rgba(74,58,50,0.5)] max-h-[90vh] overflow-y-auto">
-
-            <button
-              onClick={() => setAnalysisOpen(false)}
-              aria-label="Close"
-              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full text-[#9A8573] transition-colors hover:bg-[#E5DDD5] hover:text-[#4A3A32]"
-            >✕</button>
-
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.32em] text-[#B08B57]" style={BODY}>
-              Your Elemental Analysis
-            </p>
-            <h3 style={SERIF} className="mb-6 text-2xl font-light text-[#4A3A32]">
-              {userName ? `Designed for ${userName}` : 'Your Personalised Reading'}
-            </h3>
-
-            <p className="text-[13.5px] leading-[1.85] text-[#7A5B45] mb-5" style={BODY}>
-              {userName && paragraph.startsWith(userName)
-                ? <>Dear <strong className="font-semibold text-[#4A3A32]">{userName}</strong>{paragraph.slice(userName.length)}</>
-                : paragraph}
-            </p>
-
-            {bullets.length > 0 && (
-              <div className="flex flex-col gap-3 border-t border-[#E5DDD5] pt-5">
-                {bullets.map((point, i) => {
-                  const match = crystalNames.find(n => point.startsWith(n))
-                  return (
-                    <div key={i} className="flex items-start gap-3">
-                      <span className="mt-[6px] shrink-0 text-[#B08B57]">
-                        <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
-                      </span>
-                      <p className="text-[13px] leading-[1.8] text-[#7A5B45] m-0" style={BODY}>
-                        {match
-                          ? <><strong className="font-semibold text-[#4A3A32]">{match}</strong>{point.slice(match.length)}</>
-                          : point}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            <button
-              onClick={() => setAnalysisOpen(false)}
-              className="mt-7 w-full rounded-full border border-[#B08B57] bg-[#B08B57] py-3 text-[12px] font-medium uppercase tracking-[0.28em] text-white transition-colors hover:bg-[#7A5B45] hover:border-[#7A5B45]"
-              style={BODY}
-            >
-              View My Bracelet
             </button>
 
           </div>
