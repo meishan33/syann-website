@@ -1,10 +1,9 @@
-// Variable-slot layout: each placed spacer gets its own angular slot between
-// the flanking crystals. Crystal SIZE stays fixed (based on N), so adjacent
-// crystals without a spacer overlap slightly → look touching. Crystals
-// flanking a spacer have a small natural gap where the spacer bead sits.
+// Spacers sit at midpoints between equidistant crystal beads at 38% of crystal size.
+// Crystals stay full touching size — spacers overlap slightly with adjacent crystals
+// and are revealed by z-index (spacers z:1, crystals z:2), matching the design page.
 
 const RADIUS_PCT   = 28
-const SPACER_RATIO = 0.50  // spacer diameter as fraction of crystal diameter
+const SPACER_RATIO = 0.38
 
 type Props = {
   sequence: string[]
@@ -20,22 +19,20 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
   if (N === 0) return <div className={className} style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#F5F0EB', borderRadius: 20 }} />
 
   const gaps = spacerGaps ?? []
-  const spacerCount = gaps.filter(Boolean).length
+  const hasSpacers = gaps.some(Boolean)
 
-  // Total slots = N crystals + K placed spacers.
-  // Crystal SIZE is always based on N so crystals don't shrink as spacers are added.
-  // Adjacent crystals (1 slot apart, no spacer) → slightly overlap → look touching.
-  // Crystal flanking a spacer (1 slot apart) → small visible gap around the spacer.
-  const totalSlots  = N + spacerCount
-  const CRYSTAL_PCT = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N)).toFixed(4))
+  // Shrink crystals slightly when spacers are placed so the spacer beads are visible.
+  // Without shrink, touching crystals cover the spacers entirely.
+  const crystalFill = (hasSpacers || !!selectedSpacerName) ? 0.85 : 1.0
+  const CRYSTAL_PCT = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N) * crystalFill).toFixed(4))
   const SPACER_PCT  = Number((CRYSTAL_PCT * SPACER_RATIO).toFixed(4))
 
-  // Crystal i occupies slot: i + (spacers placed in gaps 0..i-1)
-  function crystalSlot(i: number) {
-    return i + gaps.slice(0, i).filter(Boolean).length
+  function crystalAngle(i: number) {
+    return (i / N) * 2 * Math.PI - Math.PI / 2
   }
-  function slotAngle(slot: number) {
-    return (slot / totalSlots) * 2 * Math.PI - Math.PI / 2
+  // Midpoint between crystal i and i+1
+  function midAngle(i: number) {
+    return ((i + 0.5) / N) * 2 * Math.PI - Math.PI / 2
   }
 
   return (
@@ -56,17 +53,14 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
           stroke="rgba(140,100,60,0.18)" strokeWidth="0.6" strokeDasharray="2.5 2" />
       </svg>
 
-      {/* Spacer gaps — below crystals in z-order */}
+      {/* Spacer gaps — at midpoints between crystals, below crystals in z-order */}
       {gaps.map((gap, i) => {
-        const cs    = crystalSlot(i)
-        // Placed spacer at slot cs+1; empty gap hint at midpoint cs+0.5
-        const slot  = gap ? cs + 1 : cs + 0.5
-        const a     = slotAngle(slot)
-        const cx    = Number((50 + RADIUS_PCT * Math.cos(a)).toFixed(4))
-        const cy    = Number((50 + RADIUS_PCT * Math.sin(a)).toFixed(4))
-        const urls  = gap ? (imageMap[gap] ?? []) : []
-        const url   = urls.length ? urls[i % urls.length] : null
-        const active  = !!onGapClick && (!!gap || !!selectedSpacerName)
+        const a  = midAngle(i)
+        const cx = Number((50 + RADIUS_PCT * Math.cos(a)).toFixed(4))
+        const cy = Number((50 + RADIUS_PCT * Math.sin(a)).toFixed(4))
+        const urls   = gap ? (imageMap[gap] ?? []) : []
+        const url    = urls.length ? urls[i % urls.length] : null
+        const active = !!onGapClick && (!!gap || !!selectedSpacerName)
         const visible = !!gap || !!selectedSpacerName
         return (
           <div
@@ -94,9 +88,9 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
         )
       })}
 
-      {/* Crystal beads — size based on N, positions based on N+K slots */}
+      {/* Crystal beads — full size, equidistant */}
       {sequence.map((name, i) => {
-        const a  = slotAngle(crystalSlot(i))
+        const a  = crystalAngle(i)
         const cx = Number((50 + RADIUS_PCT * Math.cos(a)).toFixed(4))
         const cy = Number((50 + RADIUS_PCT * Math.sin(a)).toFixed(4))
         const urls = imageMap[name] ?? []
