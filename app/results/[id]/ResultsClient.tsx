@@ -49,10 +49,13 @@ export default function ResultsClient({
   }, [N])
 
   function handleGapClick(idx: number) {
-    if (!selectedSpacer) return
     setSpacerGaps(prev => {
       const next = [...prev]
-      next[idx] = next[idx] ? null : selectedSpacer
+      if (next[idx]) {
+        next[idx] = null           // always allow removing a placed spacer
+      } else if (selectedSpacer) {
+        next[idx] = selectedSpacer // place only when in placement mode
+      }
       return next
     })
   }

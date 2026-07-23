@@ -46,7 +46,7 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
         const cy     = Number((50 + RADIUS_PCT * Math.sin(mid)).toFixed(4))
         const urls   = gap ? (imageMap[gap] ?? []) : []
         const url    = urls.length ? urls[i % urls.length] : null
-        const active = !!onGapClick && (!!selectedSpacerName || !!gap)
+        const active = !!onGapClick && (!!gap || !!selectedSpacerName)
         return (
           <div
             key={`g${i}`}

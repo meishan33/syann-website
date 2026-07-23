@@ -156,16 +156,26 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573' }}>Spacer</span>
-                {spacerCount > 0 && (
-                  <button type="button" onClick={onClearSpacers}
-                    style={{ ...BODY, fontSize: 9, color: '#B0A090', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0, letterSpacing: '0.06em' }}>
-                    Clear {spacerCount} spacer{spacerCount > 1 ? 's' : ''}
-                  </button>
-                )}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  {selectedSpacer && (
+                    <button type="button" onClick={() => onSpacerChange(null)}
+                      style={{ ...BODY, fontSize: 9, color: GOLD, background: 'none', border: `1px solid ${GOLD}`, borderRadius: 999, cursor: 'pointer', padding: '2px 10px', letterSpacing: '0.08em' }}>
+                      Done placing
+                    </button>
+                  )}
+                  {spacerCount > 0 && (
+                    <button type="button" onClick={onClearSpacers}
+                      style={{ ...BODY, fontSize: 9, color: '#B0A090', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0, letterSpacing: '0.06em' }}>
+                      Clear all
+                    </button>
+                  )}
+                </div>
               </div>
               <p style={{ ...BODY, fontSize: 9, color: '#B0A090', margin: '0 0 8px', lineHeight: 1.5 }}>
                 {selectedSpacer
-                  ? `Tap between beads on the bracelet to place · tap here to deselect`
+                  ? `Tap the gaps between beads on the bracelet to place — tap a placed spacer to remove it`
+                  : spacerCount > 0
+                  ? `${spacerCount} spacer${spacerCount > 1 ? 's' : ''} placed — tap any to remove, or select a type to add more`
                   : 'Select a spacer type, then tap the gaps between beads'}
               </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
