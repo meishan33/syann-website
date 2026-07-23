@@ -102,6 +102,14 @@ export default function DesignPage() {
   const uniqueCrystals = [...new Set(beads.filter(Boolean) as string[])]
   const crystalMap     = Object.fromEntries(crystals.map(c => [c.name, c]))
 
+  const spacerOptions  = crystals.filter(c => c.name.toLowerCase().includes('spacer'))
+  const crystalOptions = crystals.filter(c => !c.name.toLowerCase().includes('spacer'))
+
+  function isSpacerBead(name: string | null): boolean {
+    return name?.toLowerCase().includes('spacer') ?? false
+  }
+  const SPACER_R = Math.round(BEAD_R * 0.40)
+
   function handleBeadClick(i: number) {
     if (activeSlot === i && beads[i]) {
       const next = [...beads]; next[i] = null; setBeads(next)
@@ -205,8 +213,11 @@ export default function DesignPage() {
                     <text x={CX} y={CX + 6} textAnchor="middle" fontFamily="'Montserrat', Arial, sans-serif" fontSize="3.5" fontWeight="500" letterSpacing="1.8" fill="rgba(74,46,20,0.35)">CRYSTALS · ENERGY · YOU</text>
                   </svg>
                   {beads.map((bead, i) => {
-                    const { left, top } = slotPos(i, N, BEAD_R)
                     const isActive = activeSlot === i
+                    const isSpacer = isSpacerBead(bead)
+                    // Spacer beads render smaller; empty slots always full-size for easy clicking
+                    const R = bead && isSpacer ? SPACER_R : BEAD_R
+                    const { left, top } = slotPos(i, N, R)
                     const img = bead ? crystalMap[bead]?.bead_image_url : null
                     return (
                       <div
@@ -215,22 +226,22 @@ export default function DesignPage() {
                         title={bead ? `Slot ${i + 1}: ${bead} — tap to clear` : `Slot ${i + 1}`}
                         style={{
                           position: 'absolute', left, top,
-                          width: BEAD_R * 2, height: BEAD_R * 2,
+                          width: R * 2, height: R * 2,
                           borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
                           background: bead ? '#D8CCB8' : '#EDE6DD',
-                          border: isActive && filledCount < N ? `2px solid ${GOLD}` : bead ? 'none' : '1.5px dashed rgba(140,100,60,0.3)',
-                          boxShadow: isActive && filledCount < N ? `0 0 0 3px ${GOLD}44` : undefined,
+                          border: isActive && !bead ? `2px solid ${GOLD}` : bead ? (isSpacer ? '1px solid rgba(140,100,60,0.25)' : 'none') : '1.5px dashed rgba(140,100,60,0.3)',
+                          boxShadow: isActive && !bead ? `0 0 0 3px ${GOLD}44` : isSpacer ? '0 1px 3px rgba(50,30,10,0.30)' : bead ? '0 1px 4px rgba(50,30,10,0.22)' : undefined,
                           transition: 'border 0.15s, box-shadow 0.15s',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          userSelect: 'none', zIndex: isActive ? 3 : 1,
+                          userSelect: 'none', zIndex: isActive ? 3 : isSpacer ? 1 : 2,
                         }}
                       >
                         {img && <Image src={img} alt={bead!} fill sizes="30px" style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }} />}
                         {bead && !img && <span style={{ fontSize: 7, color: GOLD, position: 'relative', zIndex: 1 }}>✦</span>}
                         {!bead && <span style={{ fontSize: 8, fontWeight: 700, color: isActive ? GOLD : 'rgba(140,100,60,0.3)', position: 'relative', zIndex: 1 }}>{i + 1}</span>}
-                        {isActive && bead && filledCount < N && (
+                        {isActive && bead && (
                           <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,33,24,0.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4 }}>
-                            <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, lineHeight: 1 }}>×</span>
+                            <span style={{ color: '#fff', fontSize: isSpacer ? 8 : 14, fontWeight: 700, lineHeight: 1 }}>×</span>
                           </div>
                         )}
                       </div>
@@ -243,12 +254,18 @@ export default function DesignPage() {
               <div className="mt-4 text-center" style={BODY}>
                 <p className="text-[13px] text-[#7A5B45]">
                   <strong style={{ color: filledCount === N ? GOLD : '#3D2B1F' }}>{filledCount}</strong>
-                  <span className="text-[#9A8573]"> / {N} beads filled</span>
+                  <span className="text-[#9A8573]"> / {N} beads</span>
+                  {(() => {
+                    const nSpacer = beads.filter(b => isSpacerBead(b)).length
+                    const nCrystal = filledCount - nSpacer
+                    if (!filledCount) return null
+                    return <span className="text-[#9A8573]"> · {nCrystal > 0 ? `${nCrystal} crystal${nCrystal > 1 ? 's' : ''}` : ''}{nCrystal > 0 && nSpacer > 0 ? ', ' : ''}{nSpacer > 0 ? `${nSpacer} spacer${nSpacer > 1 ? 's' : ''}` : ''}</span>
+                  })()}
                 </p>
                 <p className="text-[11px] text-[#9A8573] mt-1">
                   {beads[activeSlot]
-                    ? `Slot ${activeSlot + 1} selected — tap again to clear`
-                    : `Slot ${activeSlot + 1} active — pick a crystal on the right →`}
+                    ? `Slot ${activeSlot + 1} — tap again to clear`
+                    : `Slot ${activeSlot + 1} active — pick a crystal or spacer →`}
                 </p>
                 {filledCount > 0 && (
                   <button
@@ -295,9 +312,46 @@ export default function DesignPage() {
                   </p>
                 )}
 
+                {/* Spacer beads — shown separately, smaller thumbnails */}
+                {spacerOptions.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>Spacer Beads</p>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {spacerOptions.map(c => {
+                        const inUse = uniqueCrystals.includes(c.name)
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => assignCrystal(c.name)}
+                            title={c.name}
+                            style={{ ...BODY, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+                          >
+                            <div style={{
+                              width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: '#F0EBE4', position: 'relative', flexShrink: 0,
+                              border: `2px solid ${inUse ? GOLD : '#E5DDD5'}`,
+                              boxShadow: inUse ? `0 0 0 3px #F5E8D0` : 'none',
+                              transition: 'all 0.15s',
+                            }}>
+                              {c.bead_image_url
+                                ? <Image src={c.bead_image_url} alt={c.name} fill sizes="36px" style={{ objectFit: 'cover', transform: 'scale(2.2)', transformOrigin: 'center' }} />
+                                : <div style={{ width: '100%', height: '100%', background: '#DDD0C4' }} />
+                              }
+                            </div>
+                            <span style={{ ...BODY, fontSize: 8, color: inUse ? '#4A3A32' : '#9A8573', letterSpacing: '0.06em' }}>
+                              {c.name.replace(' Spacer', '')}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div style={{ height: 1, background: '#EDE8DF', margin: '10px 0 6px' }} />
+                    <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573', margin: '0 0 6px' }}>Crystals</p>
+                  </div>
+                )}
+
                 {/* Crystal grid — 4 columns */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7, maxHeight: 300, overflowY: 'auto', padding: '2px 1px' }}>
-                  {crystals.map(c => {
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7, maxHeight: 280, overflowY: 'auto', padding: '2px 1px' }}>
+                  {crystalOptions.map(c => {
                     const inUse = uniqueCrystals.includes(c.name)
                     return (
                       <button
