@@ -79,8 +79,8 @@ export default function ResultsClient({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8 lg:items-stretch">
 
-      {/* ── LEFT: BRACELET IMAGE (3/5) ── */}
-      <div className="lg:col-span-3 lg:h-full">
+      {/* ── LEFT: BRACELET IMAGE (2/5) ── */}
+      <div className="lg:col-span-2 lg:h-full">
         <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 lg:flex lg:flex-col lg:h-full">
 
           <div className="w-full lg:flex-1">
@@ -105,8 +105,8 @@ export default function ResultsClient({
         </div>
       </div>
 
-      {/* ── RIGHT: ANALYSIS + OPTIONS + PURCHASE (2/5) ── */}
-      <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-2">
+      {/* ── RIGHT: ANALYSIS + OPTIONS + PURCHASE (3/5) ── */}
+      <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-3">
         <PurchasePanel
           analysisSummary={analysisSummary}
           crystalNames={crystalNames}
