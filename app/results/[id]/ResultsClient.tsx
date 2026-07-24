@@ -93,52 +93,6 @@ export default function ResultsClient({
             />
           </div>
 
-          {/* ELEMENTAL ANALYSIS — inside left card, above caption */}
-          {analysisSummary && (() => {
-            const parts = analysisSummary.split('\n\n')
-            const bulletIdx = parts.findIndex(p => p.trim().startsWith('•'))
-            const paragraphs = bulletIdx === -1 ? parts : parts.slice(0, bulletIdx)
-            const bulletBlock = bulletIdx === -1 ? '' : parts[bulletIdx]
-            const bullets = bulletBlock
-              ? bulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
-              : []
-            return (
-              <div className="rounded-2xl bg-[#F8F4EF] px-5 py-5" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#B08B57]">
-                  Your Elemental Analysis
-                </p>
-                <div className="flex flex-col gap-3">
-                  {paragraphs.map((para, i) => (
-                    <p key={i} className="text-[12px] leading-[1.85] text-[#7A5B45] m-0">
-                      {i === 0 && userName && para.startsWith(userName)
-                        ? <>Dear <strong className="font-semibold text-[#4A3A32]">{userName}</strong>{para.slice(userName.length)}</>
-                        : para}
-                    </p>
-                  ))}
-                  {bullets.length > 0 && (
-                    <div className="flex flex-col gap-2 mt-1">
-                      {bullets.map((point, i) => {
-                        const match = crystalNames.find(n => point.startsWith(n))
-                        return (
-                          <div key={i} className="flex items-start gap-2">
-                            <span className="mt-[5px] shrink-0 text-[#B08B57]">
-                              <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
-                            </span>
-                            <p className="text-[12px] leading-[1.8] text-[#7A5B45] m-0">
-                              {match
-                                ? <><strong className="font-semibold text-[#4A3A32]">{match}</strong>{point.slice(match.length)}</>
-                                : point}
-                            </p>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })()}
-
           <div className="px-2 text-center" style={{ fontFamily: "'Montserrat', sans-serif" }}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B08B57] mb-1">
               AI-curated · Five Elements · Handcrafted
@@ -154,7 +108,9 @@ export default function ResultsClient({
       {/* ── RIGHT: OPTIONS + PURCHASE (narrower) ── */}
       <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-2">
         <PurchasePanel
+          analysisSummary={analysisSummary}
           crystalNames={crystalNames}
+          userName={userName}
           resultId={resultId}
           imageUrl={cachedImageUrl}
           weakElement={weakElement}

@@ -34,7 +34,9 @@ type SpacerOption = {
 }
 
 type Props = {
+  analysisSummary: string
   crystalNames?: string[]
+  userName?: string | null
   resultId: string
   imageUrl?: string | null
   weakElement?: string | null
@@ -50,7 +52,7 @@ type Props = {
   onClearSpacers: () => void
 }
 
-export default function PurchasePanel({ crystalNames = [], resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence, spacers, spacerGaps, selectedSpacer, onSpacerChange, onClearSpacers }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence, spacers, spacerGaps, selectedSpacer, onSpacerChange, onClearSpacers }: Props) {
   const router = useRouter()
   const spacerCount = spacerGaps.filter(Boolean).length
   const spacerForOrder = spacerGaps.some(g => g?.toLowerCase().includes('gold')) ? 'gold'
@@ -99,6 +101,49 @@ export default function PurchasePanel({ crystalNames = [], resultId, imageUrl, w
   return (
     <>
       <div className="flex flex-col gap-3">
+
+        {/* ANALYSIS */}
+        <div className="rounded-2xl bg-[#F8F4EF] px-4 py-4">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#4A3A32]" style={BODY}>
+            Your Elemental Analysis
+          </p>
+          {(() => {
+            const [paragraph, bulletBlock] = analysisSummary.split('\n\n')
+            const bullets = bulletBlock
+              ? bulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
+              : []
+            return (
+              <>
+                <p className="text-[12px] leading-[1.8] text-[#7A5B45] mb-3" style={BODY}>
+                  {userName && paragraph.startsWith(userName)
+                    ? <>Dear <strong className="font-semibold text-[#4A3A32]">{userName}</strong>{paragraph.slice(userName.length)}</>
+                    : paragraph}
+                </p>
+                {bullets.length > 0 && (
+                  <div className="flex flex-col gap-2 mt-1">
+                    {bullets.map((point, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="mt-[5px] shrink-0 text-[#B08B57]">
+                          <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
+                        </span>
+                        <p className="text-[12px] leading-[1.8] text-[#7A5B45] m-0" style={BODY}>
+                          {(() => {
+                            const match = crystalNames.find(n => point.startsWith(n))
+                            return match
+                              ? <><strong className="font-semibold text-[#4A3A32]">{match}</strong>{point.slice(match.length)}</>
+                              : point
+                          })()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )
+          })()}
+        </div>
+
+        <div className="h-px bg-[#E5DDD5]" />
 
         {/* BRACELET OPTIONS */}
         <div className="flex flex-col gap-2.5">
