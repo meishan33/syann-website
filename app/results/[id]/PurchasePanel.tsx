@@ -36,6 +36,7 @@ type SpacerOption = {
 type Props = {
   analysisSummary: string
   crystalNames?: string[]
+  crystalImageMap?: Record<string, string>
   userName?: string | null
   resultId: string
   imageUrl?: string | null
@@ -52,7 +53,7 @@ type Props = {
   onClearSpacers: () => void
 }
 
-export default function PurchasePanel({ analysisSummary, crystalNames = [], userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence, spacers, spacerGaps, selectedSpacer, onSpacerChange, onClearSpacers }: Props) {
+export default function PurchasePanel({ analysisSummary, crystalNames = [], crystalImageMap = {}, userName, resultId, imageUrl, wristCm, onWristChange, beadCount, adjustedSequence, spacers, spacerGaps, selectedSpacer, onSpacerChange, onClearSpacers }: Props) {
   const router = useRouter()
   const spacerCount = spacerGaps.filter(Boolean).length
   const spacerForOrder = spacerGaps.some(g => g?.toLowerCase().includes('gold')) ? 'gold'
@@ -121,21 +122,23 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], user
                 </p>
                 {bullets.length > 0 && (
                   <div className="flex flex-col gap-2 mt-1">
-                    {bullets.map((point, i) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <span className="mt-[5px] shrink-0 text-[#B08B57]">
-                          <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
-                        </span>
-                        <p className="text-[12px] leading-[1.8] text-[#7A5B45] m-0" style={BODY}>
-                          {(() => {
-                            const match = crystalNames.find(n => point.startsWith(n))
-                            return match
+                    {bullets.map((point, i) => {
+                      const match = crystalNames.find(n => point.startsWith(n))
+                      const imgUrl = match ? crystalImageMap[match] : undefined
+                      return (
+                        <div key={i} className="flex items-start gap-2.5">
+                          {imgUrl
+                            ? <img src={imgUrl} alt={match} style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: 2, transform: 'scale(1)' }} />
+                            : <span className="mt-[5px] shrink-0 text-[#B08B57]"><svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg></span>
+                          }
+                          <p className="text-[12px] leading-[1.8] text-[#7A5B45] m-0" style={BODY}>
+                            {match
                               ? <><strong className="font-semibold text-[#4A3A32]">{match}</strong>{point.slice(match.length)}</>
-                              : point
-                          })()}
-                        </p>
-                      </div>
-                    ))}
+                              : point}
+                          </p>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </>

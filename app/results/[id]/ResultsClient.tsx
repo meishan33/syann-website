@@ -110,6 +110,7 @@ export default function ResultsClient({
         <PurchasePanel
           analysisSummary={analysisSummary}
           crystalNames={crystalNames}
+          crystalImageMap={Object.fromEntries(crystalNames.map(n => [n, imageMap[n]?.[0]]).filter((e): e is [string, string] => !!e[1]))}
           userName={userName}
           resultId={resultId}
           imageUrl={cachedImageUrl}
