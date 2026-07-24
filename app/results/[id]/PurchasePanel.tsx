@@ -99,7 +99,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
 
   return (
     <>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
 
         {/* ANALYSIS */}
         <div className="rounded-2xl bg-[#F8F4EF] px-4 py-4">
@@ -147,15 +147,15 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
         <div className="h-px bg-[#E5DDD5]" />
 
         {/* BRACELET OPTIONS */}
-        <div className="flex flex-col gap-2.5">
-          <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-[#4A3A32]" style={BODY}>
+        <div className="flex flex-col gap-2">
+          <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-[#9A8573]" style={BODY}>
             Bracelet Options
           </p>
 
           {/* Spacer */}
           {spacers.length > 0 && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#9A8573' }}>Spacer</span>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   {selectedSpacer && (
@@ -172,7 +172,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
                   )}
                 </div>
               </div>
-              <p style={{ ...BODY, fontSize: 9, color: '#B0A090', margin: '0 0 8px', lineHeight: 1.5 }}>
+              <p style={{ ...BODY, fontSize: 9, color: '#B0A090', margin: '0 0 6px', lineHeight: 1.5 }}>
                 {selectedSpacer
                   ? `Tap the gaps between beads on the bracelet to place — tap a placed spacer to remove it`
                   : spacerCount > 0
@@ -193,7 +193,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
                       style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
                       <div style={{
-                        width: 44, height: 44, borderRadius: '50%', overflow: 'hidden',
+                        width: 38, height: 38, borderRadius: '50%', overflow: 'hidden',
                         border: `2px solid ${isSelected ? GOLD : hasPlaced ? '#C8B89A' : '#E5DDD5'}`,
                         boxShadow: isSelected ? `0 0 0 3px #F5E8D0` : 'none',
                         background: '#F6F1EB', transition: 'all 0.15s',
@@ -242,7 +242,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
           </div>
 
           {/* Wrist Size */}
-          <div style={{ background: '#F8F4EF', borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ background: '#F8F4EF', borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: '#9A8573' }}>Wrist Size</span>
               <button type="button" onClick={() => setMeasureOpen(true)} style={{ ...BODY, fontSize: 10, color: GOLD, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}>
@@ -260,7 +260,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
                 value={wristCm}
                 min={12} max={22} step={0.5}
                 onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= 12 && v <= 22) onWristChange(v) }}
-                style={{ ...BODY, width: '100%', textAlign: 'center', fontSize: 18, fontWeight: 600, color: '#4A3A32', border: 'none', outline: 'none', background: 'transparent' }}
+                style={{ ...BODY, width: '100%', textAlign: 'center', fontSize: 16, fontWeight: 600, color: '#4A3A32', border: 'none', outline: 'none', background: 'transparent' }}
               />
               <span style={{ ...BODY, fontSize: 11, color: '#9A8573', flexShrink: 0 }}>cm</span>
               <button
@@ -285,21 +285,19 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
 
         </div>
 
-        <div className="h-px bg-[#E5DDD5]" />
-
         {/* REMARK */}
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.32em] text-[#4A3A32]" style={BODY}>
+          <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.32em] text-[#9A8573]" style={BODY}>
             Remarks
           </p>
           <textarea
             value={remark}
             onChange={(e) => setRemark(e.target.value)}
             placeholder="Any special requests or notes for your order?"
-            rows={2}
+            rows={1}
             maxLength={300}
             style={BODY}
-            className="w-full resize-none rounded-xl border border-[#E5DDD5] bg-transparent px-4 py-3 text-[12px] text-[#4A3A32] placeholder-[#C5B8AD] outline-none transition-colors focus:border-[#B08B57] leading-relaxed"
+            className="w-full resize-none rounded-xl border border-[#E5DDD5] bg-transparent px-3 py-2 text-[12px] text-[#4A3A32] placeholder-[#C5B8AD] outline-none transition-colors focus:border-[#B08B57] leading-relaxed"
           />
           {remark.length > 0 && (
             <p className="mt-1 text-right text-[10px] text-[#C5B8AD]" style={BODY}>
