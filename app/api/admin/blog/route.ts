@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { data, error } = await supabaseAdmin
     .from('blog_posts')
-    .select('id, title, slug, date, excerpt, content, status, created_at')
+    .select('id, title, slug, date, excerpt, content, cover_image_url, status, created_at')
     .order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
@@ -23,11 +23,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!await isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
-  const { title, slug, date, excerpt, content, status } = body
+  const { title, slug, date, excerpt, content, cover_image_url, status } = body
   if (!slug) return NextResponse.json({ error: 'slug is required' }, { status: 400 })
   const { data, error } = await supabaseAdmin
     .from('blog_posts')
-    .insert({ title: title ?? '', slug, date: date ?? new Date().toISOString().split('T')[0], excerpt: excerpt ?? '', content: content ?? '', status: status ?? 'draft' })
+    .insert({ title: title ?? '', slug, date: date ?? new Date().toISOString().split('T')[0], excerpt: excerpt ?? '', content: content ?? '', cover_image_url: cover_image_url ?? null, status: status ?? 'draft' })
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
