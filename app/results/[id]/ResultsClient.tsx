@@ -41,8 +41,7 @@ export default function ResultsClient({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-11 lg:gap-8 lg:items-start">
 
       {/* ── LEFT: BRACELET IMAGE + ANALYSIS ── */}
-      <div className="lg:col-span-6">
-        <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 flex flex-col gap-6">
+      <div className="overflow-hidden rounded-[28px] border border-[#E5DDD5] bg-white p-8 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.3)] sm:p-10 flex flex-col gap-6 lg:col-span-6">
 
           <div className="w-full">
             <BraceletRenderer
@@ -89,7 +88,6 @@ export default function ResultsClient({
           </div>
 
         </div>
-      </div>
 
       {/* ── RIGHT: OPTIONS + PURCHASE ── */}
       <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-5">
