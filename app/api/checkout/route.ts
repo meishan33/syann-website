@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, includeCharm, remark: rawRemark, email, userId, imageUrl, savedAddress } = await req.json()
+    const { resultId, includeCharm, remark: rawRemark, email, userId, imageUrl, savedAddress } = await req.json()
     const remark = (rawRemark || '').slice(0, 300)
 
     // Prevent buying the same bracelet design twice (e.g. user pays, goes back,
@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: 'SYANN Crystal Bracelet',
               description: [
-                `Spacer: ${spacer}`,
                 `Charm: ${includeCharm === false ? 'excluded' : 'included'}`,
                 remark && `Note: ${remark}`,
               ].filter(Boolean).join(' · '),
@@ -70,12 +69,12 @@ export async function POST(req: NextRequest) {
       // Only collect shipping if user didn't pick a saved address
       ...(!savedAddress ? { shipping_address_collection: { allowed_countries: ALL_SHIPPING_COUNTRIES } } : {}),
       metadata: {
-        resultId, spacer, includeCharm: String(includeCharm !== false),
+        resultId, includeCharm: String(includeCharm !== false),
         remark: remark || '', userId: userId || '',
         savedAddress: savedAddress ? JSON.stringify(savedAddress) : '',
       },
       success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/payment?result=${resultId}&spacer=${spacer}${remark ? `&remark=${encodeURIComponent(remark)}` : ''}`,
+      cancel_url: `${baseUrl}/payment?result=${resultId}${remark ? `&remark=${encodeURIComponent(remark)}` : ''}`,
     })
 
     return NextResponse.json({ url: session.url })

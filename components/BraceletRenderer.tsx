@@ -1,35 +1,20 @@
-const RADIUS_PCT   = 28
-const SPACER_RATIO = 0.32
+const RADIUS_PCT = 28
 
 type Props = {
   sequence: string[]
-  spacerGaps?: (string | null)[] | null
-  selectedSpacerName?: string | null
-  onGapClick?: (idx: number) => void
   imageMap: Record<string, string[]>
   className?: string
 }
 
-export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerName, onGapClick, imageMap, className }: Props) {
+export default function BraceletRenderer({ sequence, imageMap, className }: Props) {
   const N = sequence.length
   if (N === 0) return <div className={className} style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#F5F0EB', borderRadius: 20 }} />
 
-  const gaps        = spacerGaps ?? []
-  const hasSpacers  = gaps.some(Boolean)
-  const inPlacement = !!selectedSpacerName
-
-  const crystalFill = (hasSpacers || inPlacement) ? 0.85 : 1.0
-
   const ARC_PCT     = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N)).toFixed(4))
-  const CRYSTAL_PCT = Number((ARC_PCT * crystalFill).toFixed(4))
-  const SPACER_PCT  = Number((ARC_PCT * SPACER_RATIO).toFixed(4))
+  const CRYSTAL_PCT = Number((ARC_PCT * 1.0).toFixed(4))
 
   function crystalAngle(i: number): number {
     return (i / N) * 2 * Math.PI - Math.PI / 2
-  }
-
-  function gapAngle(i: number): number {
-    return ((i + 0.5) / N) * 2 * Math.PI - Math.PI / 2
   }
 
   return (
@@ -50,41 +35,6 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
           stroke="rgba(140,100,60,0.18)" strokeWidth="0.6" strokeDasharray="2.5 2" />
       </svg>
 
-      {/* Spacer gaps */}
-      {gaps.map((gap, i) => {
-        const a  = gapAngle(i)
-        const cx = Number((50 + RADIUS_PCT * Math.cos(a)).toFixed(4))
-        const cy = Number((50 + RADIUS_PCT * Math.sin(a)).toFixed(4))
-        const urls    = gap ? (imageMap[gap] ?? []) : []
-        const url     = urls.length ? urls[i % urls.length] : null
-        const active  = !!onGapClick && (!!gap || inPlacement)
-        const visible = !!gap || inPlacement
-        return (
-          <div
-            key={`g${i}`}
-            onClick={active ? () => onGapClick!(i) : undefined}
-            title={gap ? `${gap} — tap to remove` : selectedSpacerName ? `Place ${selectedSpacerName} here` : undefined}
-            style={{
-              position: 'absolute',
-              left: `${cx}%`, top: `${cy}%`,
-              width: `${SPACER_PCT}%`, height: `${SPACER_PCT}%`,
-              transform: 'translate(-50%, -50%)',
-              borderRadius: '50%', overflow: 'hidden',
-              background: gap ? '#C8B89A' : 'transparent',
-              cursor: active ? 'pointer' : 'default',
-              border: !gap && inPlacement ? '0.5px dashed rgba(176,139,87,0.7)' : 'none',
-              boxShadow: gap ? '0 1px 3px rgba(50,30,10,0.30)' : undefined,
-              opacity: visible ? 1 : 0,
-              transition: 'opacity 0.2s, left 0.4s, top 0.4s',
-              zIndex: 1,
-            }}
-          >
-            {url && <img src={url} alt={gap!} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(2.2)' }} />}
-            {!url && gap && <div style={{ width: '100%', height: '100%', background: '#DDD0C4' }} />}
-          </div>
-        )
-      })}
-
       {/* Crystal beads */}
       {sequence.map((name, i) => {
         const a  = crystalAngle(i)
@@ -104,7 +54,6 @@ export default function BraceletRenderer({ sequence, spacerGaps, selectedSpacerN
               borderRadius: '50%', overflow: 'hidden',
               background: '#F5F0EB',
               boxShadow: '0 1px 4px rgba(50,30,10,0.22)',
-              transition: 'left 0.4s, top 0.4s, width 0.4s, height 0.4s',
               zIndex: 2,
             }}
           >

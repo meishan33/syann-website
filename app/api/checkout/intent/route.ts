@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const { resultId, spacer, includeCharm, remark: rawRemark, email, userId, savedAddress } = await req.json()
+    const { resultId, includeCharm, remark: rawRemark, email, userId, savedAddress } = await req.json()
     const remark = (rawRemark || '').slice(0, 300)
 
     // Prevent buying the same bracelet design twice (e.g. user pays, goes back,
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       automatic_payment_methods: { enabled: true },
       metadata: {
         order_type: 'bracelet',
-        resultId, spacer, includeCharm: String(includeCharm !== false),
+        resultId, includeCharm: String(includeCharm !== false),
         remark: remark || '', userId: userId || '',
         baseAmountCents: String(PRICE_BASE_CENTS),
         savedAddress: savedAddress ? JSON.stringify(savedAddress) : '',

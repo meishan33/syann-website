@@ -165,7 +165,6 @@ export default function CartPage() {
         const b = selectedBracelets[0]
         const params = new URLSearchParams({
           result: b.resultId!,
-          spacer: b.spacer ?? 'silver',
           includeCharm: String(b.includeCharm !== false),
         })
         if (b.remark) params.set('remark', b.remark)
@@ -183,7 +182,6 @@ export default function CartPage() {
         body = {
           bracelets: selectedBracelets.map(b => ({
             resultId: b.resultId,
-            spacer: b.spacer ?? 'silver',
             includeCharm: b.includeCharm !== false,
             remark: b.remark ?? '',
           })),
@@ -266,7 +264,6 @@ export default function CartPage() {
                 <p style={{ ...SERIF, fontSize: 17, fontWeight: 300, color: '#3D2B1F', margin: '0 0 4px', lineHeight: 1.3 }}>{item.name}</p>
                 {item.type === 'bracelet' && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 12px' }}>
-                    {item.spacer && item.spacer !== 'exclude' && <span style={{ ...BODY, fontSize: 11, color: '#9A8573', textTransform: 'capitalize' }}>Spacer: {item.spacer}</span>}
                     <span style={{ ...BODY, fontSize: 11, color: '#9A8573' }}>Charm: {item.includeCharm !== false ? 'Included' : 'Excluded'}</span>
                     {item.remark && <span style={{ ...BODY, fontSize: 11, color: '#9A8573', width: '100%' }}>Note: {item.remark}</span>}
                   </div>

@@ -714,7 +714,7 @@ function AccountPageContent() {
                         </Link>
                         <button
                           onClick={() => {
-                            addBraceletToCart({ resultId: reading.id, spacer: 'silver', includeCharm: true, remark: '', imageUrl: reading.cached_image_url, crystalNames: reading.crystal_names ?? [] })
+                            addBraceletToCart({ resultId: reading.id, includeCharm: true, remark: '', imageUrl: reading.cached_image_url, crystalNames: reading.crystal_names ?? [] })
                             router.push('/shop/cart')
                           }}
                           style={{ ...BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, background: 'none', border: `1px solid ${GOLD}`, borderRadius: 999, padding: '7px 14px', cursor: 'pointer' }}

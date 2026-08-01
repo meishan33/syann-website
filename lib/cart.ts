@@ -8,7 +8,6 @@ export type CartItem = {
   // Bracelet-specific (type === 'bracelet')
   type?: 'shop' | 'bracelet'
   resultId?: string
-  spacer?: string
   includeCharm?: boolean
   remark?: string
 }
@@ -60,7 +59,6 @@ export function addToCart(item: Omit<CartItem, 'quantity'>) {
 // Pass `price` to override the default BRACELET_PRICE (e.g. for the builder page).
 export function addBraceletToCart(opts: {
   resultId: string
-  spacer: string
   includeCharm: boolean
   remark: string
   imageUrl: string | null
@@ -79,7 +77,6 @@ export function addBraceletToCart(opts: {
     quantity: 1,
     type: 'bracelet',
     resultId: opts.resultId,
-    spacer: opts.spacer,
     includeCharm: opts.includeCharm,
     remark: opts.remark,
   })

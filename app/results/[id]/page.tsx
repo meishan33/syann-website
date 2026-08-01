@@ -29,12 +29,6 @@ export default async function ResultsPage({ params }: Props) {
         .in("name", crystalNames)
     : { data: [] }
 
-  const { data: spacerCrystals } = await supabaseAdmin
-    .from("crystals")
-    .select("name, bead_image_url, bead_image_urls")
-    .ilike("name", "%spacer%")
-    .order("name");
-
   const imageMap: Record<string, string[]> = {}
   for (const c of crystalDetails ?? []) {
     if (c.bead_image_urls?.length) {
@@ -116,7 +110,6 @@ export default async function ResultsPage({ params }: Props) {
           resultId={id}
           weakElement={data.calculated_weak_element ?? null}
           strongElement={data.calculated_strong_element ?? null}
-          spacers={spacerCrystals ?? []}
         />
       </section>
 

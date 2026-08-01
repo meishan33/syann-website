@@ -1,18 +1,12 @@
 'use client'
 
-import { useState, useMemo, useEffect, type ReactNode } from 'react'
+import { useState, useMemo, type ReactNode } from 'react'
 import BraceletRenderer from '@/components/BraceletRenderer'
 import PurchasePanel from './PurchasePanel'
 
 const BEAD_MM = 8
 function calcN(wristCm: number): number {
   return Math.round((wristCm + 0.8) * 10 / BEAD_MM)
-}
-
-type SpacerOption = {
-  name: string
-  bead_image_url: string | null
-  bead_image_urls: string[] | null
 }
 
 type Props = {
@@ -25,57 +19,22 @@ type Props = {
   resultId: string
   weakElement: string | null
   strongElement: string | null
-  spacers: SpacerOption[]
 }
 
 export default function ResultsClient({
   beadSequence, imageMap, cachedImageUrl,
   analysisSummary, crystalNames, userName,
-  resultId, weakElement, strongElement, spacers,
+  resultId, weakElement, strongElement,
 }: Props) {
   const [wristCm, setWristCm] = useState(16.0)
-  const [selectedSpacer, setSelectedSpacer] = useState<string | null>(null)
   const [packagingOpen, setPackagingOpen] = useState(false)
 
   const N = calcN(wristCm)
 
-  const [spacerGaps, setSpacerGaps] = useState<(string | null)[]>(Array(calcN(16.0)).fill(null))
-
-  useEffect(() => {
-    setSpacerGaps(prev => {
-      if (prev.length === N) return prev
-      if (prev.length < N) return [...prev, ...Array(N - prev.length).fill(null)]
-      return prev.slice(0, N)
-    })
-  }, [N])
-
-  function handleGapClick(idx: number) {
-    setSpacerGaps(prev => {
-      const next = [...prev]
-      if (next[idx]) {
-        next[idx] = null           // always allow removing a placed spacer
-      } else if (selectedSpacer) {
-        next[idx] = selectedSpacer // place only when in placement mode
-      }
-      return next
-    })
-  }
-
-  // Crystal-only sequence — spacers rendered by BraceletRenderer via spacerGaps
   const adjustedSequence = useMemo(() => {
     if (!beadSequence.length) return []
     return Array.from({ length: N }, (_, i) => beadSequence[i % beadSequence.length])
   }, [beadSequence, N])
-
-  // Merge spacer images into the imageMap so BraceletRenderer can look them up
-  const imageMapWithSpacer = useMemo(() => {
-    const extra: Record<string, string[]> = {}
-    for (const s of spacers) {
-      const urls = s.bead_image_urls?.length ? s.bead_image_urls : s.bead_image_url ? [s.bead_image_url] : []
-      if (urls.length) extra[s.name] = urls
-    }
-    return { ...imageMap, ...extra }
-  }, [imageMap, spacers])
 
   return (
     <>
@@ -88,10 +47,7 @@ export default function ResultsClient({
           <div className="w-full">
             <BraceletRenderer
               sequence={adjustedSequence}
-              spacerGaps={spacerGaps}
-              selectedSpacerName={selectedSpacer}
-              onGapClick={handleGapClick}
-              imageMap={imageMapWithSpacer}
+              imageMap={imageMap}
             />
           </div>
 
@@ -135,7 +91,7 @@ export default function ResultsClient({
         </div>
       </div>
 
-      {/* ── RIGHT: OPTIONS + PURCHASE (narrower) ── */}
+      {/* ── RIGHT: OPTIONS + PURCHASE ── */}
       <div className="rounded-[28px] border border-[#E5DDD5] bg-white p-5 shadow-[0_20px_60px_-30px_rgba(101,70,46,0.2)] sm:p-6 lg:col-span-5">
         <PurchasePanel
           analysisSummary={analysisSummary}
@@ -150,11 +106,6 @@ export default function ResultsClient({
           onWristChange={setWristCm}
           beadCount={N}
           adjustedSequence={adjustedSequence}
-          spacers={spacers}
-          spacerGaps={spacerGaps}
-          selectedSpacer={selectedSpacer}
-          onSpacerChange={setSelectedSpacer}
-          onClearSpacers={() => { setSpacerGaps(Array(N).fill(null)); setSelectedSpacer(null) }}
         />
       </div>
 

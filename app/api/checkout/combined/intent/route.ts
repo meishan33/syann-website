@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
     const { shopItems, email, userId, savedAddress } = body
 
     // Accept new format (bracelets array) or legacy format (single resultId)
-    const braceletInputs: { resultId: string; spacer: string; includeCharm: boolean; remark: string }[] =
+    const braceletInputs: { resultId: string; includeCharm: boolean; remark: string }[] =
       body.bracelets ?? (body.resultId
-        ? [{ resultId: body.resultId, spacer: body.spacer ?? 'silver', includeCharm: body.includeCharm !== false, remark: body.remark ?? '' }]
+        ? [{ resultId: body.resultId, includeCharm: body.includeCharm !== false, remark: body.remark ?? '' }]
         : [])
 
     if (!braceletInputs.length) {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     // Validate each bracelet + compute price server-side
     let braceletSubtotalCents = 0
-    const braceletDetails: { resultId: string; priceCents: number; spacer: string; includeCharm: boolean; remark: string }[] = []
+    const braceletDetails: { resultId: string; priceCents: number; includeCharm: boolean; remark: string }[] = []
 
     for (const b of braceletInputs) {
       const { data: existingOrder } = await supabaseAdmin
@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
       braceletDetails.push({
         resultId: b.resultId,
         priceCents,
-        spacer: b.spacer ?? 'silver',
         includeCharm: b.includeCharm !== false,
         remark: (b.remark || '').slice(0, 200),
       })
@@ -86,7 +85,6 @@ export async function POST(req: NextRequest) {
         braceletDetails: JSON.stringify(braceletDetails),
         // Legacy single-bracelet fields kept for backward compat
         resultId: braceletDetails.length === 1 ? braceletDetails[0].resultId : '',
-        spacer: braceletDetails.length === 1 ? braceletDetails[0].spacer : '',
         includeCharm: braceletDetails.length === 1 ? String(braceletDetails[0].includeCharm) : '',
         remark: braceletDetails.length === 1 ? braceletDetails[0].remark : '',
         userId: userId || '',

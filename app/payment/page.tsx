@@ -9,7 +9,6 @@ import { generateBeadSequence } from "@/lib/design-engine";
 type Props = {
   searchParams: Promise<{
     result?: string;
-    spacer?: string;
     remark?: string;
     includeCharm?: string;
   }>;
@@ -19,7 +18,7 @@ const SERIF: React.CSSProperties = { fontFamily: "'Cormorant Garamond', serif" }
 const BODY: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
 
 export default async function PaymentPage({ searchParams }: Props) {
-  const { result: resultId, spacer = 'silver', remark = '', includeCharm = 'true' } = await searchParams;
+  const { result: resultId, remark = '', includeCharm = 'true' } = await searchParams;
 
   if (!resultId) {
     return (
@@ -143,10 +142,6 @@ export default async function PaymentPage({ searchParams }: Props) {
             {/* Order details */}
             <div className="flex flex-col gap-3">
               <div className="flex justify-between">
-                <span style={BODY} className="text-[12px] text-[#7A5B45]">Spacer Colour</span>
-                <span style={BODY} className="text-[12px] font-medium text-[#4A3A32] capitalize">{spacer}</span>
-              </div>
-              <div className="flex justify-between">
                 <span style={BODY} className="text-[12px] text-[#7A5B45]">Logo Charm</span>
                 <span style={BODY} className="text-[12px] font-medium text-[#4A3A32]">
                   {includeCharm === 'true' ? 'Included' : 'Excluded'}
@@ -234,7 +229,6 @@ export default async function PaymentPage({ searchParams }: Props) {
             ) : (
               <CheckoutButton
                 resultId={resultId}
-                spacer={spacer}
                 remark={remark}
                 includeCharm={includeCharm === 'true'}
               />

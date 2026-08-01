@@ -9,7 +9,6 @@ const GOLD = '#B08B57'
 
 type Props = {
   resultId: string
-  spacer: string
   remark: string
   includeCharm: boolean
 }
@@ -21,7 +20,7 @@ type SavedAddress = {
   postal_code: string | null; country: string | null
 } | null
 
-export default function CheckoutButton({ resultId, spacer, remark, includeCharm }: Props) {
+export default function CheckoutButton({ resultId, remark, includeCharm }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -61,7 +60,7 @@ export default function CheckoutButton({ resultId, spacer, remark, includeCharm 
         const res = await fetch('/api/checkout/intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resultId, spacer, includeCharm, remark, email: sessionEmail, userId, savedAddress: address }),
+          body: JSON.stringify({ resultId, includeCharm, remark, email: sessionEmail, userId, savedAddress: address }),
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to start checkout')
@@ -81,7 +80,7 @@ export default function CheckoutButton({ resultId, spacer, remark, includeCharm 
 
     createIntent()
     return () => { cancelled = true }
-  }, [resultId, spacer, includeCharm, remark])
+  }, [resultId, includeCharm, remark])
 
   if (loading) {
     return <p style={{ ...BODY, fontSize: 11, letterSpacing: '0.28em', color: GOLD, textTransform: 'uppercase', textAlign: 'center', padding: '20px 0' }}>Preparing checkout…</p>
