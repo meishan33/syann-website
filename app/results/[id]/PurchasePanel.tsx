@@ -119,7 +119,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
               )
             }
             return (
-              <p key={i} className="text-[12px] leading-[1.8] text-[#7A5B45] mb-4" style={BODY}>
+              <p key={i} className="text-[12px] leading-[2.1] text-[#7A5B45] mb-4" style={BODY}>
                 {i === 0 && userName && seg.startsWith(userName)
                   ? <>Dear <strong className="font-semibold text-[#4A3A32]">{userName}</strong>{seg.slice(userName.length)}</>
                   : seg}
