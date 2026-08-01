@@ -165,43 +165,43 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
           </div>
 
           {/* Wrist Size */}
-          <div style={{ background: '#F8F4EF', borderRadius: 14, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ background: '#F8F4EF', borderRadius: 12, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ ...BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: '#9A8573' }}>Wrist Size</span>
               <button type="button" onClick={() => setMeasureOpen(true)} style={{ ...BODY, fontSize: 10, color: GOLD, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', padding: 0 }}>
                 How to measure →
               </button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 10, padding: '6px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #E5DDD5', borderRadius: 8, padding: '4px 8px' }}>
               <button
                 type="button"
                 onClick={() => onWristChange(Math.max(12, parseFloat((wristCm - 0.5).toFixed(1))))}
-                style={{ ...BODY, width: 24, height: 24, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 14, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                style={{ ...BODY, width: 22, height: 22, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 13, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
               >−</button>
               <input
                 type="number"
                 value={wristCm}
                 min={12} max={22} step={0.5}
                 onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= 12 && v <= 22) onWristChange(v) }}
-                style={{ ...BODY, width: '100%', textAlign: 'center', fontSize: 16, fontWeight: 600, color: '#4A3A32', border: 'none', outline: 'none', background: 'transparent' }}
+                style={{ ...BODY, width: '100%', textAlign: 'center', fontSize: 14, fontWeight: 600, color: '#4A3A32', border: 'none', outline: 'none', background: 'transparent' }}
               />
               <span style={{ ...BODY, fontSize: 11, color: '#9A8573', flexShrink: 0 }}>cm</span>
               <button
                 type="button"
                 onClick={() => onWristChange(Math.min(22, parseFloat((wristCm + 0.5).toFixed(1))))}
-                style={{ ...BODY, width: 24, height: 24, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 14, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                style={{ ...BODY, width: 22, height: 22, borderRadius: '50%', border: '1px solid #E5DDD5', background: '#F6F1EB', fontSize: 13, color: '#7A5B45', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
               >+</button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#B0A090', margin: '0 0 2px' }}>Elastic Fit Range</p>
-                <p style={{ ...SERIF, fontSize: 14, fontWeight: 400, color: '#4A3A32', margin: 0 }}>
+                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#B0A090', margin: '0 0 1px' }}>Elastic Fit Range</p>
+                <p style={{ ...SERIF, fontSize: 13, fontWeight: 400, color: '#4A3A32', margin: 0 }}>
                   {((beadCount * 8 - 15) / 10).toFixed(1)} – {((beadCount * 8 + 10) / 10).toFixed(1)} cm
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#B0A090', margin: '0 0 2px' }}>Beads</p>
-                <p style={{ ...SERIF, fontSize: 14, color: '#4A3A32', margin: 0 }}>{beadCount} × 8mm</p>
+                <p style={{ ...BODY, fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#B0A090', margin: '0 0 1px' }}>Beads</p>
+                <p style={{ ...SERIF, fontSize: 13, color: '#4A3A32', margin: 0 }}>{beadCount} × 8mm</p>
               </div>
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
             rows={1}
             maxLength={300}
             style={BODY}
-            className="w-full resize-none rounded-xl border border-[#E5DDD5] bg-transparent px-3 py-2 text-[12px] text-[#4A3A32] placeholder-[#C5B8AD] outline-none transition-colors focus:border-[#B08B57] leading-relaxed"
+            className="w-full resize-none rounded-xl border border-[#E5DDD5] bg-transparent px-3 py-1.5 text-[12px] text-[#4A3A32] placeholder-[#C5B8AD] outline-none transition-colors focus:border-[#B08B57] leading-relaxed"
           />
           {remark.length > 0 && (
             <p className="mt-1 text-right text-[10px] text-[#C5B8AD]" style={BODY}>
@@ -241,11 +241,11 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
         </div>
 
         {/* PURCHASE / ADD TO CART BUTTONS */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <button
             onClick={handlePurchase}
             disabled={loading || addedToCart}
-            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#4A3A32] bg-[#4A3A32] px-6 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#B08B57] hover:border-[#B08B57] disabled:opacity-60 disabled:cursor-not-allowed"
             style={BODY}
           >
             {loading ? 'Please wait…' : <><span>Purchase Now</span><span aria-hidden="true">✦</span></>}
@@ -253,7 +253,7 @@ export default function PurchasePanel({ analysisSummary, crystalNames = [], crys
           <button
             onClick={handleAddToCart}
             disabled={loading || addedToCart}
-            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#B08B57] bg-transparent px-6 py-3.5 text-[11px] font-medium uppercase tracking-[0.3em] text-[#B08B57] transition-all duration-300 hover:bg-[#B08B57] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#B08B57] bg-transparent px-6 py-3 text-[11px] font-medium uppercase tracking-[0.3em] text-[#B08B57] transition-all duration-300 hover:bg-[#B08B57] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed"
             style={BODY}
           >
             {addedToCart ? 'Added — going to cart…' : 'Add to Cart'}
