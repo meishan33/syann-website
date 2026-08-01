@@ -54,10 +54,7 @@ export default async function PaymentPage({ searchParams }: Props) {
   const analysisSummary = isCustomDesign ? null : rawAnalysisSummary;
   const userName: string | null = data?.user_name ?? null;
 
-  const [analysisParagraph, analysisBulletBlock] = analysisSummary ? analysisSummary.split('\n\n') : [null, null];
-  const analysisBullets = analysisBulletBlock
-    ? analysisBulletBlock.split('\n').filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
-    : [];
+  const analysisSegments = analysisSummary ? analysisSummary.split('\n\n').filter(Boolean) : [];
 
   // cached_image_url is generated server-side right when the quiz analysis
   // completes (see lib/bracelet-image.ts) — it should normally already be
@@ -170,32 +167,39 @@ export default async function PaymentPage({ searchParams }: Props) {
                       {' '}· Strong: <span className="font-medium text-[#4A3A32] capitalize">{strongElement || '—'}</span>
                     </p>
                   )}
-                  {analysisParagraph && (
-                    <p style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45]">
-                      {userName && analysisParagraph.startsWith(userName)
-                        ? <>Dear <span className="font-semibold text-[#4A3A32]">{userName}</span>{analysisParagraph.slice(userName.length)}</>
-                        : analysisParagraph}
-                    </p>
-                  )}
-                  {analysisBullets.length > 0 && (
-                    <div className="flex flex-col gap-2 mt-1">
-                      {analysisBullets.map((point, i) => {
-                        const match = crystalNames.find(n => point.startsWith(n));
-                        return (
-                          <div key={i} className="flex items-start gap-2">
-                            <span className="mt-[5px] shrink-0 text-[#B08B57]">
-                              <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
-                            </span>
-                            <p style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45] m-0">
-                              {match
-                                ? <><span className="font-semibold text-[#4A3A32]">{match}</span>{point.slice(match.length)}</>
-                                : point}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {analysisSegments.map((seg, i) => {
+                    const lines = seg.split('\n')
+                    const isBulletBlock = lines.some(l => l.trim().startsWith('•'))
+                    if (isBulletBlock) {
+                      const bullets = lines.filter(l => l.trim().startsWith('•')).map(l => l.replace(/^•\s*/, '').trim())
+                      return (
+                        <div key={i} className="flex flex-col gap-2 mt-1">
+                          {bullets.map((point, j) => {
+                            const match = crystalNames.find(n => point.startsWith(n));
+                            return (
+                              <div key={j} className="flex items-start gap-2">
+                                <span className="mt-[5px] shrink-0 text-[#B08B57]">
+                                  <svg width="5" height="5" viewBox="0 0 6 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor" /></svg>
+                                </span>
+                                <p style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45] m-0">
+                                  {match
+                                    ? <><span className="font-semibold text-[#4A3A32]">{match}</span>{point.slice(match.length)}</>
+                                    : point}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )
+                    }
+                    return (
+                      <p key={i} style={BODY} className="text-[12px] leading-[1.8] text-[#7A5B45]">
+                        {i === 0 && userName && seg.startsWith(userName)
+                          ? <>Dear <span className="font-semibold text-[#4A3A32]">{userName}</span>{seg.slice(userName.length)}</>
+                          : seg}
+                      </p>
+                    )
+                  })}
                 </div>
               </>
             )}
