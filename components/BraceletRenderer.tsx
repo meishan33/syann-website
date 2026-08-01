@@ -11,7 +11,7 @@ export default function BraceletRenderer({ sequence, imageMap, className }: Prop
   if (N === 0) return <div className={className} style={{ position: 'relative', width: '100%', aspectRatio: '1', background: '#F5F0EB', borderRadius: 20 }} />
 
   const ARC_PCT     = Number((2 * RADIUS_PCT * Math.sin(Math.PI / N)).toFixed(4))
-  const CRYSTAL_PCT = Number((ARC_PCT * 1.1).toFixed(4))
+  const CRYSTAL_PCT = Number((ARC_PCT * 1.0).toFixed(4))
 
   function crystalAngle(i: number): number {
     return (i / N) * 2 * Math.PI - Math.PI / 2
